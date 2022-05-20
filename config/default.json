@@ -1,0 +1,12 @@
+{
+    "mongoDB": {
+        "connectionString": "mongodb://localhost:27017/go-cup",
+        "password": ""
+    },
+    "jwt": {
+        "privateKey": ""
+    },
+    "session": {
+        "privateKey": ""
+    }
+}

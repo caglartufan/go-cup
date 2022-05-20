@@ -1,0 +1,11 @@
+{
+    "mongoDB": {
+        "password": "go-cup_mongoDBPassword"
+    },
+    "jwt": {
+        "privateKey": "go-cup_jwtPrivateKey"
+    },
+    "session": {
+        "privateKey": "go-cup_sessionPrivateKey"
+    }
+}
