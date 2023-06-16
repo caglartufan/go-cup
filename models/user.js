@@ -3,48 +3,44 @@ const jwt = require('jsonwebtoken');
 const config = require('config');
 const Joi = require('joi');
 const {
-    validateUsername,
-    validateEmailAddress,
-    validateCountry
-} = require('../helpers/utils');
+    USERNAME_REGEX,
+    EMAIL_REGEX,
+    COUNTRY_REGEX,
+    NAME_REGEX
+} = require('../helpers/validation');
 
 const userSchema = new mongoose.Schema({
     username: {
         type: String,
-        required: true,
-        minlength: 3,
-        maxlength: 30,
-        validate: {
-            validator: validateUsername,
-            message: 'User name must containing minimum 3 and maximum 30 alphanumeric characters.'
-        },
-        unique: true
+        required: [true, 'User name is required.'],
+        minlength: [3, 'User name must have at least {MINLENGTH} characters.'],
+        maxlength: [30, 'User name must have less than {MAXLENGTH} characters.'],
+        match: [USERNAME_REGEX, 'User name must contain minimum 3 and maximum 30 alphanumeric characters.'],
+        unique: true,
     },
     firstname: {
         type: String,
-        minlength: 2,
-        maxlength: 100
+        minlength: [2, 'First name must have at least {MINLENGTH} characters.'],
+        maxlength: [100, 'First name must have less than {MAXLENGTH} characters.'],
+        match: [NAME_REGEX, 'First name can only contain Latin letters, whitespace, comma, period, apostrophe or dash.']
     },
     lastname: {
         type: String,
-        minlength: 2,
-        maxlength: 100
+        minlength: [2, 'Last name must have at least {MINLENGTH} characters.'],
+        maxlength: [100, 'Last name must have less than {MAXLENGTH} characters.'],
+        match: [NAME_REGEX, 'Last name can only contain Latin letters, whitespace, comma, period, apostrophe or dash.']
     },
     email: {
         type: String,
-        required: true,
-        validate: {
-            validator: validateEmailAddress,
-            message: 'E-mail address is not valid.'
-
-        },
+        required: [true, 'E-mail address is required.'],
+        match: [EMAIL_REGEX, 'E-mail address is not valid.'],
         unique: true
     },
     password: {
         type: String,
-        required: true,
-        minlength: 4,
-        maxlength: 1024
+        required: [true, 'Password is required.'],
+        minlength: [4, 'Password must have at least {MINLENGTH} characters.'],
+        maxlength: [1024, 'Password must have less than {MAXLENGTH} characters.']
     },
     isAdmin: {
         type: Boolean,
@@ -52,10 +48,7 @@ const userSchema = new mongoose.Schema({
     },
     country: {
         type: String,
-        validate: {
-            validator: validateCountry,
-            message: 'Country is not valid.'
-        }
+        match: [COUNTRY_REGEX, 'Country must be a valid country code containing 2 uppercase letters.']
     },
     createdAt: {
         type: Date,
@@ -94,15 +87,15 @@ function validate(user) {
             'string.alphanum': `Username must be alphanumeric.`,
             'any.required': `Username is required.`
         }),
-        'firstname': Joi.string().min(2).max(100).regex(/^[A-z ,.'-]+$/).messages({
+        'firstname': Joi.string().min(2).max(100).regex(NAME_REGEX).messages({
             'string.min': `First name must have at least {#limit} characters.`,
             'string.max': `First name must have less than {#limit} characters.`,
-            'string.pattern.base': `First name can only contain Latin letters.`
+            'string.pattern.base': `First name can only contain Latin letters, whitespace, comma, period, apostrophe or dash.`
         }),
-        'lastname': Joi.string().min(2).max(100).regex(/^[A-z ,.'-]+$/).messages({
+        'lastname': Joi.string().min(2).max(100).regex(NAME_REGEX).messages({
             'string.min': `Last name must have at least {#limit} characters.`,
             'string.max': `Last name must have less than {#limit} characters.`,
-            'string.pattern.base': `Last name can only contain Latin letters.`
+            'string.pattern.base': `Last name can only contain Latin letters, whitespace, comma, period, apostrophe or dash.`
         }),
         'email': Joi.string().email().required().messages({
             'string.empty': `E-mail address is required.`,
@@ -119,7 +112,7 @@ function validate(user) {
             'boolean.base': `isAdmin field must be a valid boolean value.`
         }),
         // TODO: Add whitelist validation with .allow method
-        'country': Joi.string().regex(/^[A-Z]{2}$/).messages({
+        'country': Joi.string().regex(COUNTRY_REGEX).messages({
             'string.pattern.base': `Country must be a valid country code containing 2 uppercase letters.`
         })
     });
