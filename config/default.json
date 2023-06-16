@@ -1,0 +1,12 @@
+{
+    "mongoDB": {
+        "connectionString": "mongodb+srv://n3pixowe:<password>@go-cup-main.9enduqx.mongodb.net/?retryWrites=true&w=majority",
+        "password": "kVBq7zL2u1ioicTY"
+    },
+    "jwt": {
+        "privateKey": ""
+    },
+    "session": {
+        "privateKey": ""
+    }
+}

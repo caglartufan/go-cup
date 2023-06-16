@@ -1,0 +1,12 @@
+{
+    "mongoDB": {
+        "connectionString": "",
+        "password": ""
+    },
+    "jwt": {
+        "privateKey": ""
+    },
+    "session": {
+        "privateKey": ""
+    }
+}
