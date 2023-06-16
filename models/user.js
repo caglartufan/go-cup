@@ -36,6 +36,7 @@ const userSchema = new mongoose.Schema({
         match: [EMAIL_REGEX, 'E-mail address is not valid.'],
         unique: true
     },
+    // TODO: Enable password strength validation, throw error for weak passwords and enforce usage of special characters in password (modify the auth routes and validation helper functions)
     password: {
         type: String,
         required: [true, 'Password is required.'],
@@ -78,7 +79,7 @@ userSchema.methods.generateAuthToken = function() {
 
 const User = mongoose.model('User', userSchema);
 
-function validate(user) {
+function validateUser(user) {
     const schema = Joi.object({
         'username': Joi.string().min(3).max(30).alphanum().required().messages({
             'string.empty': `User name is required.`,
@@ -117,8 +118,8 @@ function validate(user) {
         })
     });
 
-    return schema.validate(user);
+    return schema.validate(user, { abortEarly: false });
 }
 
 exports.User = User;
-exports.validate = validate;
+exports.validateUser = validateUser;
