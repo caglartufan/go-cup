@@ -1,0 +1,19 @@
+@use '../abstracts/variables' as *;
+
+*,
+*::after,
+*::before {
+    margin: 0;
+    padding: 0;
+    box-sizing: inherit;
+}
+
+a,
+input,
+select,
+textarea,
+button,
+area {
+    outline-width: 2px;
+    outline-color: $primary-dark;
+}

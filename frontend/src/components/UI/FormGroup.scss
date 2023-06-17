@@ -1,0 +1,22 @@
+.form-group {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 2rem;
+    font-size: 1.3rem;
+
+    & label {
+
+        & + .form-control {
+            margin-top: .5rem;
+        }
+    }
+}
+
+.form-label-group {
+    display: flex;
+    justify-content: space-between;
+
+    & + .form-control {
+        margin-top: .5rem;
+    }
+}

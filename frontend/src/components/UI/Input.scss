@@ -1,0 +1,14 @@
+@use '../../sass/abstracts/variables' as *;
+
+.form-control {
+    font-size: 1.3rem;
+    padding: .4rem;
+    border-radius: 5px;
+    border: 1px solid $tertiary;
+    // outline: 2px solid transparent;
+    transition: all .3s ease-out;
+
+    &:focus {
+        // outline: 2px solid $primary-dark;
+    }
+}

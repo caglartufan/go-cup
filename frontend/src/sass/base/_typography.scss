@@ -115,14 +115,18 @@
     font-style: italic;
 }
 
-body {
+body,
+input,
+textarea {
     font-family: 'Poppins', sans-serif;
+    font-size: 1.6rem;
 }
 
 a {
     &,
     &:link,
     &:visited {
+        text-decoration: none;
         color: $primary;
         transition: all .3s ease;
     }

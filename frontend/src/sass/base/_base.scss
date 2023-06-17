@@ -1,13 +1,5 @@
 @use '../abstracts' as *;
 
-*,
-*::after,
-*::before {
-    margin: 0;
-    padding: 0;
-    box-sizing: inherit;
-}
-
 html {
     font-size: 62.5%; // 1rem = 10px, 10/16 = 62.5%
     min-width: 100%;

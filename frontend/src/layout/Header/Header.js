@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 
 import Navigation from '../Navigation/Navigation';
 
-import './_Header.scss';
+import './Header.scss';
 
 function Header() {
     return (
