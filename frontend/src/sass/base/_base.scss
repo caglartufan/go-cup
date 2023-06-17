@@ -1,0 +1,27 @@
+@use '../abstracts' as *;
+
+*,
+*::after,
+*::before {
+    margin: 0;
+    padding: 0;
+    box-sizing: inherit;
+}
+
+html {
+    font-size: 62.5%; // 1rem = 10px, 10/16 = 62.5%
+    min-width: 100%;
+    min-height: 100%;
+
+    @include respond-to('large') { // width < 1200?
+        font-size: 56.25%; //1 rem = 9px, 9/16 = 56.25%
+    }
+
+    @include respond-to('medium') { // width < 900?
+        font-size: 50%; //1 rem = 8px, 8/16 = 50%
+    }
+    
+    @include respond-to('huge') { // width > 1800?
+        font-size: 75%; //1rem = 12, 12/16 = 75%
+    }
+}
