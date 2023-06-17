@@ -35,19 +35,16 @@ router.post('/signup', async function(req, res, next) {
         });
 
         if(alreadyExistingUser) {
-            let errorMessage = '';
-
-            if(alreadyExistingUser.username === reqData.username && alreadyExistingUser.email === reqData.email) {
-                errorMessage = 'User name and e-mail address are already in use.';
-            } else if(alreadyExistingUser.username === reqData.username) {
-                errorMessage = 'User name is already in use.'
-            } else if(alreadyExistingUser.email === reqData.email) {
-                errorMessage = 'E-mail address is already in use.'
-            } else {
-                errorMessage = 'User name or e-mail address already in use.'
+            const errors = {};
+            
+            if(alreadyExistingUser.username === reqData.username) {
+                errors.username = 'User name is already in use.';
+            }
+            if(alreadyExistingUser.email === reqData.email) {
+                errors.email = 'E-mail address is already in use.';
             }
 
-            return next(createError(400, errorMessage));
+            return next(createError(400, 'User data validation failed!', { errors }));
         }
 
         const user = new User(reqData);

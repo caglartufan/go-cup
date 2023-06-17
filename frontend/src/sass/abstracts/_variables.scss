@@ -1,4 +1,18 @@
 // COLORS
+$primary: #A6B1E1;
+$primary-light: lighten($primary, 10%);
+$primary-dark: darken($primary, 10%);
+$secondary: #424874;
+$secondary-light: lighten($secondary, 10%);
+$secondary-dark: darken($secondary, 10%);
+$tertiary: #DCD6F7;
+$tertiary-light: lighten($tertiary, 10%);
+$tertiary-dark: darken($tertiary, 10%);
+
+$overlay: #F4EEFF;
+
+$black: #000;
+$white: #fff;
 
 // FONT
 $default-font-size: 1.6rem;

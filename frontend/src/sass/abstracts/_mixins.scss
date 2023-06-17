@@ -8,6 +8,19 @@
     }
 }
 
+// Box shadow
+@mixin box-shadow($type) {
+    @if $type == 'light' {
+        box-shadow: 0 .6rem 1.2rem rgba($black, .15);
+    }
+    @if $type == 'medium' {
+        box-shadow: 0 .9rem 1.5rem rgba($black, .25);
+    }
+    @if $type == 'heavy' {
+        box-shadow: 0 1.1rem 1.7rem rgba($black, .40);
+    }
+}
+
 /// Responsive breakpoint manager
 /// @access public
 /// @param {String} $breakpoint - Breakpoint

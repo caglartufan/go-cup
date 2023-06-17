@@ -1,0 +1,63 @@
+@use '../../sass/abstracts/variables' as *;
+
+.navigation {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    &__list {
+        display: flex;
+        list-style: none;
+        gap: 1rem;
+
+        &-item {
+
+
+            &-link {
+                &,
+                &:link,
+                &:visited {
+                    display: block;
+                    padding: .5rem 1.5rem;
+                    font-size: 1.5rem;
+                    text-decoration: none;
+                }
+
+                &--active {
+                    &,
+                    &:link,
+                    &:visited {
+                        color: $primary-dark;
+                    }
+                }
+
+                &--outline {
+                    &,
+                    &:link,
+                    &:visited {
+                        color: $primary-dark;
+                        background-color: $tertiary;
+                        border-radius: 3px;
+                        box-shadow: 0 0 5px rgba($black, .15);
+                    }
+
+                    &:hover,
+                    &:active {
+                        color: $tertiary-light;
+                        background-color: $tertiary-dark;
+                    }
+
+                    &-active {
+                        &,
+                        &:link,
+                        &:visited {
+                            color: $tertiary-light;
+                            background-color: $tertiary-dark;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
