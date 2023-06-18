@@ -21,6 +21,31 @@ class UserValidationError extends HTTPError {
         this.name = 'UserValidationError';
         this.errors = errors;
     }
+
+    static fromJoiError(error) {
+        const errors = createJoiErrorsObject(error);
+
+        return new UserValidationError(errors);
+    }
+
+    static fromMongooseError(error) {
+        const errors = createMongooseValidationErrorsObject(error);
+
+        return new UserValidationError(errors);
+    }
+
+    static fromDuplicateUsernameOrEmail(isDuplicateUsername, isDuplicateEmail) {
+        const errors = {};
+            
+        if(isDuplicateUsername) {
+            errors.username = ERRORS.DUPLICATE_USERNAME;
+        }
+        if(isDuplicateEmail) {
+            errors.email = ERRORS.DUPLICATE_USERNAME;
+        }
+
+        return new UserValidationError(errors);
+    }
 }
 
 class InvalidUserCredentialsError extends HTTPError {
@@ -34,6 +59,13 @@ class InternalServerError extends HTTPError {
     constructor(message) {
         super(message, 500);
         this.name = 'InternalServerError';
+    }
+}
+
+class NotFoundError extends HTTPError {
+    constructor() {
+        super(ERRORS.NOT_FOUND, 404);
+        this.name = 'NotFoundError';
     }
 }
 
@@ -52,50 +84,24 @@ class InvalidDTOError extends TypeError {
 class ErrorHandler {
     static handle(error) {
         if(error instanceof mongoose.Error.ValidationError) {
-            ErrorHandler.throwUserValidationMongooseError(error);
+            return UserValidationError.fromMongooseError(error);
         } else {
             debug(error);
-            ErrorHandler.throwInternalServerError(error.message);
+            if(error instanceof HTTPError || error instanceof InvalidDTOError) {
+                return error;
+            } else {
+                return new InternalServerError(error.message);
+            }
         }
     }
-
-    /*
-    static throwInvalidDTOError(object, ExpectedDTOClass) {
-        throw new InvalidDTOError(object, ExpectedDTOClass);
-    }
-
-    static throwUserValidationJoiError(error) {
-        const errors = createJoiErrorsObject(error);
-
-        throw new UserValidationError(errors);
-    }
-
-    static throwUserValidationMongooseError(error) {
-        const errors = createMongooseValidationErrorsObject(error);
-
-        throw new UserValidationError(errors);
-    }
-
-    static throwUserValidationDuplicationError(isDuplicateUsername, isDuplicateEmail) {
-        const errors = {};
-            
-        if(isDuplicateUsername) {
-            errors.username = ERRORS.DUPLICATE_USERNAME;
-        }
-        if(isDuplicateEmail) {
-            errors.email = ERRORS.DUPLICATE_USERNAME;
-        }
-
-        throw new UserValidationError(errors);
-    }
-
-    static throwInvalidUserCredentialsError() {
-        throw new InvalidUserCredentialsError();
-    }
-
-    static throwInternalServerError(message) {
-        throw new InternalServerError(message);
-    }*/
 }
 
-module.exports = ErrorHandler;
+module.exports = {
+    HTTPError,
+    UserValidationError,
+    InvalidUserCredentialsError,
+    InternalServerError,
+    NotFoundError,
+    InvalidDTOError,
+    ErrorHandler
+};

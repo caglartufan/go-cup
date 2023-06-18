@@ -1,18 +1,18 @@
 const express = require('express');
-const createError = require('http-errors');
 const path = require('path');
 const cookieParser = require('cookie-parser');
 const logger = require('morgan');
 const config = require('config');
 const mongoose = require('mongoose');
 const debug = require('debug')('go-cup:app');
+const ServiceRegistry = require('./utils/ServiceRegistry');
+const { NotFoundError } = require('./utils/ErrorHandler');
 
 const indexRouter = require('./routes/index');
 const usersRouter = require('./routes/api/users');
 
 // REST API Routes
 const authRouter = require('./routes/api/auth');
-const ServiceRegistry = require('./utils/ServiceRegistry');
 
 // Check if the required configs to boot are set
 if(!config.get('mongoDB.connectionString')) {
@@ -69,21 +69,24 @@ app.use(function(req, res, next) {
 app.use('/api', authRouter);
 app.use('/api/users', usersRouter);
 
-// Catch 404 and forward to error handler
+// Catch 404 and forward to error handler route
 app.use(function(req, res, next) {
-	next(createError(404));
+	next(new NotFoundError());
 });
 
-// Error handler
+// Error handler route
 app.use(function(err, req, res, next) {
 	// Set locals, only providing error details in development
 	res.locals.message = err.message;
 	res.locals.error = req.app.get('env') === 'development' ? err : {};
 
 	// TODO: Can add url prefix control like if the url starts with /api to return json or http error redirection in SPA
-	// Render the error page
+	// Render the error page or respond with error
 	res.status(err.status);
-	res.json({ ...err });
+	res.json({
+		message: err.message,
+		errors: err.errors
+	});
 });
 
 module.exports = app;

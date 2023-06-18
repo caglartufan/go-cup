@@ -1,8 +1,5 @@
 const express = require('express');
 const router = express.Router();
-const createError = require('http-errors');
-const _ = require('lodash');
-
 const UserDTO = require('../../DTO/UserDTO');
 
 router.post('/signup', async function(req, res, next) {
@@ -15,17 +12,14 @@ router.post('/signup', async function(req, res, next) {
 
         const token = user.generateAuthToken();
         
-        // TODO modell yerine dto kullan
         return res
             .status(201)
             .header('Authorization', 'Bearer ' + token)
             .json({
-                user: _.omit(user.toObject(), 'password')
+                ok: true
             });
     } catch(error) {
-        next(
-            createError(error.status || 500, error.message, { errors: error.errors })
-        );
+        next(error);
     }
 });
 
@@ -42,12 +36,10 @@ router.post('/login', async function(req, res, next) {
         return res
             .header('Authorization', 'Bearer ' + token)
             .json({
-                user: _.omit(user.toObject(), 'password')
+                ok: true
             });
     } catch(error) {
-        next(
-            createError(error.status || 500, error.message, { errors: error.errors })
-        );
+        next(error);
     }
 });
 

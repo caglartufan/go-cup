@@ -2,20 +2,23 @@ const Joi = require('joi');
 const bcrypt = require('bcrypt');
 const UserDTO = require('../DTO/UserDTO');
 const UserDAO = require('../DAO/UserDAO');
-const ErrorHandler = require('../utils/ErrorHandler');
+const {
+    ErrorHandler,
+    InvalidDTOError,
+    UserValidationError,
+    InvalidUserCredentialsError
+} = require('../utils/ErrorHandler');
 
 class UserService {
     async signupUser(user) {
         if(!(user instanceof UserDTO)) {
-
-            throw IndlvaidDTOError
-            //ErrorHandler.throwInvalidDTOError(user, UserDTO);
+            throw new InvalidDTOError(user, UserDTO);
         }
 
         const { error } = this.#validateSignupData(user);
 
         if(error) {
-            ErrorHandler.throwUserValidationJoiError(error);
+            throw UserValidationError.fromJoiError(error);
         }
 
         const alreadyExistingUser = await UserDAO.findAlreadyExistingUser(user.username, user.email);
@@ -24,38 +27,34 @@ class UserService {
             const isDuplicateUsername = alreadyExistingUser.username === user.username;
             const isDuplicateEmail = alreadyExistingUser.email === user.email;
             
-            ErrorHandler.throwUserValidationDuplicationError(isDuplicateUsername, isDuplicateEmail);
+            throw UserValidationError.fromDuplicateUsernameOrEmail(isDuplicateUsername, isDuplicateEmail);
         }
 
-        try {
-            user = await UserDAO.createUser(user);
-        } catch(error) {
-            ErrorHandler.handle(error);
-        }
+        user = await UserDAO.createUser(user);
 
         return user;
     }
 
     async loginUser(user) {
         if(!(user instanceof UserDTO)) {
-            ErrorHandler.throwInvalidDTOError(user, UserDTO);
+            throw new InvalidDTOError(user, UserDTO);
         }
 
         const { error } = this.#validateLoginData(user);
 
         if(error) {
-            ErrorHandler.throwUserValidationJoiError(error);
+            throw UserValidationError.fromJoiError(error);
         }
 
         const loginUser = await UserDAO.findAlreadyExistingUser(user.login, user.login);
 
         if(!loginUser) {
-            ErrorHandler.throwInvalidUserCredentialsError();
+            throw new InvalidUserCredentialsError();
         }
 
         const isEnteredPasswordValid = await bcrypt.compare(user.password, loginUser.password);
         if(!isEnteredPasswordValid) {
-            ErrorHandler.throwInvalidUserCredentialsError();
+            throw new InvalidUserCredentialsError();
         }
 
         return loginUser;
