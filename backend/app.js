@@ -12,6 +12,7 @@ const usersRouter = require('./routes/api/users');
 
 // REST API Routes
 const authRouter = require('./routes/api/auth');
+const ServiceRegistry = require('./utils/ServiceRegistry');
 
 // Check if the required configs to boot are set
 if(!config.get('mongoDB.connectionString')) {
@@ -47,13 +48,24 @@ mongoose.connect(connectionString)
 
 const app = express();
 
+const services = new ServiceRegistry();
+
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Web routes
 app.use('/', indexRouter);
+
+// Enable services in REST API routes
+app.use(function(req, res, next) {
+	req.services = services;
+	next();
+});
+
+// REST API routes
 app.use('/api', authRouter);
 app.use('/api/users', usersRouter);
 
@@ -70,7 +82,7 @@ app.use(function(err, req, res, next) {
 
 	// TODO: Can add url prefix control like if the url starts with /api to return json or http error redirection in SPA
 	// Render the error page
-	res.status(err.status || 500);
+	res.status(err.status);
 	res.json({ ...err });
 });
 

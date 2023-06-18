@@ -1,0 +1,12 @@
+@use '../../sass/abstracts/variables' as *;
+
+.button {
+    font-size: 1.3rem;
+    padding: .75rem 2rem;
+    background-color: $primary-dark;
+    color: $white;
+    font-weight: 500;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+}

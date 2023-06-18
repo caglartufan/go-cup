@@ -18,7 +18,12 @@ html {
     }
 }
 
-main {
-    max-width: 114rem;
-    margin: 0 auto;
+a,
+input,
+select,
+textarea,
+button,
+area {
+    outline-width: 2px;
+    outline-color: $primary-dark;
 }

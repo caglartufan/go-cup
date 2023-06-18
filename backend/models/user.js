@@ -7,7 +7,7 @@ const {
     EMAIL_REGEX,
     COUNTRY_REGEX,
     NAME_REGEX
-} = require('../helpers/validation');
+} = require('../utils/validation');
 
 const userSchema = new mongoose.Schema({
     username: {
