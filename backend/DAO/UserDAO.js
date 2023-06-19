@@ -1,5 +1,5 @@
 const bcrypt = require('bcrypt');
-const { User } = require('../models/user');
+const { User } = require('../models/User');
 
 class UserDAO {
     static async findAlreadyExistingUser(username, email) {

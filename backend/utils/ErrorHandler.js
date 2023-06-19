@@ -1,12 +1,8 @@
 const mongoose = require('mongoose');
-const {
-    createJoiErrorsObject,
-    createMongooseValidationErrorsObject
-} = require('./validation');
 const ERRORS = require('../messages/errors');
+const Validator = require('../utils/Validator');
 const debug = require('debug')('go-cup:error-handler');
 
-// TODO http error sadece controlerda kullnılacak
 class HTTPError extends Error {
     constructor(message, status) {
         super(message);
@@ -23,13 +19,13 @@ class UserValidationError extends HTTPError {
     }
 
     static fromJoiError(error) {
-        const errors = createJoiErrorsObject(error);
+        const errors = Validator.createJoiErrorsObject(error);
 
         return new UserValidationError(errors);
     }
 
     static fromMongooseError(error) {
-        const errors = createMongooseValidationErrorsObject(error);
+        const errors = Validator.createMongooseValidationErrorsObject(error);
 
         return new UserValidationError(errors);
     }

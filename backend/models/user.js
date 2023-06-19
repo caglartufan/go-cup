@@ -2,46 +2,42 @@ const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
 const config = require('config');
 const Joi = require('joi');
-const {
-    USERNAME_REGEX,
-    EMAIL_REGEX,
-    COUNTRY_REGEX,
-    NAME_REGEX
-} = require('../utils/validation');
+const Validator = require('../utils/Validator');
+const VALIDATION = require('../messages/validation');
 
 const userSchema = new mongoose.Schema({
     username: {
         type: String,
-        required: [true, 'User name is required.'],
-        minlength: [3, 'User name must have at least {MINLENGTH} characters.'],
-        maxlength: [30, 'User name must have less than {MAXLENGTH} characters.'],
-        match: [USERNAME_REGEX, 'User name must contain minimum 3 and maximum 30 alphanumeric characters.'],
+        required: [true, VALIDATION.username['any.required']],
+        minlength: [3, VALIDATION.username['string.min'].replace('{#limit}', '{MINLENGTH}')],
+        maxlength: [30, VALIDATION.username['string.max'].replace('{#limit}', '{MAXLENGTH}')],
+        match: [Validator.USERNAME_REGEX, VALIDATION.username['string.pattern.base']],
         unique: true,
     },
     firstname: {
         type: String,
-        minlength: [2, 'First name must have at least {MINLENGTH} characters.'],
-        maxlength: [100, 'First name must have less than {MAXLENGTH} characters.'],
-        match: [NAME_REGEX, 'First name can only contain Latin letters, whitespace, comma, period, apostrophe or dash.']
+        minlength: [2, VALIDATION.firstname['string.min'].replace('{#limit}', '{MINLENGTH}')],
+        maxlength: [100, VALIDATION.firstname['string.max'].replace('{#limit}', '{MAXLENGTH}')],
+        match: [Validator.NAME_REGEX, VALIDATION.firstname['string.pattern.base']]
     },
     lastname: {
         type: String,
-        minlength: [2, 'Last name must have at least {MINLENGTH} characters.'],
-        maxlength: [100, 'Last name must have less than {MAXLENGTH} characters.'],
-        match: [NAME_REGEX, 'Last name can only contain Latin letters, whitespace, comma, period, apostrophe or dash.']
+        minlength: [2, VALIDATION.lastname['string.min'].replace('{#limit}', '{MINLENGTH}')],
+        maxlength: [100, VALIDATION.lastname['string.max'].replace('{#limit}', '{MAXLENGTH}')],
+        match: [Validator.NAME_REGEX, VALIDATION.lastname['string.pattern.base']]
     },
     email: {
         type: String,
-        required: [true, 'E-mail address is required.'],
-        match: [EMAIL_REGEX, 'E-mail address is not valid.'],
+        required: [true, VALIDATION.email['any.required']],
+        match: [Validator.EMAIL_REGEX, VALIDATION.email['string.email']],
         unique: true
     },
     // TODO: Enable password strength validation, throw error for weak passwords and enforce usage of special characters in password (modify the auth routes and validation helper functions)
     password: {
         type: String,
-        required: [true, 'Password is required.'],
-        minlength: [4, 'Password must have at least {MINLENGTH} characters.'],
-        maxlength: [1024, 'Password must have less than {MAXLENGTH} characters.']
+        required: [true, VALIDATION.password['any.required']],
+        minlength: [4, VALIDATION.password['string.min'].replace('{#limit}', '{MINLENGTH}')],
+        maxlength: [1024, VALIDATION.password['string.max'].replace('{#limit}', '{MAXLENGTH}')]
     },
     isAdmin: {
         type: Boolean,
@@ -49,7 +45,7 @@ const userSchema = new mongoose.Schema({
     },
     country: {
         type: String,
-        match: [COUNTRY_REGEX, 'Country must be a valid country code containing 2 uppercase letters.']
+        match: [Validator.COUNTRY_REGEX, VALIDATION.country['string.pattern.base']]
     },
     createdAt: {
         type: Date,
@@ -82,39 +78,39 @@ const User = mongoose.model('User', userSchema);
 function validateUser(user) {
     const schema = Joi.object({
         'username': Joi.string().min(3).max(30).alphanum().required().messages({
-            'string.empty': `User name is required.`,
-            'string.min': `User name must have at least {#limit} characters.`,
-            'string.max': `User name must have less than {#limit} characters.`,
-            'string.alphanum': `Username must be alphanumeric.`,
-            'any.required': `Username is required.`
+            'string.empty': VALIDATION.username['string.empty'],
+            'string.min': VALIDATION.username['string.min'],
+            'string.max': VALIDATION.username['string.max'],
+            'string.alphanum': VALIDATION.username['string.alphanum'],
+            'any.required': VALIDATION.username['any.required']
         }),
-        'firstname': Joi.string().min(2).max(100).regex(NAME_REGEX).messages({
-            'string.min': `First name must have at least {#limit} characters.`,
-            'string.max': `First name must have less than {#limit} characters.`,
-            'string.pattern.base': `First name can only contain Latin letters, whitespace, comma, period, apostrophe or dash.`
+        'firstname': Joi.string().min(2).max(100).regex(Validator.NAME_REGEX).messages({
+            'string.min': VALIDATION.firstname['string.min'],
+            'string.max': VALIDATION.firstname['string.max'],
+            'string.pattern.base': VALIDATION.firstname['string.pattern.base']
         }),
-        'lastname': Joi.string().min(2).max(100).regex(NAME_REGEX).messages({
-            'string.min': `Last name must have at least {#limit} characters.`,
-            'string.max': `Last name must have less than {#limit} characters.`,
-            'string.pattern.base': `Last name can only contain Latin letters, whitespace, comma, period, apostrophe or dash.`
+        'lastname': Joi.string().min(2).max(100).regex(Validator.NAME_REGEX).messages({
+            'string.min': VALIDATION.lastname['string.min'],
+            'string.max': VALIDATION.lastname['string.max'],
+            'string.pattern.base': VALIDATION.lastname['string.pattern.base']
         }),
         'email': Joi.string().email().required().messages({
-            'string.empty': `E-mail address is required.`,
-            'string.email': `E-mail address is not valid.`,
-            'any.required': `E-mail address is required.`
+            'string.empty': VALIDATION.email['string.empty'],
+            'string.email': VALIDATION.email['string.email'],
+            'any.required': VALIDATION.email['any.required']
         }),
         'password': Joi.string().min(4).max(1024).required().messages({
-            'string.empty': `Password is required.`,
-            'string.min': `Password must have at least {#limit} characters.`,
-            'string.max': `Password must have less than {#limit} characters.`,
-            'any.required': `Password is required.`
+            'string.empty': VALIDATION.password['string.empty'],
+            'string.min': VALIDATION.password['string.min'],
+            'string.max': VALIDATION.password['string.max'],
+            'any.required': VALIDATION.password['any.required']
         }),
         'isAdmin': Joi.boolean().default(false).messages({
-            'boolean.base': `isAdmin field must be a valid boolean value.`
+            'boolean.base': VALIDATION.isAdmin['boolean.base']
         }),
         // TODO: Add whitelist validation with .allow method
-        'country': Joi.string().regex(COUNTRY_REGEX).messages({
-            'string.pattern.base': `Country must be a valid country code containing 2 uppercase letters.`
+        'country': Joi.string().regex(Validator.COUNTRY_REGEX).messages({
+            'string.pattern.base': VALIDATION.country['string.pattern.base']
         })
     });
 

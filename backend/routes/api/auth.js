@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const UserDTO = require('../../DTO/UserDTO');
+const { ErrorHandler } = require('../../utils/ErrorHandler');
 
 router.post('/signup', async function(req, res, next) {
     const reqData = req.body;
@@ -19,7 +20,7 @@ router.post('/signup', async function(req, res, next) {
                 ok: true
             });
     } catch(error) {
-        next(error);
+        next(ErrorHandler.handle(error));
     }
 });
 
@@ -39,7 +40,7 @@ router.post('/login', async function(req, res, next) {
                 ok: true
             });
     } catch(error) {
-        next(error);
+        next(ErrorHandler.handle(error));
     }
 });
 
