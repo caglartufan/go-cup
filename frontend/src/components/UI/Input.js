@@ -10,6 +10,7 @@ function Input(props) {
         isValid,
         isInputValid,
         message,
+        setIsInputTouched,
         inputChangeHandler,
         inputBlurHandler,
         reset
@@ -18,6 +19,7 @@ function Input(props) {
     const {
         onIsInputValidOrMessageChange,
         onValidityChange,
+        onIsInputTouched,
         onReset
     } = props;
 
@@ -42,6 +44,12 @@ function Input(props) {
             onValidityChange(isValid);
         }
     }, [onValidityChange, isValid]);
+
+    useEffect(() => {
+        if(onIsInputTouched && typeof onIsInputTouched === 'function') {
+            onIsInputTouched(setIsInputTouched);
+        }
+    }, [onIsInputTouched, setIsInputTouched]);
 
     useEffect(() => {
         if(onReset && typeof onReset === 'function') {

@@ -29,6 +29,7 @@ function useInput(validityFn) {
         isValid,
         isInputValid,
         message,
+        setIsInputTouched,
         inputChangeHandler,
         inputBlurHandler,
         reset

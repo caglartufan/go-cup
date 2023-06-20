@@ -12,6 +12,8 @@ function LoginPage() {
     const submit = useSubmit();
     const [isLoginValid, setIsLoginValid] = useState(false);
     const [isPasswordValid, setIsPasswordValid] = useState(false);
+    var setIsLoginInputTouched = null;
+    var setIsPasswordInputTouched = null;
     var resetLoginInput = null;
     var resetPasswordInput = null;
 
@@ -25,6 +27,8 @@ function LoginPage() {
         event.preventDefault();
 
         if(!isFormValid) {
+            setIsLoginInputTouched(true);
+            setIsPasswordInputTouched(true);
             return;
         }
 
@@ -41,6 +45,14 @@ function LoginPage() {
 
     function passwordValidityChangeHandler(isValid) {
         setIsPasswordValid(isValid);
+    }
+
+    function setIsLoginInputTouchedHandler(setIsInputTouched) {
+         setIsLoginInputTouched = setIsInputTouched;
+    }
+
+    function setIsPasswordInputTouchedHandler(setIsInputTouched) {
+        setIsPasswordInputTouched = setIsInputTouched;
     }
 
     function resetLoginInputHandler(reset) {
@@ -71,17 +83,19 @@ function LoginPage() {
                         inputProps={{
                             type: "text",
                             name: "login",
+                            required: true,
                             validity: (value) => {
                                 value = value.trim();
                                 if(!value) {
                                     return [false, 'Username or e-mail address is required.']
                                 } else if(value.length < 3 || value.length > 30) {
-                                    return [false, 'Username or e-mail address must have at least 3 and at maximum 30 characters'];
+                                    return [false, 'Username or e-mail address must be a minimum of 3 characters and a maximum of 30 characters'];
                                 } else {
                                     return [true, null];
                                 }
                             },
                             onValidityChange: loginValidityChangeHandler,
+                            onIsInputTouched: setIsLoginInputTouchedHandler,
                             onReset: resetLoginInputHandler
                         }}
                     />
@@ -96,17 +110,19 @@ function LoginPage() {
                         inputProps={{
                             type: "password",
                             name: "password",
+                            required: true,
                             validity: (value) => {
                                 value = value.trim();
                                 if(!value) {
                                     return [false, 'Password is required.']
                                 } else if(value.length < 4 || value.length > 1024) {
-                                    return [false, 'Password must be at least 4 or at maximum 1024 characters long.'];
+                                    return [false, 'Password must be a minimum of 4 characters and a maximumof 1024 characters.'];
                                 } else {
                                     return [true, null];
                                 }
                             },
                             onValidityChange: passwordValidityChangeHandler,
+                            onIsInputTouched: setIsPasswordInputTouchedHandler,
                             onReset: resetPasswordInputHandler
                         }}
                     />
