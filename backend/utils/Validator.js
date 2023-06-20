@@ -21,7 +21,7 @@ class Validator {
                 'string.email': VALIDATION.email['string.email'],
                 'any.required': VALIDATION.email['any.required']
             }),
-            'password': Joi.string().min(4).max(1024).required().messages({
+            'password': Joi.string().min(4).max(100).required().messages({
                 'string.empty': VALIDATION.password['string.empty'],
                 'string.min': VALIDATION.password['string.min'],
                 'string.max': VALIDATION.password['string.max'],
@@ -50,7 +50,7 @@ class Validator {
                 'alternatives.match': VALIDATION.login['alternatives.match'],
                 'any.required': VALIDATION.login['any.required']
             }),
-            'password': Joi.string().min(4).required().max(1024).messages({
+            'password': Joi.string().min(4).max(100).required().messages({
                 'string.empty': VALIDATION.password['string.empty'],
                 'string.min': VALIDATION.password['string.min'],
                 'string.max': VALIDATION.password['string.max'],

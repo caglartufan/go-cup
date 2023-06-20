@@ -1,8 +1,13 @@
+import { useState } from 'react';
+
 import Input from './Input';
 
 import './FormGroup.scss';
 
 function FormGroup(props) {
+    const [message, setMessage] = useState(null);
+    const [isInputValid, setIsInputValid] = useState(false);
+
     let className = 'form-group';
 
     if(props.className) {
@@ -24,13 +29,20 @@ function FormGroup(props) {
         );
     }
 
+    function isInputValidOrMessageChangeHandler(changedIsInputValid, changedMessage) {
+        setIsInputValid(changedIsInputValid);
+        setMessage(changedMessage);
+    }
+
     return (
         <div className={className}>
             {labelCmp}
             <Input
                 id={props.id}
+                onIsInputValidOrMessageChange={isInputValidOrMessageChangeHandler}
                 {...props.inputProps}
             />
+            {!isInputValid && <p className="form-group__error">{message}</p>}
         </div>
     );
 }
