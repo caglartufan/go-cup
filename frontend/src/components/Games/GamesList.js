@@ -1,4 +1,4 @@
-function GamesList() {
+const GamesList = () => {
     return (
         <h1>Games List</h1>
     );

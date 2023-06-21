@@ -1,4 +1,4 @@
-function LeaderbordPage() {
+const LeaderbordPage = () => {
     return (
         <h1>Leaderbord Page!</h1>
     );

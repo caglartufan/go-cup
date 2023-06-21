@@ -3,7 +3,7 @@ import { Outlet } from 'react-router-dom';
 
 import Header from '../Header/Header';
 
-function RootLayout() {
+const RootLayout = () => {
     return (
         <Fragment>
             <Header />

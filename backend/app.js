@@ -46,6 +46,8 @@ mongoose.connect(connectionString)
 	.then(() => debug('MongoDB connection established successfully!'))
 	.catch(err => debug('Could not connect to MongoDB!', err));
 
+mongoose.connection.on('')
+
 const app = express();
 
 const services = new ServiceRegistry();

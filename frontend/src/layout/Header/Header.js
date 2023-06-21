@@ -4,7 +4,7 @@ import Navigation from '../Navigation/Navigation';
 
 import './Header.scss';
 
-function Header() {
+const Header = () => {
     return (
         <header className="header">
             <Link to="/" className="header__brand">

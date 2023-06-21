@@ -1,12 +1,20 @@
-import { useState } from 'react';
+import { useSelector } from 'react-redux';
 
 import Input from './Input';
 
 import './FormGroup.scss';
 
-function FormGroup(props) {
-    const [message, setMessage] = useState(null);
-    const [isInputValid, setIsInputValid] = useState(false);
+const FormGroup = (props) => {
+    const {
+        form: formName,
+        name: input
+    } = props.inputProps;
+    const {
+        isInputValid,
+        message
+    } = useSelector(
+        state => state[formName].inputs[input]
+    );
 
     let className = 'form-group';
 
@@ -29,17 +37,11 @@ function FormGroup(props) {
         );
     }
 
-    function isInputValidOrMessageChangeHandler(changedIsInputValid, changedMessage) {
-        setIsInputValid(changedIsInputValid);
-        setMessage(changedMessage);
-    }
-
     return (
         <div className={className}>
             {labelCmp}
             <Input
                 id={props.id}
-                onIsInputValidOrMessageChange={isInputValidOrMessageChangeHandler}
                 {...props.inputProps}
             />
             {!isInputValid && <p className="form-group__error">{message}</p>}

@@ -1,5 +1,7 @@
-import { useState } from 'react';
 import { Link, Form, useNavigate, useSubmit } from 'react-router-dom';
+import { useSelector, useDispatch } from 'react-redux';
+
+import { loginFormActions } from '../store/loginFormSlice';
 
 import FormGroup from '../components/UI/FormGroup';
 import Button from '../components/UI/Button';
@@ -7,63 +9,28 @@ import Card from '../components/UI/Card';
 
 import './Login.scss';
 
-function LoginPage() {
+const LoginPage = () => {
+    const formName = 'login-form';
+    const dispatch = useDispatch();
     const navigate = useNavigate();
     const submit = useSubmit();
-    const [isLoginValid, setIsLoginValid] = useState(false);
-    const [isPasswordValid, setIsPasswordValid] = useState(false);
-    var setIsLoginInputTouched = null;
-    var setIsPasswordInputTouched = null;
-    var resetLoginInput = null;
-    var resetPasswordInput = null;
+    const isFormValid = useSelector(state => state[formName].isFormValid);
 
-    let isFormValid = false;
-
-    if(isLoginValid && isPasswordValid) {
-        isFormValid = true;
-    }
-
-    function formSubmitHandler(event) {
+    const formSubmitHandler = (event) => {
         event.preventDefault();
 
         if(!isFormValid) {
-            setIsLoginInputTouched(true);
-            setIsPasswordInputTouched(true);
+            dispatch(loginFormActions.updateIsInputTouched({ input: 'login', isInputTouched: true }));
+            dispatch(loginFormActions.updateIsInputTouched({ input: 'password', isInputTouched: true }));
             return;
         }
 
-        console.log('submit', isFormValid);
-
-        resetLoginInput();
-        resetPasswordInput();
+        dispatch(loginFormActions.reset('login'));
+        dispatch(loginFormActions.reset('password'));
         submit(event.currentTarget);
     }
 
-    function loginValidityChangeHandler(isValid) {
-        setIsLoginValid(isValid);
-    }
-
-    function passwordValidityChangeHandler(isValid) {
-        setIsPasswordValid(isValid);
-    }
-
-    function setIsLoginInputTouchedHandler(setIsInputTouched) {
-         setIsLoginInputTouched = setIsInputTouched;
-    }
-
-    function setIsPasswordInputTouchedHandler(setIsInputTouched) {
-        setIsPasswordInputTouched = setIsInputTouched;
-    }
-
-    function resetLoginInputHandler(reset) {
-        resetLoginInput = reset;
-    }
-
-    function resetPasswordInputHandler(reset) {
-        resetPasswordInput = reset;
-    }
-
-    function switchToSignupHandler() {
+    const switchToSignupHandler = () => {
         navigate('/signup');
     }
 
@@ -81,6 +48,7 @@ function LoginPage() {
                         id="login"
                         label="User name or e-mail address"
                         inputProps={{
+                            form: formName,
                             type: "text",
                             name: "login",
                             required: true,
@@ -93,10 +61,7 @@ function LoginPage() {
                                 } else {
                                     return [true, null];
                                 }
-                            },
-                            onValidityChange: loginValidityChangeHandler,
-                            onIsInputTouched: setIsLoginInputTouchedHandler,
-                            onReset: resetLoginInputHandler
+                            }
                         }}
                     />
                     <FormGroup
@@ -108,6 +73,7 @@ function LoginPage() {
                             </Link>
                         }
                         inputProps={{
+                            form: formName,
                             type: "password",
                             name: "password",
                             required: true,
@@ -115,15 +81,12 @@ function LoginPage() {
                                 value = value.trim();
                                 if(!value) {
                                     return [false, 'Password is required.']
-                                } else if(value.length < 4 || value.length > 1024) {
-                                    return [false, 'Password must be a minimum of 4 characters and a maximumof 1024 characters.'];
+                                } else if(value.length < 4 || value.length > 100) {
+                                    return [false, 'Password must be a minimum of 4 characters and a maximumof 100 characters.'];
                                 } else {
                                     return [true, null];
                                 }
-                            },
-                            onValidityChange: passwordValidityChangeHandler,
-                            onIsInputTouched: setIsPasswordInputTouchedHandler,
-                            onReset: resetPasswordInputHandler
+                            }
                         }}
                     />
                     <div className="text-center">

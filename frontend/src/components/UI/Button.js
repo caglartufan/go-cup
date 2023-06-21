@@ -1,6 +1,6 @@
 import './Button.scss';
 
-function Button(props) {
+const Button = (props) => {
     const classes = ['button'];
 
     if(props.className) {

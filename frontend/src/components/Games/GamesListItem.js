@@ -1,4 +1,4 @@
-function GamesListItem() {
+const GamesListItem = () => {
     return (
         <div>
             Game

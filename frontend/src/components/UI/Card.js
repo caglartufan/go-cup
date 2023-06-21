@@ -1,6 +1,6 @@
 import './Card.scss';
 
-function Card(props) {
+const Card = (props) => {
     const classes = ['card'];
 
     if(props.border) {

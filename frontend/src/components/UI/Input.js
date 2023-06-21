@@ -1,27 +1,25 @@
-import { useEffect } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
 
-import useInput from '../../hooks/use-input';
+import { loginFormActions } from '../../store/loginFormSlice';
 
 import './Input.scss';
 
-function Input(props) {
+const Input = (props) => {
+    const dispatch = useDispatch();
+    const {
+        form: formName,
+        name: input,
+        validity
+    } = props;
     const {
         value,
-        isValid,
-        isInputValid,
-        message,
-        setIsInputTouched,
-        inputChangeHandler,
-        inputBlurHandler,
-        reset
-    } = useInput(props.validity);
+        isInputTouched
+    } = useSelector(state => state[formName].inputs[input]);
 
-    const {
-        onIsInputValidOrMessageChange,
-        onValidityChange,
-        onIsInputTouched,
-        onReset
-    } = props;
+    const [isValid, message] = typeof validity === 'function' ? validity(value) : [true, null];
+    const isInputValid = isValid || !isInputTouched;
+
+    dispatch(loginFormActions.updateValidityAndMessage({ input, isValid, message }));
 
     let className = 'form-control';
 
@@ -32,30 +30,15 @@ function Input(props) {
     if(props.className) {
         className = `${className} ${props.className}`;
     }
+    
+    const inputChangeHandler = (event) => {
+        const userInput = event.currentTarget.value;
+        dispatch(loginFormActions.updateValue({ input, value: userInput }));
+    };
 
-    useEffect(() => {
-        if(onIsInputValidOrMessageChange && typeof onIsInputValidOrMessageChange === 'function') {
-            onIsInputValidOrMessageChange(isInputValid, message);
-        }
-    }, [onIsInputValidOrMessageChange, isInputValid, message]);
-
-    useEffect(() => {
-        if(onValidityChange && typeof onValidityChange === 'function') {
-            onValidityChange(isValid);
-        }
-    }, [onValidityChange, isValid]);
-
-    useEffect(() => {
-        if(onIsInputTouched && typeof onIsInputTouched === 'function') {
-            onIsInputTouched(setIsInputTouched);
-        }
-    }, [onIsInputTouched, setIsInputTouched]);
-
-    useEffect(() => {
-        if(onReset && typeof onReset === 'function') {
-            onReset(reset);
-        }
-    }, [onReset, reset]);
+    const inputBlurHandler = () => {
+        dispatch(loginFormActions.updateIsInputTouched({ input, isInputTouched: true }));
+    }
 
     return (
         <input
