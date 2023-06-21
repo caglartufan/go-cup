@@ -1,14 +1,34 @@
 import './Card.scss';
 
 const Card = (props) => {
-    const classes = ['card'];
+    const {
+        color,
+        border,
+        'box-shadow': boxShadow,
+        className: customClassName,
+        ...divProps
+    } = props;
 
-    if(props.border) {
-        classes.push('card--border');
+    let className = 'card';
+
+    if(color && ['info', 'success', 'warning', 'danger'].includes(color)) {
+        className = `${className} card--${color}`;
+    }
+
+    if(boxShadow && ['light', 'medium', 'heavy'].includes(boxShadow)) {
+        className = `${className} card--shadow-${boxShadow}`;
+    }
+
+    if(border) {
+        className = `${className} card--border`;
+    }
+
+    if(customClassName) {
+        className = `${className} ${customClassName}`;
     }
 
     return (
-        <div className={classes.join(' ')}>
+        <div {...divProps} className={className}>
             {props.children}
         </div>
     );

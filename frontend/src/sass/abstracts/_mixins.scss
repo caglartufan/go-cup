@@ -1,3 +1,4 @@
+@use 'sass:map';
 @use 'variables' as *;
 
 @mixin clearfix {
@@ -10,15 +11,25 @@
 
 // Box shadow
 @mixin box-shadow($type) {
-    @if $type == 'light' {
-        box-shadow: 0 .6rem 1.2rem rgba($black, .15);
-    }
-    @if $type == 'medium' {
-        box-shadow: 0 .9rem 1.5rem rgba($black, .25);
-    }
-    @if $type == 'heavy' {
-        box-shadow: 0 1.1rem 1.7rem rgba($black, .40);
-    }
+  	box-shadow: map.get($box-shadows, $type);
+}
+
+// Add $prefix--$name SCSS definitions for each status color (danger, success etc.)
+@mixin status-modifiers {
+	@each $name, $color in $status {
+		&--#{$name} {
+			@content($color);
+		}
+	}
+}
+
+// Add $prefix--shadow-$level SCSS definitions for each $box-shadows variable
+@mixin box-shadow-modifiers {
+	@each $level, $property in $box-shadows {
+		&--shadow-#{$level} {
+			box-shadow: map.get($box-shadows, $level);
+		}
+	}
 }
 
 /// Responsive breakpoint manager
@@ -29,17 +40,17 @@
     $raw-query: map-get($breakpoints, $breakpoint);
   
     @if $raw-query {
-      $query: if(
-        type-of($raw-query) == 'string',
-        unquote($raw-query),
-        inspect($raw-query)
-      );
-  
-      @media only screen and #{$query} {
-        @content;
-      }
+		$query: if(
+			type-of($raw-query) == 'string',
+			unquote($raw-query),
+			inspect($raw-query)
+		);
+	
+		@media only screen and #{$query} {
+			@content;
+		}
     } @else {
-      @error 'No value found for `#{$breakpoint}`. '
-           + 'Please make sure it is defined in `$breakpoints` map.';
+      	@error 'No value found for `#{$breakpoint}`. '
+           	 + 'Please make sure it is defined in `$breakpoints` map.';
     }
   }

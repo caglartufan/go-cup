@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 
 import { loginFormActions } from '../../store/loginFormSlice';
@@ -9,17 +10,20 @@ const Input = (props) => {
     const {
         form: formName,
         name: input,
-        validity
+        onValidate,
+        ...inputProps
     } = props;
     const {
         value,
         isInputTouched
     } = useSelector(state => state[formName].inputs[input]);
 
-    const [isValid, message] = typeof validity === 'function' ? validity(value) : [true, null];
+    const [isValid, message] = typeof onValidate === 'function' ? onValidate(value) : [true, null];
     const isInputValid = isValid || !isInputTouched;
 
-    dispatch(loginFormActions.updateValidityAndMessage({ input, isValid, message }));
+    useEffect(() => {
+        dispatch(loginFormActions.updateValidityAndMessage({ input, isValid, message }));
+    }, [dispatch,  input, isValid, message]);
 
     let className = 'form-control';
 
@@ -42,7 +46,8 @@ const Input = (props) => {
 
     return (
         <input
-            {...props}
+            name={input}
+            {...inputProps}
             className={className}
             value={value}
             onChange={inputChangeHandler}

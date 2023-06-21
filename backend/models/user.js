@@ -66,7 +66,7 @@ userSchema.methods.generateAuthToken = function() {
         },
         config.get('jwt.privateKey'),
         {
-            expiresIn: '1d'
+            expiresIn: '1h'
         }
     );
 

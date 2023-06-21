@@ -12,9 +12,7 @@ const FormGroup = (props) => {
     const {
         isInputValid,
         message
-    } = useSelector(
-        state => state[formName].inputs[input]
-    );
+    } = useSelector(state => state[formName].inputs[input]);
 
     let className = 'form-group';
 

@@ -5,7 +5,7 @@ import { store } from './store/store';
 
 import RootLayout from './layout/Root/Root';
 import HomePage from './pages/Home';
-import LoginPage from './pages/Login';
+import LoginPage, { action as loginAction } from './pages/Login';
 import SignupPage from './pages/Signup';
 import LeaderbordPage from './pages/Leaderboard';
 import GamesPage from './pages/Games';
@@ -39,7 +39,8 @@ const router = createBrowserRouter([
 			},
 			{
 				path: 'login',
-				element: <LoginPage />
+				element: <LoginPage />,
+				action: loginAction
 			},
 			{
 				path: 'signup',

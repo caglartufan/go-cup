@@ -1,11 +1,14 @@
-import { Link, Form, useNavigate, useSubmit } from 'react-router-dom';
+import { Link, Form, useNavigate, useSubmit, useActionData, useNavigation, redirect } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 
 import { loginFormActions } from '../store/loginFormSlice';
 
+import { setAuthToken } from '../utils/auth';
+
 import FormGroup from '../components/UI/FormGroup';
 import Button from '../components/UI/Button';
 import Card from '../components/UI/Card';
+import Alert from '../components/UI/Alert';
 
 import './Login.scss';
 
@@ -13,7 +16,12 @@ const LoginPage = () => {
     const formName = 'login-form';
     const dispatch = useDispatch();
     const navigate = useNavigate();
+    const navigation = useNavigation();
     const submit = useSubmit();
+
+    const actionData = useActionData();
+    const isSubmitting = navigation.state === 'submitting';
+
     const isFormValid = useSelector(state => state[formName].isFormValid);
 
     const formSubmitHandler = (event) => {
@@ -25,13 +33,21 @@ const LoginPage = () => {
             return;
         }
 
-        dispatch(loginFormActions.reset('login'));
-        dispatch(loginFormActions.reset('password'));
         submit(event.currentTarget);
     }
 
     const switchToSignupHandler = () => {
         navigate('/signup');
+    }
+
+    let alertCmp = null;
+
+    if(!isSubmitting && actionData) {
+        alertCmp = (
+            <Alert color={actionData.ok ? 'success' : 'danger'}>
+                {actionData.ok ? 'Logged in successfully!' : actionData.message}
+            </Alert>
+        );
     }
 
     return (
@@ -42,8 +58,9 @@ const LoginPage = () => {
             <p className="login__description">
                 Log in to your Go Cup account
             </p>
-            <Card border>
-                <Form onSubmit={formSubmitHandler}>
+            <Card box-shadow="heavy" border>
+                {alertCmp}
+                <Form method='post' onSubmit={formSubmitHandler}>
                     <FormGroup
                         id="login"
                         label="User name or e-mail address"
@@ -52,7 +69,7 @@ const LoginPage = () => {
                             type: "text",
                             name: "login",
                             required: true,
-                            validity: (value) => {
+                            onValidate: (value) => {
                                 value = value.trim();
                                 if(!value) {
                                     return [false, 'Username or e-mail address is required.']
@@ -77,7 +94,7 @@ const LoginPage = () => {
                             type: "password",
                             name: "password",
                             required: true,
-                            validity: (value) => {
+                            onValidate: (value) => {
                                 value = value.trim();
                                 if(!value) {
                                     return [false, 'Password is required.']
@@ -90,8 +107,8 @@ const LoginPage = () => {
                         }}
                     />
                     <div className="text-center">
-                        <Button className="w-100" type="submit">
-                            Log in
+                        <Button className="w-100" type="submit" disabled={isSubmitting}>
+                            {isSubmitting ? 'Logging in...' : 'Log in'}
                         </Button>
                         <span className="login__or">
                             or
@@ -104,6 +121,45 @@ const LoginPage = () => {
             </Card>
         </div>
     );
+}
+
+export const action = async ({ request }) => {
+    const formData = await request.formData();
+
+    const loginData = {
+        login: formData.get('login'),
+        password: formData.get('password')
+    };
+
+    try {
+        const response = await fetch('http://localhost:3000/api/login', {
+            method: request.method,
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(loginData)
+        });
+        
+        const resData = await response.json();
+
+        if(!response.ok) {
+            if(resData && resData.message) {
+                return resData;
+            } else {
+                return { message: 'Could not log in!' };
+            }
+        }
+
+        const authHeader = response.headers.get('Authorization');
+        const token = authHeader.split(' ')[1];
+
+        setAuthToken(token);
+
+        return redirect('/');
+    } catch(error) {
+        // In case fails to fetch
+        return error;
+    }
 }
 
 export default LoginPage;

@@ -8,5 +8,11 @@
     font-weight: 500;
     border: none;
     border-radius: 3px;
+    transition: all .3s ease;
     cursor: pointer;
+
+    &:disabled {
+        background-color: $primary;
+        cursor: not-allowed;
+    }
 }

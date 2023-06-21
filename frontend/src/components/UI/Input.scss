@@ -1,3 +1,4 @@
+@use 'sass:map';
 @use '../../sass/abstracts/variables' as *;
 
 .form-control {
@@ -8,7 +9,7 @@
     transition: all .3s ease-out;
 
     &--invalid {
-        border-color: $danger;
-        outline-color: $danger;
+        border-color: map.get($status, 'danger');
+        outline-color: map.get($status, 'danger');
     }
 }

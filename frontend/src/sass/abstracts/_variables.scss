@@ -11,16 +11,25 @@ $tertiary-dark: darken($tertiary, 10%);
 
 $overlay: #F4EEFF;
 
-$success: #28a745;
-$danger: #dc3545;
-$warning: #ffc107;
-$info: #17a2b8;
+$status: (
+    success: #28a745,
+    danger: #dc3545,
+    warning: #ffc107,
+    info: #17a2b8,
+);
 
 $black: #000;
 $white: #fff;
 
 // FONT
 $default-font-size: 1.6rem;
+
+// BOX-SHADOWS
+$box-shadows: (
+    light: 0 .6rem 1.2rem rgba($black, .15),
+    medium: 0 .9rem 1.5rem rgba($black, .25),
+    heavy: 0 1.1rem 1.7rem rgba($black, .40)
+);
 
 // GRID
 $grid-width: 120rem;

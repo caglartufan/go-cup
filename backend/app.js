@@ -2,9 +2,11 @@ const express = require('express');
 const path = require('path');
 const cookieParser = require('cookie-parser');
 const logger = require('morgan');
+const cors = require('cors');
 const config = require('config');
 const mongoose = require('mongoose');
 const debug = require('debug')('go-cup:app');
+
 const ServiceRegistry = require('./utils/ServiceRegistry');
 const { NotFoundError } = require('./utils/ErrorHandler');
 
@@ -46,8 +48,6 @@ mongoose.connect(connectionString)
 	.then(() => debug('MongoDB connection established successfully!'))
 	.catch(err => debug('Could not connect to MongoDB!', err));
 
-mongoose.connection.on('')
-
 const app = express();
 
 const services = new ServiceRegistry();
@@ -57,6 +57,11 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(cors({
+	allowedHeaders: ['Content-Type', 'Authorization'],
+	exposedHeaders: ['Content-Type', 'Authorization'],
+	credentials: true
+}));
 
 // Web routes
 app.use('/', indexRouter);

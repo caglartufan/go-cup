@@ -1,17 +1,16 @@
 import './Button.scss';
 
 const Button = (props) => {
-    const classes = ['button'];
+    let className = 'button';
 
     if(props.className) {
-        classes.push(props.className);
+        className = `${className} ${props.className}`;
     }
 
     return (
         <button
-            type={props.type || 'button'}
-            className={classes.join(' ')}
-            onClick={props.onClick}
+            {...props}
+            className={className}
         >
             {props.children}
         </button>
