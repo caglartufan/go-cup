@@ -2,6 +2,8 @@ import { Link, Form, useNavigate, useSubmit, useActionData, useNavigation, redir
 import { useSelector, useDispatch } from 'react-redux';
 
 import { loginFormActions } from '../store/loginFormSlice';
+import { userActions } from '../store/userSlice';
+import { store } from '../store/store';
 
 import { setAuthToken } from '../utils/auth';
 
@@ -150,10 +152,19 @@ export const action = async ({ request }) => {
             }
         }
 
+        const user = resData.user;
+
         const authHeader = response.headers.get('Authorization');
         const token = authHeader.split(' ')[1];
 
         setAuthToken(token);
+
+        // Clean login form
+        store.dispatch(loginFormActions.reset('login'));
+        store.dispatch(loginFormActions.reset('password'));
+
+        // Update user state
+        store.dispatch(userActions.update(user));
 
         return redirect('/');
     } catch(error) {

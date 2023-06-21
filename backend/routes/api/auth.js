@@ -1,23 +1,27 @@
 const express = require('express');
 const router = express.Router();
+const _ = require('lodash');
 const UserDTO = require('../../DTO/UserDTO');
 const { ErrorHandler } = require('../../utils/ErrorHandler');
 
 router.post('/signup', async function(req, res, next) {
     const reqData = req.body;
 
-    const userDTO = UserDTO.withRequestData(reqData);
+    let userDTO = UserDTO.withRequestData(reqData);
 
     try {
         const user = await req.services.userService.signupUser(userDTO);
 
         const token = user.generateAuthToken();
+
+        userDTO = UserDTO.withUserObject(user);
         
         return res
             .status(201)
             .header('Authorization', 'Bearer ' + token)
             .json({
-                ok: true
+                ok: true,
+                user: userDTO.toObject()
             });
     } catch(error) {
         next(ErrorHandler.handle(error));
@@ -27,17 +31,20 @@ router.post('/signup', async function(req, res, next) {
 router.post('/login', async function(req, res, next) {
     const reqData = req.body;
 
-    const userDTO = UserDTO.withRequestData(reqData);
+    let userDTO = UserDTO.withRequestData(reqData);
 
     try {
         const user = await req.services.userService.loginUser(userDTO);
 
         const token = user.generateAuthToken();
 
+        userDTO = UserDTO.withUserObject(user);
+
         return res
             .header('Authorization', 'Bearer ' + token)
             .json({
-                ok: true
+                ok: true,
+                user: userDTO.toObject()
             });
     } catch(error) {
         next(ErrorHandler.handle(error));

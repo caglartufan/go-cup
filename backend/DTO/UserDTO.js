@@ -1,26 +1,68 @@
 class UserDTO {
     #login = '';
     #username = '';
+    #firstname = '';
+    #lastname = '';
     #email = '';
     #password = '';
     #passwordConfirmation = '';
+    #country = '';
+    #createdAt = null;
+    #updatedAt = null;
 
-    constructor(login, username, email, password, passwordConfirmation) {
+    constructor(login, username, firstname, lastname, email, password, passwordConfirmation, country, createdAt, updatedAt) {
         this.#login = login;
         this.#username = username;
+        this.#firstname = firstname;
+        this.#lastname = lastname;
         this.#email = email;
         this.#password = password;
         this.#passwordConfirmation = passwordConfirmation;
+        this.#country = country;
+        this.#createdAt = createdAt;
+        this.#updatedAt = updatedAt;
     }
 
     static withRequestData(requestData) {
         return new UserDTO(
             requestData['login'],
             requestData['username'],
+            requestData['firstname'],
+            requestData['lastname'],
             requestData['email'],
             requestData['password'],
-            requestData['password-confirmation']
+            requestData['password-confirmation'],
+            requestData['country']
         )
+    }
+
+    static withUserObject(user) {
+        return new UserDTO(
+            undefined,
+            user.username,
+            user.firstname,
+            user.lastname,
+            user.email,
+            undefined,
+            undefined,
+            user.country,
+            user.createdAt,
+            user.updatedAt
+        );
+    }
+
+    toObject() {
+        return {
+            login: this.#login,
+            username: this.#username,
+            firstname: this.#firstname,
+            lastname: this.#lastname,
+            email: this.#email,
+            password: this.#password,
+            passwordConfirmation: this.#passwordConfirmation,
+            createdAt: this.#createdAt,
+            updatedAt: this.#updatedAt
+        };
     }
 
     get login() {
@@ -37,6 +79,22 @@ class UserDTO {
 
     set username(value) {
         this.#username = value;
+    }
+
+    get firstname() {
+        return this.#firstname;
+    }
+
+    set firstname(value) {
+        this.#firstname = value;
+    }
+
+    get lastname() {
+        return this.#lastname;
+    }
+
+    set lastname(value) {
+        this.#lastname = value;
     }
 
     get email() {
@@ -61,6 +119,22 @@ class UserDTO {
 
     set passwordConfirmation(value) {
         this.#passwordConfirmation = value;
+    }
+
+    get country() {
+        return this.#country;
+    }
+
+    set country(value) {
+        this.#country = value;
+    }
+
+    get createdAt() {
+        return this.#createdAt;
+    }
+
+    get updatedAt() {
+        return this.#updatedAt;
     }
 }
 
