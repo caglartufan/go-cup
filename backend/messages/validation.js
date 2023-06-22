@@ -11,6 +11,9 @@ const VALIDATION = {
         'string.pattern.base': 'User name must contain minimum 3 and maximum 30 alphanumeric characters.',
         'any.required': 'Username is required.'
     },
+    'avatar': {
+        'string.pattern.base': 'Avatar must be valid path pointing to JPG, JPEG or PNG file.'
+    },
     'firstname': {
         'string.min': 'First name must have at least {#limit} characters.',
         'string.max': 'First name must have less than {#limit} characters.',

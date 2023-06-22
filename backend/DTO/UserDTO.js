@@ -1,6 +1,7 @@
 class UserDTO {
     #login = '';
     #username = '';
+    #avatar = '';
     #firstname = '';
     #lastname = '';
     #email = '';
@@ -10,9 +11,10 @@ class UserDTO {
     #createdAt = null;
     #updatedAt = null;
 
-    constructor(login, username, firstname, lastname, email, password, passwordConfirmation, country, createdAt, updatedAt) {
+    constructor(login, username, avatar, firstname, lastname, email, password, passwordConfirmation, country, createdAt, updatedAt) {
         this.#login = login;
         this.#username = username;
+        this.#avatar = avatar;
         this.#firstname = firstname;
         this.#lastname = lastname;
         this.#email = email;
@@ -27,6 +29,7 @@ class UserDTO {
         return new UserDTO(
             requestData['login'],
             requestData['username'],
+            requestData['avatar'],
             requestData['firstname'],
             requestData['lastname'],
             requestData['email'],
@@ -40,6 +43,7 @@ class UserDTO {
         return new UserDTO(
             undefined,
             user.username,
+            user.avatar,
             user.firstname,
             user.lastname,
             user.email,
@@ -55,6 +59,7 @@ class UserDTO {
         return {
             login: this.#login,
             username: this.#username,
+            avatar: this.#avatar,
             firstname: this.#firstname,
             lastname: this.#lastname,
             email: this.#email,
@@ -79,6 +84,14 @@ class UserDTO {
 
     set username(value) {
         this.#username = value;
+    }
+
+    get avatar() {
+        return this.#avatar;
+    }
+
+    set avatar(value) {
+        this.#avatar = value;
     }
 
     get firstname() {

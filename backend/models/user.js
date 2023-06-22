@@ -14,6 +14,10 @@ const userSchema = new mongoose.Schema({
         match: [Validator.USERNAME_REGEX, VALIDATION.username['string.pattern.base']],
         unique: true,
     },
+    avatar: {
+        type: String,
+        match: [Validator.AVATAR_REGEX, VALIDATION.avatar['string.pattern.base']]
+    },
     firstname: {
         type: String,
         minlength: [2, VALIDATION.firstname['string.min'].replace('{#limit}', '{MINLENGTH}')],
@@ -81,6 +85,9 @@ function validateUser(user) {
             'string.max': VALIDATION.username['string.max'],
             'string.alphanum': VALIDATION.username['string.alphanum'],
             'any.required': VALIDATION.username['any.required']
+        }),
+        'avatar': Joi.string().regex(Validator.AVATAR_REGEX).messages({
+            'string.pattern.base': VALIDATION.avatar['string.pattern.base']
         }),
         'firstname': Joi.string().min(2).max(100).regex(Validator.NAME_REGEX).messages({
             'string.min': VALIDATION.firstname['string.min'],
