@@ -3,6 +3,7 @@ import { createSlice } from '@reduxjs/toolkit';
 const initialUserState = {
     _id: null,
     username: null,
+    avatar: null,
     firstname: null,
     lastname: null,
     email: null,
@@ -17,6 +18,9 @@ const userSlice = createSlice({
         update: (state, action) => {
             if(action.payload.username) {
                 state.username = action.payload.username;
+            }
+            if(action.payload.username) {
+                state.avatar = action.payload.avatar;
             }
             if(action.payload.firstname) {
                 state.firstname = action.payload.firstname;

@@ -1,5 +1,5 @@
-import { UseSelector, useSelector } from 'react-redux/es/hooks/useSelector';
-import { NavLink } from 'react-router-dom';
+import { useSelector } from 'react-redux/es/hooks/useSelector';
+import { Link, NavLink } from 'react-router-dom';
 
 import './Navigation.scss';
 
@@ -77,32 +77,19 @@ const Navigation = () => {
                 </ul>
             )}
             {isUserAuthenticated && (
-                <ul className="navigation__list">
-                    <li className="navigation__list-item">
-                        <NavLink
-                            to="profile"
-                            className={
-                                ({ isActive }) => isActive
-                                    ? 'navigation__list-item-link navigation__list-item-link--active'
-                                    : 'navigation__list-item-link'
-                            }
-                        >
+                <div>
+                    <div>
+                        <img src={`http://localhost:3000${user.avatar}`} alt={user.username} />
+                    </div>
+                    <div>
+                        <Link to="/profile">
                             {user.username}
-                        </NavLink>
-                    </li>
-                    <li className="navigation__list-item">
-                        <NavLink
-                            to="logout"
-                            className={
-                                ({ isActive }) => isActive
-                                    ? 'navigation__list-item-link navigation__list-item-link--active'
-                                    : 'navigation__list-item-link'
-                            }
-                        >
-                            Log out
-                        </NavLink>
-                    </li>
-                </ul>
+                        </Link>
+                        <button>
+                            Settings
+                        </button>
+                    </div>
+                </div>
             )}
         </nav>
     );

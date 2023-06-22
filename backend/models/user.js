@@ -16,7 +16,8 @@ const userSchema = new mongoose.Schema({
     },
     avatar: {
         type: String,
-        match: [Validator.AVATAR_REGEX, VALIDATION.avatar['string.pattern.base']]
+        match: [Validator.AVATAR_REGEX, VALIDATION.avatar['string.pattern.base']],
+        default: '/images/avatar_placeholder.png'
     },
     firstname: {
         type: String,
