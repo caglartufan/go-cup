@@ -1,6 +1,5 @@
 const express = require('express');
 const router = express.Router();
-const _ = require('lodash');
 const UserDTO = require('../../DTO/UserDTO');
 const { ErrorHandler } = require('../../utils/ErrorHandler');
 

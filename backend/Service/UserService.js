@@ -58,6 +58,10 @@ class UserService {
 
         return loginUser;
     }
+
+    getProfile() {
+        
+    }
 }
 
 module.exports = UserService;

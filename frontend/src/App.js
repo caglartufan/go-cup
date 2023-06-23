@@ -1,6 +1,6 @@
 import { Provider } from 'react-redux';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
-import { logoutAction } from './utils/auth';
+import { authLoader, logoutAction } from './utils/auth';
 
 import { store } from './store/store';
 
@@ -17,6 +17,7 @@ const router = createBrowserRouter([
 	{
 		path: '/',
 		element: <RootLayout />,
+		loader: authLoader,
 		children: [
 			{
 				index: true,

@@ -1,12 +1,26 @@
 import { redirect } from 'react-router-dom';
+import jwtDecode from 'jwt-decode';
 import { store } from '../store/store';
 import { userActions } from '../store/userSlice';
 
 export const AUTH_TOKEN_KEY = 'auth-token';
 
+export const getAuthTokenDuration = () => {
+    const token = getAuthToken();
+
+    if(token) {
+        const { exp: expirationSeconds } = jwtDecode(token);
+        const expirationTimestamp = expirationSeconds*1000;
+
+        return expirationTimestamp - Date.now();
+    } else {
+        return 0;
+    }
+};
+
 export const setAuthToken = token => {
     localStorage.setItem(AUTH_TOKEN_KEY, token);
-}
+};
 
 export const getAuthToken = () => {
     const token = localStorage.getItem(AUTH_TOKEN_KEY);
@@ -22,9 +36,46 @@ export const deleteAuthToken = () => {
     localStorage.removeItem(AUTH_TOKEN_KEY);
 };
 
-export const authLoader = () => {
-    return getAuthToken();
-}
+export const authLoader = async () => {
+    const token = getAuthToken();
+    const duration = getAuthTokenDuration();
+    
+    if(duration <= 0) {
+        deleteAuthToken();
+        return null;
+    }
+
+    const { user: storedUser } = store.getState();
+    if(storedUser.username && storedUser.email) {
+        return null;
+    }
+
+    const response = await fetch('http://localhost:3000/api/users/me', {
+        headers: {
+            'Authorization': 'Bearer ' + token
+        }
+    });
+
+    const resData = await response.json();
+
+    if(!response.ok) {
+        if(resData && resData.message) {
+            return resData;
+        } else {
+            return { message: 'Could not fetch profile data!' };
+        }
+    }
+
+    const user = resData.user;
+
+    if(!user) {
+        return { mesesage: 'Could not fetch profile data!' };
+    }
+
+    store.dispatch(userActions.update(user));
+
+    return null;
+};
 
 export const logoutAction = () => {
     store.dispatch(userActions.logout());

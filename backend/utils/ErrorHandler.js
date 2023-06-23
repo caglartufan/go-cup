@@ -1,7 +1,8 @@
 const mongoose = require('mongoose');
+const jwt = require('jsonwebtoken');
+const debug = require('debug')('go-cup:error-handler');
 const ERRORS = require('../messages/errors');
 const Validator = require('../utils/Validator');
-const debug = require('debug')('go-cup:error-handler');
 
 class HTTPError extends Error {
     constructor(message, status) {
@@ -51,6 +52,20 @@ class InvalidUserCredentialsError extends HTTPError {
     }
 }
 
+class InvalidJWTError extends HTTPError {
+    constructor() {
+        super(ERRORS.INVALID_JWT, 401);
+        this.name = 'InvalidJWTError';
+    }
+}
+
+class ExpiredJWTError extends HTTPError {
+    constructor() {
+        super(ERRORS.EXPIRED_JWT, 401);
+        this.name = 'ExpiredJWTError';
+    }
+}
+
 class InternalServerError extends HTTPError {
     constructor(message) {
         super(message, 500);
@@ -62,6 +77,14 @@ class NotFoundError extends HTTPError {
     constructor() {
         super(ERRORS.NOT_FOUND, 404);
         this.name = 'NotFoundError';
+    }
+}
+
+class UserNotFoundError extends NotFoundError {
+    constructor() {
+        super();
+        this.message = ERRORS.USER_NOT_FOUND;
+        this.name = 'UserNotFoundError';
     }
 }
 
@@ -81,6 +104,10 @@ class ErrorHandler {
     static handle(error) {
         if(error instanceof mongoose.Error.ValidationError) {
             return UserValidationError.fromMongooseError(error);
+        } else if(error instanceof jwt.TokenExpiredError) {
+            return new ExpiredJWTError();
+        } else if(error instanceof jwt.JsonWebTokenError) {
+            return new InvalidJWTError();
         } else {
             debug(error);
             if(error instanceof HTTPError || error instanceof InvalidDTOError) {
@@ -96,8 +123,11 @@ module.exports = {
     HTTPError,
     UserValidationError,
     InvalidUserCredentialsError,
+    InvalidJWTError,
+    ExpiredJWTError,
     InternalServerError,
     NotFoundError,
+    UserNotFoundError,
     InvalidDTOError,
     ErrorHandler
 };

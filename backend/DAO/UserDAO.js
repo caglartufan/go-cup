@@ -2,6 +2,12 @@ const bcrypt = require('bcrypt');
 const { User } = require('../models/User');
 
 class UserDAO {
+    static async findByUsername(username) {
+        return await User.findOne({
+            username
+        });
+    }
+
     static async findAlreadyExistingUser(username, email) {
         return await User.findOne({
             $or: [
