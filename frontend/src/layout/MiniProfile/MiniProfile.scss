@@ -1,0 +1,71 @@
+@use '../../sass/abstracts/variables' as *;
+@use '../../sass/abstracts/mixins' as *;
+
+.mini-profile {
+    display: flex;
+    align-items: center;
+    height: 100%;
+    position: relative;
+
+    &__avatar-link {
+        display: block;
+        margin-right: 1rem;
+    }
+
+    &__avatar-image {
+        aspect-ratio: 1;
+        height: 3.5rem;
+        border-radius: 50%;
+        border: 1px solid $primary-dark;
+    }
+
+    &__links {
+        display: flex;
+        flex-direction: column;
+    }
+
+    &__link {
+        font-size: 1.5rem;
+
+        &--settings {
+            font-size: 1.3rem;
+        }
+    }
+
+    &__dropdown {
+        display: block;
+        position: absolute;
+        top: 100%;
+        right: 0;
+        padding: 1rem 2rem;
+        min-width: 10rem;
+        background-color: $overlay;
+        @include box-shadow('medium');
+
+        &-list {
+            display: flex;
+            flex-direction: column;
+
+            &-item {
+                margin-bottom: .5rem;
+
+                &:last-child {
+                    margin-bottom: 0;
+                }
+            }
+
+            &-link {
+                font-size: 1.5rem;
+            }
+        }
+
+        &-separator {
+            display: block;
+            height: 1px;
+            width: 100%;
+            background-color: $primary;
+            margin: 1rem auto;
+            border: none;
+        }
+    }
+}

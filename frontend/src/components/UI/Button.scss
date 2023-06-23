@@ -2,10 +2,10 @@
 
 .button {
     font-size: 1.3rem;
+    font-weight: 500;
+    color: $white;
     padding: .75rem 2rem;
     background-color: $primary-dark;
-    color: $white;
-    font-weight: 500;
     border: none;
     border-radius: 3px;
     transition: all .3s ease;
@@ -14,5 +14,18 @@
     &:disabled {
         background-color: $primary;
         cursor: not-allowed;
+    }
+
+    &--link {
+        font-size: 1.5rem;
+        font-weight: initial;
+        color: $primary;
+        padding: 0;
+        background-color: transparent;
+
+        &:hover,
+        &:active {
+            color: $primary-dark;
+        }
     }
 }

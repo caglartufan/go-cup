@@ -1,20 +1,32 @@
+import { forwardRef } from 'react';
+
 import './Button.scss';
 
-const Button = (props) => {
+const Button = forwardRef((props, ref) => {
+    const {
+        className: customClassName,
+        link,
+        ...buttonProps
+    } = props;
     let className = 'button';
 
-    if(props.className) {
-        className = `${className} ${props.className}`;
+    if(customClassName) {
+        className = `${className} ${customClassName}`;
+    }
+
+    if(props.link) {
+        className = `${className} button--link`;
     }
 
     return (
         <button
-            {...props}
+            ref={ref}
+            {...buttonProps}
             className={className}
         >
             {props.children}
         </button>
     );
-}
+});
 
 export default Button;

@@ -1,5 +1,6 @@
 import { Provider } from 'react-redux';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import { logoutAction } from './utils/auth';
 
 import { store } from './store/store';
 
@@ -10,6 +11,7 @@ import SignupPage from './pages/Signup';
 import LeaderbordPage from './pages/Leaderboard';
 import GamesPage from './pages/Games';
 import GameDetailPage from './pages/GameDetail';
+import ProfilePage from './pages/Profile';
 
 const router = createBrowserRouter([
 	{
@@ -45,6 +47,14 @@ const router = createBrowserRouter([
 			{
 				path: 'signup',
 				element: <SignupPage />
+			},
+			{
+				path: 'profile',
+				element: <ProfilePage />
+			},
+			{
+				path: 'logout',
+				action: logoutAction
 			}
 		]
 	}

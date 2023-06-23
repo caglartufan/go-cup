@@ -1,11 +1,11 @@
 import { useSelector } from 'react-redux/es/hooks/useSelector';
-import { Link, NavLink } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 
 import './Navigation.scss';
+import MiniProfile from '../MiniProfile/MiniProfile';
 
 const Navigation = () => {
-    const user = useSelector(state => state.user);
-    const isUserAuthenticated = user.username && user.email;
+    const isUserAuthenticated = useSelector(state => state.user.username && state.user.email);
 
     return (
         <nav className="navigation">
@@ -76,21 +76,7 @@ const Navigation = () => {
                     </li>
                 </ul>
             )}
-            {isUserAuthenticated && (
-                <div>
-                    <div>
-                        <img src={`http://localhost:3000${user.avatar}`} alt={user.username} />
-                    </div>
-                    <div>
-                        <Link to="/profile">
-                            {user.username}
-                        </Link>
-                        <button>
-                            Settings
-                        </button>
-                    </div>
-                </div>
-            )}
+            {isUserAuthenticated && <MiniProfile />}
         </nav>
     );
 }

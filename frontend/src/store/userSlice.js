@@ -37,6 +37,9 @@ const userSlice = createSlice({
             if(action.payload.createdAt) {
                 state.createdAt = action.payload.createdAt;
             }
+        },
+        logout: (state) => {
+            return initialUserState;
         }
     }
 });
