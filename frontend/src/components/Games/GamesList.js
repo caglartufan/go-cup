@@ -1,6 +1,14 @@
+import Container from "../../layout/Grid/Container";
+
+const dummyGames = [
+
+];
+
 const GamesList = () => {
     return (
-        <h1>Games List</h1>
+        <Container>
+            Hey!
+        </Container>
     );
 }
 

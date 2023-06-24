@@ -1,0 +1,22 @@
+@use 'sass:map';
+@use '../../sass/abstracts/variables' as *;
+@use '../../sass/abstracts/mixins' as *;
+
+.container {
+    margin-right: auto;
+    margin-left: auto;
+    background-color: red;
+
+    @include respond-to(large) {
+        max-width: map.get($container-max-widths, lg);
+    }
+    @include respond-to(medium) {
+        max-width: map.get($container-max-widths, md);
+    }
+    @include respond-to(small) {
+        max-width: map.get($container-max-widths, sm);
+    }
+    @include respond-to(huge) {
+        max-width: map.get($container-max-widths, hg);
+    }
+}

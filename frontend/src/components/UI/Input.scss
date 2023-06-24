@@ -9,7 +9,7 @@
     transition: all .3s ease-out;
 
     &--invalid {
-        border-color: map.get($status, 'danger');
-        outline-color: map.get($status, 'danger');
+        border-color: map.get($status, danger);
+        outline-color: map.get($status, danger);
     }
 }

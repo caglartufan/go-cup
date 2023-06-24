@@ -32,11 +32,22 @@ $box-shadows: (
 );
 
 // GRID
-$grid-width: 120rem;
-$gutter-vertical: 8rem;
-$gutter-vertical-medium: 4.5rem;
-$gutter-horizontal: 2.5rem;
-$gutter-horizontal-medium: 1.8rem;
+$container-max-widths: (
+    sm: 33.75em, // 540px
+    md: 52.5em, // 840px
+    lg: 71.25em, // 1140px
+    hg: 100em, // 1600px
+);
+$gutter-vertical: (
+    small: 2rem,
+    medium: 4.5rem,
+    large: 8rem
+);
+$gutter-horizontal: (
+    small: 1rem,
+    medium: 1.8rem,
+    large: 2.5rem
+);
 
 // LAYOUT
 $section-gutter-vertical: 2.5rem;
@@ -44,8 +55,8 @@ $section-gutter-vertical: 2.5rem;
 // BREAKPOINTS
 // 1em=16px
 $breakpoints: (
-    'small': (max-width: 37.5em),   // 600px
-    'medium': (max-width: 56.25em), // 900px
-    'large': (max-width: 75em),     // 1200px
-    'huge': (min-width: 112.5em),   // 1800px
+    small: (max-width: 37.5em),   // 600px
+    medium: (max-width: 56.25em), // 900px
+    large: (max-width: 75em),     // 1200px
+    huge: (min-width: 112.5em)   // 1800px
 );
