@@ -147,11 +147,11 @@ export const action = async ({ request }) => {
         const resData = await response.json();
 
         if(!response.ok) {
-            if(resData && resData.message) {
-                return resData;
-            } else {
+            if(!resData?.message) {
                 return { message: 'Could not log in!' };
             }
+            
+            return resData;
         }
 
         const user = resData.user;
@@ -162,8 +162,7 @@ export const action = async ({ request }) => {
         setAuthToken(token);
 
         // Clean login form
-        store.dispatch(loginFormActions.reset('login'));
-        store.dispatch(loginFormActions.reset('password'));
+        store.dispatch(loginFormActions.reset());
 
         // Update user state
         store.dispatch(userActions.update(user));

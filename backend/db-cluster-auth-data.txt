@@ -1,2 +1,3 @@
 Username: n3pixowe
 Password: kVBq7zL2u1ioicTY
+go-cup-token: sqp_5f2a7e82dc309f9b99f59b1098d77598917c01ed

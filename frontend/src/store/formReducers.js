@@ -34,10 +34,22 @@ export const formReducers = initialFormState => ({
         // Update given input's isInputValid state with updated isInputTouched state
         state.inputs[input].isInputValid = state.inputs[input].isValid || !isInputTouched;
     },
-    reset: (state, action) => {
+    addAlreadyInUseValue: (state, action) => {
+        const input = action.payload.input;
+        const value = state.inputs[input].value;
+
+        // Push current value of the input into already in use values array
+        if(!state.inputs[input].alreadyInUseValues.includes(value)) {
+            state.inputs[input].alreadyInUseValues.push(value);
+        }
+    },
+    resetInput: (state, action) => {
         const input = action.payload;
 
         // Reset given input to it's initial state
         state.inputs[input] = initialFormState.inputs[input];
+    },
+    reset: (state) => {
+        return initialFormState;
     }
 });

@@ -29,7 +29,7 @@ class UserDAO {
                 { username: login },
                 { email: login }
             ]
-        }).select('-_id username email');
+        });
     }
 
     static async createUser(user) {

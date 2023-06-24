@@ -10,7 +10,7 @@
     @include status-modifiers using ($color) {
         background-color: $color;
         color: $white;
-    };
+    }
     
     @include box-shadow-modifiers;
     

@@ -21,7 +21,20 @@ const SignupPage = () => {
     const actionData = useActionData();
     const isSubmitting = navigation.state === 'submitting';
 
+    // const [
+    //     isFormValid,
+    //     alreadyInUseUsernames,
+    //     alreadyInUseEmails,
+    //     passwordValue
+    // ] = useSelector(state => ([
+    //     state[formName].isFormValid,
+    //     state[formName].inputs.username.alreadyInUseValues,
+    //     state[formName].inputs.email.alreadyInUseValues,
+    //     state[formName].inputs.password.value
+    // ]));
     const isFormValid = useSelector(state => state[formName].isFormValid);
+    const alreadyInUseUsernames = useSelector(state => state[formName].inputs.username.alreadyInUseValues);
+    const alreadyInUseEmails = useSelector(state => state[formName].inputs.email.alreadyInUseValues);
     const passwordValue = useSelector(state => state[formName].inputs.password.value);
 
     const formSubmitHandler = (event) => {
@@ -78,6 +91,8 @@ const SignupPage = () => {
                                     return [false, 'User name is required.']
                                 } else if(value.length < 3 || value.length > 30) {
                                     return [false, 'User name must be a minimum of 3 characters and a maximum of 30 characters'];
+                                } else if(alreadyInUseUsernames.includes(value)) {
+                                    return [false, 'User name is already in use.'];
                                 } else {
                                     return [true, null];
                                 }
@@ -99,6 +114,8 @@ const SignupPage = () => {
                                     return [false, 'E-mail address is required.']
                                 } else if(!value.includes('@')) {
                                     return [false, 'Enter a valid e-mail address.'];
+                                } else if(alreadyInUseEmails.includes(value)) {
+                                    return [false, 'E-mail address is already in use.'];
                                 } else {
                                     return [true, null];
                                 }
@@ -186,22 +203,21 @@ export const action = async ({ request }) => {
         const resData = await response.json();
 
         if(!response.ok) {
-            if(resData && resData.message) {
-                if(resData.errors) {
-                    const errors = resData.errors;
-
-                    // @@@Handle duplicate error message showing and state updates and hiding errors on value change
-                    Object.entries(errors).forEach(
-                        ([input, message]) => store.dispatch(
-                            signupFormActions.updateValidityAndMessage({ input, isValid: true, message })
-                        )
-                    );
-                }
-
-                return resData;
-            } else {
+            if(!resData?.message) {
                 return { message: 'Could not sign up!' };
             }
+
+            if(resData.errors) {
+                Object.entries(resData.errors).forEach(([input, message]) => {
+                    if( message?.includes('already in use')) {
+                        store.dispatch(
+                            signupFormActions.addAlreadyInUseValue({ input })
+                        );
+                    }
+                });
+            }
+
+            return resData;
         }
 
         const user = resData.user;
@@ -212,10 +228,7 @@ export const action = async ({ request }) => {
         setAuthToken(token);
 
         // Clean sign up form
-        store.dispatch(signupFormActions.reset('username'));
-        store.dispatch(signupFormActions.reset('email'));
-        store.dispatch(signupFormActions.reset('password'));
-        store.dispatch(signupFormActions.reset('password-confirmation'));
+        store.dispatch(signupFormActions.reset());
 
         // Update user state
         store.dispatch(userActions.update(user));

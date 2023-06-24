@@ -8,6 +8,7 @@ const initialSignupFormState = {
             value: '',
             isValid: false,
             message: null,
+            alreadyInUseValues: [],
             isInputTouched: false,
             isInputValid: true // initially => isValid || !isInputTouched = true
         },
@@ -15,6 +16,7 @@ const initialSignupFormState = {
             value: '',
             isValid: false,
             message: null,
+            alreadyInUseValues: [],
             isInputTouched: false,
             isInputValid: true
         },

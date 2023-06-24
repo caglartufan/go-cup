@@ -48,6 +48,7 @@ class UserService {
         }
 
         const loginUser = await UserDAO.findByUsernameOrEmail(user.login);
+        console.log(loginUser);
 
         if(!loginUser) {
             throw new InvalidUserCredentialsError();
@@ -59,10 +60,6 @@ class UserService {
         }
 
         return loginUser;
-    }
-
-    getProfile() {
-        
     }
 }
 
