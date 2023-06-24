@@ -84,3 +84,23 @@ export const logoutAction = () => {
 
     return redirect('/');
 };
+
+export const authMiddleware = () => {
+    const token = getAuthToken();
+
+    if(!token) {
+        return redirect('/login');
+    }
+
+    return null;
+};
+
+export const noAuthMiddleware = () => {
+    const token = getAuthToken();
+
+    if(token) {
+        return redirect('/');
+    }
+
+    return null;
+};

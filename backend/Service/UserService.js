@@ -20,11 +20,13 @@ class UserService {
             throw UserValidationError.fromJoiError(error);
         }
 
-        const alreadyExistingUser = await UserDAO.findAlreadyExistingUser(user.username, user.email);
+        const alreadyExistingUsers = await UserDAO.findUsersByUsernameAndEmail(user.username, user.email);
 
-        if(alreadyExistingUser) {
-            const isDuplicateUsername = alreadyExistingUser.username === user.username;
-            const isDuplicateEmail = alreadyExistingUser.email === user.email;
+        if(alreadyExistingUsers.length) {
+            const alreadyUsedUsernames = alreadyExistingUsers.map(existingUser => existingUser.username);
+            const alreadyUsedEmails = alreadyExistingUsers.map(existingUser => existingUser.email);
+            const isDuplicateUsername = alreadyUsedUsernames.includes(user.username);
+            const isDuplicateEmail = alreadyUsedEmails.includes(user.email);
             
             throw UserValidationError.fromDuplicateUsernameOrEmail(isDuplicateUsername, isDuplicateEmail);
         }
@@ -45,7 +47,7 @@ class UserService {
             throw UserValidationError.fromJoiError(error);
         }
 
-        const loginUser = await UserDAO.findAlreadyExistingUser(user.login, user.login);
+        const loginUser = await UserDAO.findByUsernameOrEmail(user.login);
 
         if(!loginUser) {
             throw new InvalidUserCredentialsError();

@@ -8,13 +8,28 @@ class UserDAO {
         });
     }
 
-    static async findAlreadyExistingUser(username, email) {
+    static async findByEmail(email) {
+        return await User.findOne({
+            email
+        });
+    }
+
+    static async findUsersByUsernameAndEmail(username, email) {
+        return await User.find({
+            $or: [
+                { username },
+                { email }
+            ]
+        }).select('-_id username email');
+    }
+
+    static async findByUsernameOrEmail(login) {
         return await User.findOne({
             $or: [
-                { username: username },
-                { email: email }
+                { username: login },
+                { email: login }
             ]
-        });
+        }).select('-_id username email');
     }
 
     static async createUser(user) {

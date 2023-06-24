@@ -38,7 +38,7 @@ class UserValidationError extends HTTPError {
             errors.username = ERRORS.DUPLICATE_USERNAME;
         }
         if(isDuplicateEmail) {
-            errors.email = ERRORS.DUPLICATE_USERNAME;
+            errors.email = ERRORS.DUPLICATE_EMAIL;
         }
 
         return new UserValidationError(errors);

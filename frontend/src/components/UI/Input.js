@@ -1,14 +1,13 @@
 import { useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 
-import { loginFormActions } from '../../store/loginFormSlice';
-
 import './Input.scss';
 
 const Input = (props) => {
     const dispatch = useDispatch();
     const {
         form: formName,
+        actions: formActions,
         name: input,
         onValidate,
         ...inputProps
@@ -22,8 +21,8 @@ const Input = (props) => {
     const isInputValid = isValid || !isInputTouched;
 
     useEffect(() => {
-        dispatch(loginFormActions.updateValidityAndMessage({ input, isValid, message }));
-    }, [dispatch,  input, isValid, message]);
+        dispatch(formActions.updateValidityAndMessage({ input, isValid, message }));
+    }, [dispatch, input, isValid, message, formActions]);
 
     let className = 'form-control';
 
@@ -37,11 +36,11 @@ const Input = (props) => {
     
     const inputChangeHandler = (event) => {
         const userInput = event.currentTarget.value;
-        dispatch(loginFormActions.updateValue({ input, value: userInput }));
+        dispatch(formActions.updateValue({ input, value: userInput }));
     };
 
     const inputBlurHandler = () => {
-        dispatch(loginFormActions.updateIsInputTouched({ input, isInputTouched: true }));
+        dispatch(formActions.updateIsInputTouched({ input, isInputTouched: true }));
     }
 
     return (

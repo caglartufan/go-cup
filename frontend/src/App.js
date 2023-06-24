@@ -1,13 +1,13 @@
 import { Provider } from 'react-redux';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
-import { authLoader, logoutAction } from './utils/auth';
+import { authLoader, authMiddleware, logoutAction, noAuthMiddleware } from './utils/auth';
 
 import { store } from './store/store';
 
 import RootLayout from './layout/Root/Root';
 import HomePage from './pages/Home';
 import LoginPage, { action as loginAction } from './pages/Login';
-import SignupPage from './pages/Signup';
+import SignupPage, { action as signupAction } from './pages/Signup';
 import LeaderbordPage from './pages/Leaderboard';
 import GamesPage from './pages/Games';
 import GameDetailPage from './pages/GameDetail';
@@ -43,19 +43,24 @@ const router = createBrowserRouter([
 			{
 				path: 'login',
 				element: <LoginPage />,
-				action: loginAction
+				action: loginAction,
+				loader: noAuthMiddleware
 			},
 			{
 				path: 'signup',
-				element: <SignupPage />
+				element: <SignupPage />,
+				action: signupAction,
+				loader: noAuthMiddleware
 			},
 			{
 				path: 'profile',
-				element: <ProfilePage />
+				element: <ProfilePage />,
+				loader: authMiddleware
 			},
 			{
 				path: 'logout',
-				action: logoutAction
+				action: logoutAction,
+				loader: authMiddleware
 			}
 		]
 	}

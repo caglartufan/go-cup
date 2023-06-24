@@ -36,11 +36,11 @@ const LoginPage = () => {
         }
 
         submit(event.currentTarget);
-    }
+    };
 
     const switchToSignupHandler = () => {
         navigate('/signup');
-    }
+    };
 
     let alertCmp = null;
 
@@ -68,15 +68,16 @@ const LoginPage = () => {
                         label="User name or e-mail address"
                         inputProps={{
                             form: formName,
+                            actions: loginFormActions,
                             type: "text",
                             name: "login",
                             required: true,
                             onValidate: (value) => {
                                 value = value.trim();
                                 if(!value) {
-                                    return [false, 'Username or e-mail address is required.']
+                                    return [false, 'User name or e-mail address is required.']
                                 } else if(value.length < 3 || value.length > 30) {
-                                    return [false, 'Username or e-mail address must be a minimum of 3 characters and a maximum of 30 characters'];
+                                    return [false, 'User name or e-mail address must be a minimum of 3 characters and a maximum of 30 characters'];
                                 } else {
                                     return [true, null];
                                 }
@@ -93,6 +94,7 @@ const LoginPage = () => {
                         }
                         inputProps={{
                             form: formName,
+                            actions: loginFormActions,
                             type: "password",
                             name: "password",
                             required: true,
@@ -123,7 +125,7 @@ const LoginPage = () => {
             </Card>
         </div>
     );
-}
+};
 
 export const action = async ({ request }) => {
     const formData = await request.formData();
@@ -171,6 +173,6 @@ export const action = async ({ request }) => {
         // In case fails to fetch
         return error;
     }
-}
+};
 
 export default LoginPage;
