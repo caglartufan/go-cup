@@ -1,0 +1,32 @@
+@use 'sass:map';
+@use '../../sass/abstracts/variables' as *;
+
+.row {
+    display: flex;
+    flex-wrap: wrap;
+    column-gap: map.get($gutter-horizontal, large);
+    margin-bottom: map.get($gutter-vertical, small);
+
+    &>* {
+        flex-shrink: 0;
+        flex-basis: 100%;
+        max-width: 100%;
+    }
+
+    &:last-child {
+        margin-bottom: 0;
+    }
+
+    @for $i from 1 through 12 {
+        &--cols-#{$i}>.column {
+            flex: 0 0 auto !important;
+            width: calc((100% - ((($i - 1) * map.get($gutter-horizontal, large)) + (2 * $i * map.get($gutter-horizontal, small)))) / $i);
+
+            @for $j from 1 through 12 {
+                &--#{$j} {
+                    width: calc((100% * $j / 12) - ((($i - 1) * map.get($gutter-horizontal, large)) + (2 * $i * map.get($gutter-horizontal, small))) / $i);
+                }
+            }
+        }
+    }
+}

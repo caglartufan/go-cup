@@ -1,0 +1,15 @@
+@use 'sass:map';
+@use '../../sass/abstracts/variables' as *;
+
+.column {
+    flex: 1 0 0;
+    padding: map.get($gutter-horizontal, small);
+    background-color: yellow;
+
+    @for $i from 1 through 12 {
+        &--#{$i} {
+            flex: 0 0 auto;
+            width: calc(100% * $i / 12);
+        }
+    }
+}
