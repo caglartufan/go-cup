@@ -1,5 +1,3 @@
-import './Column.scss';
-
 const Column = props => {
     const {
         className: customClassName,
@@ -7,6 +5,7 @@ const Column = props => {
         ...divProps
     } = props;
 
+    // let className = 'column';
     let className = 'column';
     
     if(size && size !== 1) {

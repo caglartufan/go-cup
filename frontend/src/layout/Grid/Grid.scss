@@ -1,0 +1,79 @@
+@use 'sass:map';
+@use '../../sass/abstracts/variables' as *;
+@use '../../sass/abstracts/mixins' as *;
+
+// CONTAINER
+.container {
+    max-width: 1140px;
+    margin-right: auto;
+    margin-left: auto;
+    padding: 2rem;
+    box-sizing: border-box;
+
+    @include respond-to(large) {
+        max-width: map.get($container-max-widths, lg);
+    }
+
+    @include respond-to(medium) {
+        max-width: map.get($container-max-widths, md);
+    }
+
+    @include respond-to(small) {
+        max-width: map.get($container-max-widths, sm);
+    }
+
+    @include respond-to(huge) {
+        max-width: map.get($container-max-widths, hg);
+    }
+}
+
+// ROW
+.row {
+    display: flex;
+    flex-wrap: wrap;
+    column-gap: map.get($gutter-horizontal, large);
+    row-gap: map.get($gutter-vertical, small);
+    margin-bottom: map.get($gutter-vertical, small);
+
+    &>* {
+        flex-shrink: 0;
+        flex-basis: 100%;
+        max-width: 100%;
+    }
+
+    &:last-child {
+        margin-bottom: 0;
+    }
+
+    @for $i from 1 through 12 {
+        &--cols-#{$i}>.column {
+            flex: 0 0 auto;
+            width: calc((100% - ((($i - 1) * map.get($gutter-horizontal, large)) + (2 * $i * $column-padding))) / $i);
+
+            @for $j from 1 through 12 {
+                @if $j != 12 {
+                    &--#{$j} {
+                        width: calc((100% * $j / 12) - ((($i - 1) * map.get($gutter-horizontal, large)) + (2 * $i * $column-padding)) / $i);
+                    }
+                } @else {
+                    &--#{$j} {
+                        width: calc((100% * $j / 12) - ((2 * $i * map.get($gutter-horizontal, small))) / $i);
+                    }
+                }
+            }
+        }
+    }
+}
+
+// COLUMN
+.column {
+    flex: 1 0 0;
+    padding: $column-padding;
+
+    @for $i from 1 through 12 {
+        &--#{$i} {
+            flex: 0 0 auto;
+            width: calc(100% * $i / 12);
+        }
+    }
+}

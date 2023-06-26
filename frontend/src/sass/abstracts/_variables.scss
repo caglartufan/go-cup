@@ -33,10 +33,10 @@ $box-shadows: (
 
 // GRID
 $container-max-widths: (
-    sm: 33.75em, // 540px
-    md: 52.5em, // 840px
-    lg: 71.25em, // 1140p
-    hg: 100em, // 1600px
+    sm: 100%, // <= 600px
+    md: 540px, // <= 900px
+    lg: 840px, // <= 1200px
+    hg: 1600px, // >= 1800px
 );
 $gutter-vertical: (
     small: 2rem,
@@ -48,6 +48,7 @@ $gutter-horizontal: (
     medium: 1.8rem,
     large: 2.5rem
 );
+$column-padding: 0px;
 
 // LAYOUT
 $section-gutter-vertical: 2.5rem;
