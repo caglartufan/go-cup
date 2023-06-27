@@ -19,7 +19,7 @@ const GamesListItem = props => {
                     Score: {game.white.score}, {formatSeconds(game.white.timeRemaining)} remaining
                 </span>
             </div>
-            <Board state={game.board} />
+            <Board size={game.size} state={game.board} />
             <div className="games-list-item__player-preview games-list-item__player-preview--black">
                 <span>
                     {game.black.username} ({game.black.elo})

@@ -67,8 +67,8 @@ const dummyGames = [
     {
         id: 'g4',
         status: 'started',
-        size: 9,
-        board: Array.from(new Array(9), row => Array.from(new Array(9), column => Math.random() < .5)),
+        size: 19,
+        board: Array.from(new Array(19), row => Array.from(new Array(19), column => Math.random() < .5)),
         white: {
             id: 'p7',
             username: 'player7',
@@ -87,8 +87,8 @@ const dummyGames = [
     {
         id: 'g5',
         status: 'started',
-        size: 9,
-        board: Array.from(new Array(9), row => Array.from(new Array(9), column => Math.random() < .5)),
+        size: 13,
+        board: Array.from(new Array(13), row => Array.from(new Array(13), column => Math.random() < .5)),
         white: {
             id: 'p9',
             username: 'player9',
@@ -107,8 +107,6 @@ const dummyGames = [
 ];
 
 const GamesList = () => {
-    console.log(dummyGames);
-
     return (
         <Container>
             <Row columns={3}>

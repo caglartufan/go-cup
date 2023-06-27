@@ -24,6 +24,8 @@
     &__player-preview {
         display: flex;
         justify-content: space-between;
-        font-size: 1.4rem;
+        font-size: 1.3rem;
+        font-weight: 500;
+        color: $black;
     }
 }
