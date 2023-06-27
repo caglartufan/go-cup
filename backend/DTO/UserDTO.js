@@ -10,7 +10,7 @@ class UserDTO {
     #country = '';
     #createdAt = null;
     #updatedAt = null;
-
+    // I am a nigga
     constructor(login, username, avatar, firstname, lastname, email, password, passwordConfirmation, country, createdAt, updatedAt) {
         this.#login = login;
         this.#username = username;
