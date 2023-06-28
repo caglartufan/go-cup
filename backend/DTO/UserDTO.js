@@ -8,10 +8,11 @@ class UserDTO {
     #password = '';
     #passwordConfirmation = '';
     #country = '';
+    #games = null;
     #createdAt = null;
     #updatedAt = null;
     
-    constructor(login, username, avatar, firstname, lastname, email, password, passwordConfirmation, country, createdAt, updatedAt) {
+    constructor(login, username, avatar, firstname, lastname, email, password, passwordConfirmation, country, games, createdAt, updatedAt) {
         this.#login = login;
         this.#username = username;
         this.#avatar = avatar;
@@ -21,6 +22,7 @@ class UserDTO {
         this.#password = password;
         this.#passwordConfirmation = passwordConfirmation;
         this.#country = country;
+        this.#games = games;
         this.#createdAt = createdAt;
         this.#updatedAt = updatedAt;
     }
@@ -50,6 +52,7 @@ class UserDTO {
             undefined,
             undefined,
             user.country,
+            user.games,
             user.createdAt,
             user.updatedAt
         );
@@ -65,6 +68,8 @@ class UserDTO {
             email: this.#email,
             password: this.#password,
             passwordConfirmation: this.#passwordConfirmation,
+            country: this.#country,
+            games: this.#games,
             createdAt: this.#createdAt,
             updatedAt: this.#updatedAt
         };
@@ -140,6 +145,14 @@ class UserDTO {
 
     set country(value) {
         this.#country = value;
+    }
+
+    get games() {
+        return this.#games;
+    }
+
+    set games(value) {
+        this.#games = value;
     }
 
     get createdAt() {

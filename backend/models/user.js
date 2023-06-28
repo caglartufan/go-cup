@@ -52,6 +52,9 @@ const userSchema = new mongoose.Schema({
         type: String,
         match: [Validator.COUNTRY_REGEX, VALIDATION.country['string.pattern.base']]
     },
+    games: [{
+        type: mongoose.SchemaTypes.ObjectId
+    }],
     createdAt: {
         type: Date,
         default: Date.now

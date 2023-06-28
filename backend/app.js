@@ -16,6 +16,7 @@ const usersRouter = require('./routes/api/users');
 
 // REST API Routes
 const authRouter = require('./routes/api/auth');
+const gamesRouter = require('./routes/api/games');
 
 // Check if the required configs to boot are set
 if(!config.get('mongoDB.connectionString')) {
@@ -75,6 +76,7 @@ app.use(function(req, res, next) {
 
 // REST API routes
 app.use('/api', authRouter);
+app.use('/api/games', gamesRouter);
 app.use('/api/users', usersRouter);
 
 // Catch 404 and forward to error handler route
