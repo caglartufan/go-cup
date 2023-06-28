@@ -8,7 +8,7 @@ const dummyGames = [
         id: 'g1',
         status: 'started',
         size: 9,
-        board: Array.from(new Array(9), row => Array.from(new Array(9), column => Math.random() < .5)),
+        board: Array.from(new Array(9), row => new Array(9)),
         white: {
             id: 'p1',
             username: 'player1',
@@ -48,7 +48,7 @@ const dummyGames = [
         id: 'g3',
         status: 'finished',
         size: 9,
-        board: Array.from(new Array(9), row => Array.from(new Array(9), column => Math.random() < .5)),
+        board: Array.from(new Array(9), row =>new Array(9)),
         white: {
             id: 'p5',
             username: 'player5',
@@ -68,7 +68,7 @@ const dummyGames = [
         id: 'g4',
         status: 'started',
         size: 19,
-        board: Array.from(new Array(19), row => Array.from(new Array(19), column => Math.random() < .5)),
+        board: Array.from(new Array(19), row => new Array(19)),
         white: {
             id: 'p7',
             username: 'player7',
@@ -88,7 +88,7 @@ const dummyGames = [
         id: 'g5',
         status: 'started',
         size: 13,
-        board: Array.from(new Array(13), row => Array.from(new Array(13), column => Math.random() < .5)),
+        board: Array(13).fill().map(() => Array(13).fill()).map(row => row.map(col => Math.random() < .5)),
         white: {
             id: 'p9',
             username: 'player9',

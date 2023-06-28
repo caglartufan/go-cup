@@ -2,10 +2,6 @@ import { useCallback, useEffect, useRef } from 'react';
 
 import './Board.scss';
 
-const roundToClosestHalf = number => {
-    return Math.floor(number) + .5;
-}
-
 const Board = props => {
     const {
         size,
@@ -21,7 +17,7 @@ const Board = props => {
         board.current.width = clientWidth;
 
         // Constant definitions related to board
-        const gridPadding = roundToClosestHalf(clientWidth / 22);
+        const gridPadding = Math.floor(clientWidth / 22) + .5;
         const gridWidth = 1;
         const gridColor = '#000';
         const referencePointColor = '#000';
@@ -80,11 +76,27 @@ const Board = props => {
             const centerX = gridPadding + Math.floor(col * gridOffset);
             const centerY = gridPadding + Math.floor(row * gridOffset);
             ctx.moveTo(centerX, centerY);
-            ctx.arc(centerX, centerY, 3, 0, 2 * Math.PI);
+            ctx.arc(centerX, centerY, clientWidth / 90, 0, 2 * Math.PI);
         });
         ctx.fillStyle = referencePointColor;
         ctx.fill();
-    }, [size]);
+
+        // Draw stones
+        ctx.beginPath();
+        state.forEach((row, rowIndex) => {
+            row.forEach((stone, columnIndex) => {
+                const centerX = gridPadding + Math.floor(columnIndex * gridOffset);
+                const centerY = gridPadding + Math.floor(rowIndex * gridOffset);
+                ctx.moveTo(centerX, centerY);
+                ctx.arc(centerX, centerY, clientWidth / (size * 2.5), 0, 2 * Math.PI);
+                ctx.fillStyle = stone ? '#fff' : '#000';
+                ctx.fill();
+            });
+        });
+    }, [size, state]);
+    if(size === 13) {
+        console.log(state);
+    }
 
     useEffect(() => {
         initializeBoard(board.current);
