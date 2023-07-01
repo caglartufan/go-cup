@@ -5,7 +5,7 @@ const { UserNotFoundError, UnauthorizedError, ErrorHandler } = require('../utils
 
 const auth = async (req, res, next) => {
     const authHeader = req.headers.authorization;
-	var token = null;
+	let token = null;
 	
 	if(authHeader.startsWith('Bearer ')) {
 		token = authHeader.substring(7, authHeader.length);
