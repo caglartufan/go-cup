@@ -94,9 +94,6 @@ const Board = props => {
             });
         });
     }, [size, state]);
-    if(size === 13) {
-        console.log(state);
-    }
 
     useEffect(() => {
         initializeBoard(board.current);

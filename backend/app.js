@@ -6,17 +6,19 @@ const logger = require('morgan');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const config = require('config');
+const socketio = require('socket.io');
 const debug = require('debug')('go-cup:app');
 
 const ServiceRegistry = require('./utils/ServiceRegistry');
 const { NotFoundError } = require('./utils/ErrorHandler');
 
+// General Routes
 const indexRouter = require('./routes/index');
-const usersRouter = require('./routes/api/users');
 
 // REST API Routes
 const authRouter = require('./routes/api/auth');
 const gamesRouter = require('./routes/api/games');
+const usersRouter = require('./routes/api/users');
 
 // Check if the required configs to boot are set
 if(!config.get('mongoDB.connectionString')) {
@@ -65,6 +67,27 @@ app.use(cors({
 	credentials: true
 }));
 
+// Listen on provided port and initialize Express HTTP server
+const port = process.env.PORT || 3000;
+const server = app.listen(port, () => {
+	debug(`Listenin on port ${port}`);
+});
+
+// Initialize websocket server and set Express variable
+const io = socketio(server, {
+	cors: {
+		allow: 'http://localhost:3001'
+	},
+	serveClient: false
+});
+
+app.set('io', io);
+
+io.on('connection', socket => {
+	app.set('socket', socket);
+	console.log('connection!');
+});
+
 // Web routes
 app.use('/', indexRouter);
 
@@ -98,5 +121,3 @@ app.use(function(err, req, res, next) {
 		errors: err.errors
 	});
 });
-
-module.exports = app;

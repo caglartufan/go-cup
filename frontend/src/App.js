@@ -3,6 +3,7 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { authLoader, authMiddleware, logoutAction, noAuthMiddleware } from './utils/auth';
 
 import { store } from './store/store';
+import io from './websocket';
 
 import RootLayout from './layout/Root/Root';
 import HomePage from './pages/Home';
@@ -12,6 +13,7 @@ import LeaderbordPage from './pages/Leaderboard';
 import GamesPage from './pages/Games';
 import GameDetailPage from './pages/GameDetail';
 import ProfilePage from './pages/Profile';
+import { useEffect } from 'react';
 
 const router = createBrowserRouter([
 	{
@@ -67,6 +69,21 @@ const router = createBrowserRouter([
 ])
 
 const App = () => {
+	useEffect(() => {
+		io.on('connect', () => {
+			console.log('Connected!');
+		});
+
+		io.on('loggedIn', from => {
+			console.log('Logged in from ' + from);
+		});
+
+		return () => {
+			io.off('connect');
+			io.off('loggedIn');
+		};
+	}, []);
+
 	return (
 		<Provider store={store}>
 			<RouterProvider router={router} />

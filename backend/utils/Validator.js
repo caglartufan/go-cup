@@ -11,26 +11,26 @@ class Validator {
     static validateSignupData(user) {
         const schema = Joi.object({
             'username': Joi.string().min(3).max(30).alphanum().required().messages({
-                'string.empty': VALIDATION.username['string.empty'],
-                'string.min': VALIDATION.username['string.min'],
-                'string.max': VALIDATION.username['string.max'],
-                'string.alphanum': VALIDATION.username['string.alphanum'],
-                'any.required': VALIDATION.username['any.required']
+                'string.empty': VALIDATION.user.username['string.empty'],
+                'string.min': VALIDATION.user.username['string.min'],
+                'string.max': VALIDATION.user.username['string.max'],
+                'string.alphanum': VALIDATION.user.username['string.alphanum'],
+                'any.required': VALIDATION.user.username['any.required']
             }),
             'email': Joi.string().email().required().messages({
-                'string.empty': VALIDATION.email['string.empty'],
-                'string.email': VALIDATION.email['string.email'],
-                'any.required': VALIDATION.email['any.required']
+                'string.empty': VALIDATION.user.email['string.empty'],
+                'string.email': VALIDATION.user.email['string.email'],
+                'any.required': VALIDATION.user.email['any.required']
             }),
             'password': Joi.string().min(4).max(100).required().messages({
-                'string.empty': VALIDATION.password['string.empty'],
-                'string.min': VALIDATION.password['string.min'],
-                'string.max': VALIDATION.password['string.max'],
-                'any.required': VALIDATION.password['any.required']
+                'string.empty': VALIDATION.user.password['string.empty'],
+                'string.min': VALIDATION.user.password['string.min'],
+                'string.max': VALIDATION.user.password['string.max'],
+                'any.required': VALIDATION.user.password['any.required']
             }),
             'password-confirmation': Joi.any().valid(Joi.ref('password')).required().messages({
-                'any.required': VALIDATION['password-confirmation']['any.required'],
-                'any.only': VALIDATION['password-confirmation']['any.only']
+                'any.required': VALIDATION.user['password-confirmation']['any.required'],
+                'any.only': VALIDATION.user['password-confirmation']['any.only']
             })
         });
     
@@ -48,14 +48,14 @@ class Validator {
                 Joi.string().min(3).max(30).alphanum(),
                 Joi.string().email()
             ).messages({
-                'alternatives.match': VALIDATION.login['alternatives.match'],
-                'any.required': VALIDATION.login['any.required']
+                'alternatives.match': VALIDATION.user.login['alternatives.match'],
+                'any.required': VALIDATION.user.login['any.required']
             }),
             'password': Joi.string().min(4).max(100).required().messages({
-                'string.empty': VALIDATION.password['string.empty'],
-                'string.min': VALIDATION.password['string.min'],
-                'string.max': VALIDATION.password['string.max'],
-                'any.required': VALIDATION.password['any.required']
+                'string.empty': VALIDATION.user.password['string.empty'],
+                'string.min': VALIDATION.user.password['string.min'],
+                'string.max': VALIDATION.user.password['string.max'],
+                'any.required': VALIDATION.user.password['any.required']
             })
         });
     

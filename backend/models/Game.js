@@ -1,14 +1,18 @@
 const mongoose = require('mongoose');
+const VALIDATION = require('../messages/validation');
 
 const gameSchema = new mongoose.Schema({
     size: {
         type: Number,
-        required: true,
-        enum: [9, 13, 19]
+        required: [true, VALIDATION.game.size['any.required']],
+        enum: [[9, 13, 19], VALIDATION.game.size['any.only']]
     },
     status: {
         type: String,
-        enum: ['waiting', 'started', 'finished', 'white_resigned', 'black_resigned'],
+        enum: {
+            values: ['waiting', 'started', 'finished', 'white_resigned', 'black_resigned'],
+            message: VALIDATION.game.status['any.only']
+        },
         default: 'waiting'
     },
     board: {
@@ -20,20 +24,24 @@ const gameSchema = new mongoose.Schema({
     white: {
         score: {
             type: Number,
+            min: 0,
             default: 0
         },
         timeRemaning: {
             type: Number,
+            min: 0,
             default: 5 * 60
         }
     },
     black: {
         score: {
             type: Number,
+            min: 0,
             default: 0
         },
         timeRemaning: {
             type: Number,
+            min: 0,
             default: 5 * 60
         }
     }
