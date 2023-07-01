@@ -9,7 +9,7 @@ router.post('/signup', async function(req, res, next) {
     let userDTO = UserDTO.withRequestData(reqData);
 
     try {
-        const user = await req.services.userService.signupUser(userDTO);
+        const user = await req.app.get('services').userService.signupUser(userDTO);
 
         const token = user.generateAuthToken();
 
@@ -33,7 +33,7 @@ router.post('/login', async function(req, res, next) {
     let userDTO = UserDTO.withRequestData(reqData);
 
     try {
-        const user = await req.services.userService.loginUser(userDTO);
+        const user = await req.app.get('services').userService.loginUser(userDTO);
 
         const token = user.generateAuthToken();
 

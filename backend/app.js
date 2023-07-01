@@ -9,7 +9,7 @@ const config = require('config');
 const socketio = require('socket.io');
 const debug = require('debug')('go-cup:app');
 
-const ServiceRegistry = require('./utils/ServiceRegistry');
+const ServiceRegistry = require('./Service/ServiceRegistry');
 const { NotFoundError } = require('./utils/ErrorHandler');
 
 // General Routes
@@ -54,9 +54,7 @@ mongoose.connect(connectionString)
 
 const app = express();
 
-const services = new ServiceRegistry();
-
-app.use(logger('dev'));
+// app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
@@ -78,25 +76,20 @@ const io = socketio(server, {
 	cors: {
 		allow: 'http://localhost:3001'
 	},
-	cookie: true,
 	serveClient: false
 });
 
 app.set('io', io);
 
 io.on('connection', socket => {
-	app.set('socket', socket);
-	console.log('connection!');
+	console.log(socket.id, socket.rooms);
 });
+
+// Enable services in REST API routes
+app.set('services', new ServiceRegistry(io));
 
 // Web routes
 app.use('/', indexRouter);
-
-// Enable services in REST API routes
-app.use(function(req, res, next) {
-	req.services = services;
-	next();
-});
 
 // REST API routes
 app.use('/api', authRouter);

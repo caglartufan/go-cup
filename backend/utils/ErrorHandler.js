@@ -80,6 +80,13 @@ class NotFoundError extends HTTPError {
     }
 }
 
+class UnauthorizedError extends HTTPError {
+    constructor() {
+        super(ERRORS.UNAUTHORIZED, 401);
+        this.name = 'UnauthorizedError';
+    }
+}
+
 class UserNotFoundError extends NotFoundError {
     constructor() {
         super();
@@ -92,11 +99,21 @@ class InvalidDTOError extends TypeError {
     constructor(object, ExpectedDTOClass) {
         let message = ERRORS.INVALID_DTO_OBJECT;
         message = message
-            .replace('#{RECEIVED_CLASS}', object.constructor.name)
+            .replace('#{RECEIVED_CLASS}', object?.constructor.name)
             .replace('#{EXPECTED_CLASS}', ExpectedDTOClass.name);
 
         super(message);
         this.name = 'InvalidDTOError';
+    }
+}
+
+class InvalidIOError extends TypeError {
+    constructor(object) {
+        let message = ERRORS.INVALID_IO_OBJECT;
+        message = message.replace('#{RECEIVED_CLASS}', object?.constructor.name);
+
+        super(message);
+        this.name = 'InvalidIOError';
     }
 }
 
@@ -127,7 +144,9 @@ module.exports = {
     ExpiredJWTError,
     InternalServerError,
     NotFoundError,
+    UnauthorizedError,
     UserNotFoundError,
     InvalidDTOError,
+    InvalidIOError,
     ErrorHandler
 };

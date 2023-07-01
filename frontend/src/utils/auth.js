@@ -38,6 +38,11 @@ export const deleteAuthToken = () => {
 
 export const authLoader = async () => {
     const token = getAuthToken();
+
+    if(!token) {
+        return null;
+    }
+
     const duration = getAuthTokenDuration();
     
     if(duration <= 0) {
@@ -59,7 +64,7 @@ export const authLoader = async () => {
     const resData = await response.json();
 
     if(!response.ok) {
-        if(resData && resData.message) {
+        if(resData?.message) {
             return resData;
         } else {
             return { message: 'Could not fetch profile data!' };
@@ -69,7 +74,7 @@ export const authLoader = async () => {
     const user = resData.user;
 
     if(!user) {
-        return { mesesage: 'Could not fetch profile data!' };
+        return { message: 'Could not fetch profile data!' };
     }
 
     store.dispatch(userActions.update(user));

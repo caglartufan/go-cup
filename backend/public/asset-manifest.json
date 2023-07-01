@@ -1,0 +1,33 @@
+{
+  "files": {
+    "main.css": "/static/css/main.5522cf1b.css",
+    "main.js": "/static/js/main.78a3324a.js",
+    "static/js/787.c9e9d717.chunk.js": "/static/js/787.c9e9d717.chunk.js",
+    "static/media/Poppins-ThinItalic.ttf": "/static/media/Poppins-ThinItalic.9d5e661e645ce9a32fe6.ttf",
+    "static/media/Poppins-ExtraLightItalic.ttf": "/static/media/Poppins-ExtraLightItalic.dbdfd398abcbbafc022b.ttf",
+    "static/media/Poppins-LightItalic.ttf": "/static/media/Poppins-LightItalic.4a7d59f898225cc2f2e7.ttf",
+    "static/media/Poppins-Italic.ttf": "/static/media/Poppins-Italic.e373f6163127e2d469af.ttf",
+    "static/media/Poppins-MediumItalic.ttf": "/static/media/Poppins-MediumItalic.89e040c6a64d18f620dc.ttf",
+    "static/media/Poppins-SemiBoldItalic.ttf": "/static/media/Poppins-SemiBoldItalic.3524ffc3226f4578e5c5.ttf",
+    "static/media/Poppins-BoldItalic.ttf": "/static/media/Poppins-BoldItalic.cfb635a5111b545f5598.ttf",
+    "static/media/Poppins-ExtraBoldItalic.ttf": "/static/media/Poppins-ExtraBoldItalic.73d4495be63ad83b25cc.ttf",
+    "static/media/Poppins-BlackItalic.ttf": "/static/media/Poppins-BlackItalic.563eda3d3407af0fb581.ttf",
+    "static/media/Poppins-Thin.ttf": "/static/media/Poppins-Thin.59ff6a729e30c99b478e.ttf",
+    "static/media/Poppins-ExtraLight.ttf": "/static/media/Poppins-ExtraLight.333cb30c20e31999802a.ttf",
+    "static/media/Poppins-Light.ttf": "/static/media/Poppins-Light.7641a0f76ca9ef6c252c.ttf",
+    "static/media/Poppins-Regular.ttf": "/static/media/Poppins-Regular.35d26b781dc5fda684cc.ttf",
+    "static/media/Poppins-Medium.ttf": "/static/media/Poppins-Medium.673ed42382ab264e0bf5.ttf",
+    "static/media/Poppins-SemiBold.ttf": "/static/media/Poppins-SemiBold.ac8d04b620e54be9b0f0.ttf",
+    "static/media/Poppins-Bold.ttf": "/static/media/Poppins-Bold.cdb29a5d7ccf57ff05a3.ttf",
+    "static/media/Poppins-ExtraBold.ttf": "/static/media/Poppins-ExtraBold.01849ee091e1762a5dd5.ttf",
+    "static/media/Poppins-Black.ttf": "/static/media/Poppins-Black.d8b850b920a5ef49d752.ttf",
+    "index.html": "/index.html",
+    "main.5522cf1b.css.map": "/static/css/main.5522cf1b.css.map",
+    "main.78a3324a.js.map": "/static/js/main.78a3324a.js.map",
+    "787.c9e9d717.chunk.js.map": "/static/js/787.c9e9d717.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.5522cf1b.css",
+    "static/js/main.78a3324a.js"
+  ]
+}

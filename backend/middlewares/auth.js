@@ -1,7 +1,7 @@
 const jwt = require('jsonwebtoken');
 const config = require('config');
 const UserDAO = require('../DAO/UserDAO');
-const { UserNotFoundError, ErrorHandler } = require('../utils/ErrorHandler');
+const { UserNotFoundError, UnauthorizedError, ErrorHandler } = require('../utils/ErrorHandler');
 
 const auth = async (req, res, next) => {
     const authHeader = req.headers.authorization;
@@ -9,6 +9,10 @@ const auth = async (req, res, next) => {
 	
 	if(authHeader.startsWith('Bearer ')) {
 		token = authHeader.substring(7, authHeader.length);
+	}
+
+	if(!token) {
+		next(new UnauthorizedError());
 	}
 
 	try {
