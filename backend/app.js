@@ -78,6 +78,7 @@ const io = socketio(server, {
 	cors: {
 		allow: 'http://localhost:3001'
 	},
+	cookie: true,
 	serveClient: false
 });
 
