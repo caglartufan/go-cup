@@ -1,12 +1,10 @@
 import { useEffect } from 'react';
 import { Provider } from 'react-redux';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import { socket } from './websocket';
 import { authLoader, authMiddleware, logoutAction, noAuthMiddleware } from './utils/auth';
 import { setSocketId } from './utils/websocket';
-
 import { store } from './store/store';
-
-import socket from './websocket';
 
 import RootLayout from './layout/Root/Root';
 import HomePage from './pages/Home';
@@ -81,9 +79,21 @@ const App = () => {
 			console.log('matched!');
 		});
 
+		// General error handler
+		socket.on('error', error => {
+			console.log(error);
+		});
+
+		// In case authentication middleware fails and throws and error
+		socket.on('connect_error', error => {
+			console.error(error);
+		});
+
 		return () => {
 			socket.off('connect');
 			socket.off('matched');
+			socket.off('error');
+			socket.off('connect_error');
 		};
 	}, []);
 

@@ -13,6 +13,7 @@ import Card from '../components/UI/Card';
 import Alert from '../components/UI/Alert';
 
 import './Login.scss';
+import { socket } from '../websocket';
 
 const LoginPage = () => {
     const formName = 'login-form';
@@ -166,6 +167,9 @@ export const action = async ({ request }) => {
 
         // Update user state
         store.dispatch(userActions.update(user));
+
+        // Send authenticated event to websocket
+        socket.emit('authenticated', token);
 
         return redirect('/');
     } catch(error) {

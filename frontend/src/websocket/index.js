@@ -1,7 +1,12 @@
 import { io } from 'socket.io-client';
+import { getAuthToken } from '../utils/auth';
 
 const URL = 'http://localhost:3000';
 
-const socket = io(URL);
+const options = {
+    auth: {
+        token: getAuthToken()
+    }
+};
 
-export default socket;
+export const socket = io(URL, options);
