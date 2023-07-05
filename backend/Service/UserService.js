@@ -1,10 +1,14 @@
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+const config = require('config');
 const UserDTO = require('../DTO/UserDTO');
 const UserDAO = require('../DAO/UserDAO');
 const {
     InvalidDTOError,
     UserValidationError,
-    InvalidUserCredentialsError
+    InvalidUserCredentialsError,
+    InvalidJWTError,
+    UnauthorizedError
 } = require('../utils/ErrorHandler');
 const Validator = require('../utils/Validator');
 
@@ -59,6 +63,24 @@ class UserService {
         }
 
         return loginUser;
+    }
+
+    async authenticate(token) {
+        if(!token) {
+            throw new UnauthorizedError();
+        }
+        
+        const { username } = jwt.verify(token, config.get('jwt.privateKey'));
+
+        const user = await UserDAO.findByUsername(username);
+
+        if(!user) {
+            throw new UserNotFoundError();
+        }
+
+        const userDTO = UserDTO.withUserObject(user);
+
+        return userDTO;
     }
 }
 

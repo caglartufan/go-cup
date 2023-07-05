@@ -10,7 +10,7 @@ const socketio = require('socket.io');
 const debug = require('debug')('go-cup:app');
 
 const ServiceRegistry = require('./Service/ServiceRegistry');
-const { NotFoundError } = require('./utils/ErrorHandler');
+const { NotFoundError, ErrorHandler } = require('./utils/ErrorHandler');
 
 // General Routes
 const indexRouter = require('./routes/index');
@@ -71,7 +71,7 @@ const server = app.listen(port, () => {
 	debug(`Listenin on port ${port}`);
 });
 
-// Initialize websocket server and set Express variable
+// Initialize websocket server
 const io = socketio(server, {
 	cors: {
 		allow: 'http://localhost:3001'
@@ -79,14 +79,58 @@ const io = socketio(server, {
 	serveClient: false
 });
 
+// Initialize App-wide ServiceRegistry object with initialized websocket server object
+const services = new ServiceRegistry(io);
+
+// Set Express server variables
+app.set('services', services);
 app.set('io', io);
 
-io.on('connection', socket => {
-	console.log(socket.id, socket.rooms);
+io.use(async (socket, next) => {
+	const token = socket.handshake.auth.token;
+	if(token) {
+		try {
+			const userDTO = await services.userService.authenticate(token);
+			socket.data.user = userDTO;
+		} catch(error) {
+			next(ErrorHandler.handle(error));
+		}
+	}
+	console.log(socket.handshake.auth);
+	next();
 });
 
-// Enable services in REST API routes
-app.set('services', new ServiceRegistry(io));
+io.on('connection', socket => {
+	console.log(socket.id, socket.rooms, socket.handshake.auth.token, socket.data);
+	if(socket.data.user) {
+		console.log('User:', socket.data.user.toObject());
+	}
+
+	socket.on('authenticated', async token => {
+		token = 'nope';
+		socket.handshake.auth.token = token;
+
+		try {
+			const userDTO = await services.userService.authenticate(token);
+			socket.data.user = userDTO;
+			console.log('Authenticated socket:', socket.data);
+			if(socket.data.user) {
+				console.log('User:', socket.data.user.toObject());
+			}
+		} catch(error) {
+			socket.emit('error', ErrorHandler.handle(error));
+		}
+	});
+
+	socket.on('loggedOut', () => {
+		socket.handshake.auth.token = null;
+		socket.data.user = null;
+		console.log('Unauthenticated socket:', socket.handshake.auth, socket.data);
+		if(socket.data.user) {
+			console.log('User:', socket.data.user.toObject());
+		}
+	});
+});
 
 // Web routes
 app.use('/', indexRouter);
