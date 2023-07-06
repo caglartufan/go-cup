@@ -11,6 +11,8 @@ const debug = require('debug')('go-cup:app');
 
 const ServiceRegistry = require('./Service/ServiceRegistry');
 const { NotFoundError, ErrorHandler } = require('./utils/ErrorHandler');
+const { auth } = require('./websocket/middlewares');
+const handlers = require('./websocket/handlers');
 
 // General Routes
 const indexRouter = require('./routes/index');
@@ -86,50 +88,13 @@ const services = new ServiceRegistry(io);
 app.set('services', services);
 app.set('io', io);
 
-io.use(async (socket, next) => {
-	const token = socket.handshake.auth.token;
-	if(token) {
-		try {
-			const userDTO = await services.userService.authenticate(token);
-			socket.data.user = userDTO;
-		} catch(error) {
-			next(ErrorHandler.handle(error));
-		}
-	}
-	console.log(socket.handshake.auth);
-	next();
-});
+io.use(auth.bind(null, services));
 
 io.on('connection', socket => {
-	console.log(socket.id, socket.rooms, socket.handshake.auth.token, socket.data);
-	if(socket.data.user) {
-		console.log('User:', socket.data.user.toObject());
-	}
+	handlers.onConnection(socket);
 
-	socket.on('authenticated', async token => {
-		token = 'nope';
-		socket.handshake.auth.token = token;
-
-		try {
-			const userDTO = await services.userService.authenticate(token);
-			socket.data.user = userDTO;
-			console.log('Authenticated socket:', socket.data);
-			if(socket.data.user) {
-				console.log('User:', socket.data.user.toObject());
-			}
-		} catch(error) {
-			socket.emit('error', ErrorHandler.handle(error));
-		}
-	});
-
-	socket.on('loggedOut', () => {
-		socket.handshake.auth.token = null;
-		socket.data.user = null;
-		console.log('Unauthenticated socket:', socket.handshake.auth, socket.data);
-		if(socket.data.user) {
-			console.log('User:', socket.data.user.toObject());
-		}
-	});
+	socket.on('authenticated', handlers.onAuthenticated.bind(null, services, socket));
+	socket.on('loggedOut', handlers.onLoggedOut.bind(null, socket));
 });
 
 // Web routes

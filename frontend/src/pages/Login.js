@@ -1,6 +1,7 @@
 import { Link, Form, useNavigate, useSubmit, useActionData, useNavigation, redirect } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 
+import { socket } from '../websocket';
 import { loginFormActions } from '../store/loginFormSlice';
 import { userActions } from '../store/userSlice';
 import { store } from '../store/store';
@@ -13,7 +14,6 @@ import Card from '../components/UI/Card';
 import Alert from '../components/UI/Alert';
 
 import './Login.scss';
-import { socket } from '../websocket';
 
 const LoginPage = () => {
     const formName = 'login-form';

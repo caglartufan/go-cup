@@ -34,7 +34,7 @@ router.post('/play', auth, function(req, res, next) {
     }
 });
 
-router.delete('/play', auth, function(req, res, next) {
+router.delete('/cancel', auth, function(req, res, next) {
     try {
         const user = UserDTO.withUserObject(req.user);
 

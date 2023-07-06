@@ -2,6 +2,7 @@ import { useNavigate, useNavigation, useSubmit, useActionData, redirect, Form } 
 import { useDispatch, useSelector } from 'react-redux';
 import { setAuthToken } from '../utils/auth';
 
+import { socket } from '../websocket';
 import { store } from '../store/store';
 import { signupFormActions } from '../store/signupFormSlice';
 import { userActions } from '../store/userSlice';
@@ -21,17 +22,6 @@ const SignupPage = () => {
     const actionData = useActionData();
     const isSubmitting = navigation.state === 'submitting';
 
-    // const [
-    //     isFormValid,
-    //     alreadyInUseUsernames,
-    //     alreadyInUseEmails,
-    //     passwordValue
-    // ] = useSelector(state => ([
-    //     state[formName].isFormValid,
-    //     state[formName].inputs.username.alreadyInUseValues,
-    //     state[formName].inputs.email.alreadyInUseValues,
-    //     state[formName].inputs.password.value
-    // ]));
     const isFormValid = useSelector(state => state[formName].isFormValid);
     const alreadyInUseUsernames = useSelector(state => state[formName].inputs.username.alreadyInUseValues);
     const alreadyInUseEmails = useSelector(state => state[formName].inputs.email.alreadyInUseValues);
@@ -232,6 +222,9 @@ export const action = async ({ request }) => {
 
         // Update user state
         store.dispatch(userActions.update(user));
+
+        // Send authenticated event to websocket
+        socket.emit('authenticated', token);
 
         return redirect('/');
     } catch(error) {
