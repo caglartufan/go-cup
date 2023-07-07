@@ -55,6 +55,10 @@ const userSchema = new mongoose.Schema({
     games: [{
         type: mongoose.SchemaTypes.ObjectId
     }],
+    elo: {
+        type: Number,
+        default: 0
+    },
     createdAt: {
         type: Date,
         default: Date.now

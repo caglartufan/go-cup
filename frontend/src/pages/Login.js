@@ -4,6 +4,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { socket } from '../websocket';
 import { loginFormActions } from '../store/loginFormSlice';
 import { userActions } from '../store/userSlice';
+import { toastActions } from '../store/toastSlice';
 import { store } from '../store/store';
 
 import { setAuthToken } from '../utils/auth';
@@ -167,6 +168,12 @@ export const action = async ({ request }) => {
 
         // Update user state
         store.dispatch(userActions.update(user));
+
+        // Add toast message with success message
+        store.dispatch(toastActions.add({
+            message: 'Logged in successfully!',
+            status: 'success'
+        }));
 
         // Send authenticated event to websocket
         socket.emit('authenticated', token);

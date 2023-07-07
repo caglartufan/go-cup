@@ -52,9 +52,10 @@ class GameService {
     #startProcessingQueue() {
         this.#interval = setInterval(() => {
             // TODO: Implement an algorithm to match players in queue
-            // @@@Implement ELO in users model, add toast message component in front
-            // to notify user when authenticated, logged out, get into queue
-            // get out of queue or when match has been found etc.
+            // @@@ Implmenet Uı elements to start search and view search
+            // information like currently searching, currently online,
+            // time elapsed since beginning of search process
+            // estimated time (if possible) and a way to cancel
             // Then implement a way to match players in here (in a simple way)
             console.log('processing queue...');
             this.queue

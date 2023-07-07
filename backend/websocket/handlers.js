@@ -14,7 +14,7 @@ module.exports = {
 			const userDTO = await services.userService.authenticate(token);
 			socket.data.user = userDTO;
 		} catch(error) {
-			socket.emit('error', ErrorHandler.handle(error));
+			socket.emit('errorOccured', ErrorHandler.handle(error).message);
 		}
 	},
     onLoggedOut: socket => {

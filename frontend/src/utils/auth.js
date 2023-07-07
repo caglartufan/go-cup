@@ -2,6 +2,7 @@ import { redirect } from 'react-router-dom';
 import jwtDecode from 'jwt-decode';
 import { store } from '../store/store';
 import { userActions } from '../store/userSlice';
+import { toastActions } from '../store/toastSlice';
 import { socket } from '../websocket';
 
 export const AUTH_TOKEN_KEY = 'auth-token';
@@ -87,6 +88,12 @@ export const logoutAction = () => {
     store.dispatch(userActions.logout());
 
     deleteAuthToken();
+
+    store.dispatch(toastActions.add({
+        message: 'Logged out!',
+        status: 'info'
+    }));
+
     socket.emit('loggedOut');
 
     return redirect('/');

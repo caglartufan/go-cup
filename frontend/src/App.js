@@ -1,10 +1,9 @@
-import { useEffect } from 'react';
 import { Provider } from 'react-redux';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
-import { socket } from './websocket';
-import { authLoader, authMiddleware, logoutAction, noAuthMiddleware } from './utils/auth';
-import { setSocketId } from './utils/websocket';
+
 import { store } from './store/store';
+import WebSocketProvider from './websocket/WebSocketProvider';
+import { authLoader, authMiddleware, logoutAction, noAuthMiddleware } from './utils/auth';
 
 import RootLayout from './layout/Root/Root';
 import HomePage from './pages/Home';
@@ -69,37 +68,11 @@ const router = createBrowserRouter([
 ]);
 
 const App = () => {
-	useEffect(() => {
-		socket.on('connect', () => {
-			setSocketId(socket.id);
-			console.log('Connected with id: ' + socket.id);
-		});
-
-		socket.on('matched', () => {
-			console.log('matched!');
-		});
-
-		// General error handler
-		socket.on('error', error => {
-			console.log(error);
-		});
-
-		// In case authentication middleware fails and throws and error
-		socket.on('connect_error', error => {
-			console.error(error);
-		});
-
-		return () => {
-			socket.off('connect');
-			socket.off('matched');
-			socket.off('error');
-			socket.off('connect_error');
-		};
-	}, []);
-
 	return (
 		<Provider store={store}>
-			<RouterProvider router={router} />
+			<WebSocketProvider>
+				<RouterProvider router={router} />
+			</WebSocketProvider>
 		</Provider>
 	);
 };

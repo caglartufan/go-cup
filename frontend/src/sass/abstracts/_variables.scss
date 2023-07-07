@@ -31,6 +31,12 @@ $box-shadows: (
     heavy: 0 1.1rem 1.7rem rgba($black, .40)
 );
 
+// Z-INDEXES
+$z-indexes: (
+    dropdown: 1000,
+    toast: 1100
+);
+
 // GRID
 $container-max-widths: (
     sm: 100%, // <= 600px

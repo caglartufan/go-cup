@@ -6,6 +6,7 @@ import { socket } from '../websocket';
 import { store } from '../store/store';
 import { signupFormActions } from '../store/signupFormSlice';
 import { userActions } from '../store/userSlice';
+import { toastActions } from '../store/toastSlice';
 
 import Card from '../components/UI/Card';
 import FormGroup from '../components/UI/FormGroup';
@@ -222,6 +223,12 @@ export const action = async ({ request }) => {
 
         // Update user state
         store.dispatch(userActions.update(user));
+
+        // Add toast message with success message
+        store.dispatch(toastActions.add({
+            message: 'Signed up successfully!',
+            status: 'success'
+        }));
 
         // Send authenticated event to websocket
         socket.emit('authenticated', token);
