@@ -4,6 +4,7 @@ import { store } from '../store/store';
 import { userActions } from '../store/userSlice';
 import { toastActions } from '../store/toastSlice';
 import { socket } from '../websocket';
+import { queueActions } from '../store/queueSlice';
 
 export const AUTH_TOKEN_KEY = 'auth-token';
 
@@ -80,6 +81,15 @@ export const authLoader = async () => {
     }
 
     store.dispatch(userActions.update(user));
+
+    if(user.isInQueue) {
+        // TODO: Get queue data from websocket server and update queue slice
+        const { inQueue, timeElapsed } = await socket.emitWithAck('fetchQueueData');
+        store.dispatch(queueActions.searching({
+            inQueue,
+            timeElapsed
+        }));
+    }
 
     return null;
 };

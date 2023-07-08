@@ -3,9 +3,16 @@ import { NavLink } from 'react-router-dom';
 
 import './Navigation.scss';
 import MiniProfile from '../MiniProfile/MiniProfile';
+import { socket } from '../../websocket';
 
 const Navigation = () => {
     const isUserAuthenticated = useSelector(state => state.user.username && state.user.email);
+    const isUserAlreadyInQueue = useSelector(state => state.queue.isInQueue);
+
+    const playHandler = () => {
+        // TODO: Ask for preferences in a modal and send it
+        socket.emit('play', {});
+    };
 
     return (
         <nav className="navigation">
@@ -47,6 +54,17 @@ const Navigation = () => {
                         Leaderbord
                     </NavLink>
                 </li>
+                {isUserAuthenticated && (
+                    <li className="navigation__list-item">
+                        <button
+                            className="navigation__list-item-link navigation__list-item-link--button"
+                            onClick={playHandler}
+                            disabled={isUserAlreadyInQueue}
+                        >
+                            Play
+                        </button>
+                    </li>
+                )}
             </ul>
             {!isUserAuthenticated && (
                 <ul className="navigation__list">

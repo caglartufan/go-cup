@@ -1,6 +1,6 @@
 const GameDAO = require('../DAO/GameDAO');
 const UserDTO = require('../DTO/UserDTO');
-const { InvalidDTOError } = require('../utils/ErrorHandler');
+const { InvalidDTOError, UserNotFoundError } = require('../utils/ErrorHandler');
 
 class GameService {
     queue = [];
@@ -23,8 +23,16 @@ class GameService {
 
         const queueObject = {
             user,
-            preferences
+            preferences,
+            since: new Date()
         };
+
+        const isUserAlreadyInQueue = this.queue.findIndex(
+            queueObject => queueObject.user.username === user.username
+        ) > -1;
+        if(isUserAlreadyInQueue) {
+            return;
+        }
 
         this.queue.push(queueObject);
 
@@ -66,6 +74,20 @@ class GameService {
     #stopProcessingQueue() {
         clearInterval(this.#interval);
         this.#processing = false;
+    }
+
+    isUserInQueue(username) {
+        return this.queue.findIndex(queueObject => queueObject.user.username === username) > -1;
+    }
+
+    timeElapsedOfUser(username) {
+        const queueObject = this.queue.find(queueObject => queueObject.user.username === username);
+
+        if(!queueObject) {
+            throw new UserNotFoundError();
+        }
+
+        return Date.now() - queueObject.since;
     }
 
     // TODO: Remove this method and related route when need no more

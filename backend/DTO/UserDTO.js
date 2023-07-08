@@ -10,10 +10,11 @@ class UserDTO {
     #country = '';
     #games = null;
     #elo = 0;
+    #isInQueue = false;
     #createdAt = null;
     #updatedAt = null;
     
-    constructor(login, username, avatar, firstname, lastname, email, password, passwordConfirmation, country, games, elo, createdAt, updatedAt) {
+    constructor(login, username, avatar, firstname, lastname, email, password, passwordConfirmation, country, games, elo, isInQueue, createdAt, updatedAt) {
         this.#login = login;
         this.#username = username;
         this.#avatar = avatar;
@@ -25,6 +26,7 @@ class UserDTO {
         this.#country = country;
         this.#games = games;
         this.#elo = elo;
+        this.#isInQueue = isInQueue;
         this.#createdAt = createdAt;
         this.#updatedAt = updatedAt;
     }
@@ -56,6 +58,7 @@ class UserDTO {
             user.country,
             user.games,
             user.elo,
+            undefined,
             user.createdAt,
             user.updatedAt
         );
@@ -74,6 +77,7 @@ class UserDTO {
             country: this.#country,
             games: this.#games,
             elo: this.#elo,
+            isInQueue: this.#isInQueue,
             createdAt: this.#createdAt,
             updatedAt: this.#updatedAt
         };
@@ -165,6 +169,14 @@ class UserDTO {
 
     set elo(value) {
         this.#elo = value;
+    }
+
+    get isInQueue() {
+        return this.#isInQueue;
+    }
+
+    set isInQueue(value) {
+        this.#isInQueue = value;
     }
 
     get createdAt() {

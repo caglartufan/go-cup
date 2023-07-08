@@ -1,6 +1,8 @@
 import { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
+
 import { toastActions } from '../store/toastSlice';
+import { queueActions } from '../store/queueSlice';
 
 import { setSocketId } from '../utils/websocket';
 import { socket } from '.';
@@ -21,6 +23,26 @@ const WebSocketProvider = props => {
             dispatch(toastActions.add({
                 message: 'Disconnected from websocket server due to reason ' + reason,
                 status: 'danger'
+            }));
+        });
+
+        socket.io.on('reconnect_attempt', attemptNumber => {
+            if(attemptNumber === 1) {
+                dispatch(toastActions.add({
+                    message: 'Reconnecting to websocket server...',
+                    status: 'info'
+                }));
+            }
+        });
+
+        socket.on('searching', queueData => {
+            dispatch(toastActions.add({
+                message: 'Searching for a game...',
+                status: 'info'
+            }));
+            dispatch(queueActions.searching({
+                inQueue: queueData.inQueue,
+                timeElapsed: 0
             }));
         });
 
@@ -48,6 +70,8 @@ const WebSocketProvider = props => {
 		return () => {
 			socket.off('connect');
             socket.off('disconnect');
+            socket.io.off('reconnect_attempt');
+            socket.off('searching');
 			socket.off('matched');
 			socket.off('errorOccured');
 			socket.off('connect_error');

@@ -20,5 +20,17 @@ module.exports = {
     onLoggedOut: socket => {
 		delete socket.handshake.auth.token;
 		delete socket.data.user;
+	},
+	onPlay: (services, socket, preferences) => {
+		services.gameService.enqueue(socket.data.user, preferences);
+
+		socket.emit('searching', {
+			inQueue: services.gameService.queue.length
+		});
+	},
+	onFetchQueueData: (services, socket, callback) => {
+		const inQueue = services.gameService.queue.length;
+		const timeElapsed = services.gameService.timeElapsedOfUser(socket.data.user.username);
+		callback({ inQueue, timeElapsed });
 	}
 };

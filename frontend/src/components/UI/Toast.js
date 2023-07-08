@@ -29,7 +29,7 @@ const Toast = props => {
         if(delay !== false) {
             const timer = setTimeout(() => {
                 removeToast();
-            }, delay || 3000);
+            }, delay || 5000);
     
             return () => {
                 clearTimeout(timer);

@@ -95,6 +95,9 @@ io.on('connection', socket => {
 
 	socket.on('authenticated', handlers.onAuthenticated.bind(null, services, socket));
 	socket.on('loggedOut', handlers.onLoggedOut.bind(null, socket));
+
+	socket.on('play', handlers.onPlay.bind(null, services, socket));
+	socket.on('fetchQueueData', handlers.onFetchQueueData.bind(null, services, socket));
 });
 
 // Web routes
