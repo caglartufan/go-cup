@@ -1,0 +1,31 @@
+.queue-preview {
+    display: flex;
+
+    &__details {
+        display: flex;
+        column-gap: 1.5rem;
+        margin-right: 1.5rem;
+        flex: 1;
+
+        &-group {
+            text-align: center;
+        }
+
+        &-term {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: .5rem;
+        }
+
+        &-description {
+            font-size: 2.25rem;
+            font-weight: 700;
+        }
+    }
+
+    &__actions {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+}

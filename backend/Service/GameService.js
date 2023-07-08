@@ -60,13 +60,22 @@ class GameService {
     #startProcessingQueue() {
         this.#interval = setInterval(() => {
             // TODO: Implement an algorithm to match players in queue
-            // @@@ Implmenet Uı elements to start search and view search
-            // information like currently searching, currently online,
-            // time elapsed since beginning of search process
-            // estimated time (if possible) and a way to cancel
-            // Then implement a way to match players in here (in a simple way)
             console.log('processing queue...');
-            this.queue
+            // Sort queue in ascending order by since property (date when joined in queue)
+            this.queue.sort(
+                (queueObjA, queueObjB) => queueObjA.since - queueObjB.since
+            );
+            this.queue.forEach(queueObject => {
+                const foundQueueObjectWithEloBetween0And25 = this.queue.find(
+                    targetQueueObject => (
+                        targetQueueObject.user.username !== queueObject.user.username
+                        && Math.abs(targetQueueObject.user.elo - queueObject.user.elo) <= 25
+                    )
+                );
+                if(foundQueueObjectWithEloBetween0And25) {
+                    console.log(queueObject.user.username, foundQueueObjectWithEloBetween0And25.user.username);
+                }
+            });
         }, 1000);
         this.#processing = true;
     }

@@ -1,4 +1,5 @@
 @use '../../sass/abstracts/variables' as *;
+@use '../../sass/abstracts/mixins' as *;
 
 .button {
     font-size: 1.3rem;
@@ -10,6 +11,18 @@
     border-radius: 3px;
     transition: all .3s ease;
     cursor: pointer;
+
+    &:hover {
+        background-color: darken($primary, 15%);
+    }
+
+    @include status-modifiers using ($color) {
+        background-color: $color;
+
+        &:hover {
+            background-color: darken($color, 15%);
+        }
+    }
 
     &:disabled {
         background-color: $primary;
@@ -26,6 +39,7 @@
         &:hover,
         &:active {
             color: $primary-dark;
+            background-color: transparent;
         }
     }
 }

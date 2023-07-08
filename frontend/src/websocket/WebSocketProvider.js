@@ -46,9 +46,18 @@ const WebSocketProvider = props => {
             }));
         });
 
-		socket.on('matched', () => {
-            console.log('matched!');
+		socket.on('cancelled', () => {
+            dispatch(toastActions.add({
+                message: 'Search for a game has been cancelled!',
+                status: 'warning'
+            }));
 		});
+
+        socket.on('queueUpdated', queueData => {
+            dispatch(queueActions.updateInQueue({
+                inQueue: queueData.inQueue
+            }));
+        });
 
 		// General error handler
 		socket.on('errorOccured', errorMessage => {
@@ -72,7 +81,8 @@ const WebSocketProvider = props => {
             socket.off('disconnect');
             socket.io.off('reconnect_attempt');
             socket.off('searching');
-			socket.off('matched');
+			socket.off('cancelled');
+            socket.off('queueUpdated');
 			socket.off('errorOccured');
 			socket.off('connect_error');
 		};

@@ -1,42 +1,22 @@
 import { Fragment } from 'react';
 import { Outlet } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { formatSeconds } from '../../utils/helpers';
 
 import Header from '../Header/Header';
+import QueuePreview from '../QueuePreview/QueuePreview';
 import Toast from '../../components/UI/Toast';
 
 const RootLayout = () => {
     // TODO: Add defer for loading to show a spinner or some kind of loading state component
     // https://beta.reactrouter.com/en/main/guides/deferred
     const toasts = useSelector(store => store.toast);
-    const queueData = useSelector(store => store.queue);
+    const isInQueue = useSelector(store => store.queue.isInQueue);
 
     return (
         <Fragment>
             <Header />
             <main>
-                {queueData.isInQueue && (
-                    <div>
-                        <dl>
-                            <dt>
-                                Currently in queue
-                            </dt>
-                            <dd>
-                                {queueData.inQueue}
-                            </dd>
-                            <dt>
-                                Time elapsed
-                            </dt>
-                            <dd>
-                                {formatSeconds((queueData.timeElapsed / 1000).toFixed(2))}
-                            </dd>
-                        </dl>
-                        <button>
-                            Cancel
-                        </button>
-                    </div>
-                )}
+                {isInQueue && <QueuePreview />}
                 <Outlet />
             </main>
             {toasts.length > 0 && (

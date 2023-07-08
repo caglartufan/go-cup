@@ -5,10 +5,15 @@ import './Button.scss';
 const Button = forwardRef((props, ref) => {
     const {
         className: customClassName,
+        color,
         link,
         ...buttonProps
     } = props;
     let className = 'button';
+
+    if(color) {
+        className = `${className} button--${color}`;
+    }
 
     if(customClassName) {
         className = `${className} ${customClassName}`;
