@@ -72,7 +72,7 @@ const router = createBrowserRouter([
 const App = () => {
 	return (
 		<Provider store={store}>
-			<WebSocketProvider>
+			<WebSocketProvider navigate={router.navigate} >
 				<RouterProvider router={router} />
 			</WebSocketProvider>
 		</Provider>

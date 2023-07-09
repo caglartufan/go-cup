@@ -1,6 +1,5 @@
 import { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
-// import { useNavigate } from 'react-router-dom';
 
 import { toastActions } from '../store/toastSlice';
 import { queueActions } from '../store/queueSlice';
@@ -9,36 +8,36 @@ import { setSocketId } from '../utils/websocket';
 import { socket } from '.';
 
 const WebSocketProvider = props => {
+    const { navigate } = props;
     const dispatch = useDispatch();
-    // const navigate = useNavigate();
 
 	useEffect(() => {
-		socket.on('connect', () => {
+        const onConnect = () => {
             setSocketId(socket.id);
-            console.log('Connected with id: ' + socket.id);
 			dispatch(toastActions.add({
                 message: 'Connected to websocket server!',
                 status: 'info'
             }));
-		});
+            console.log('Connected with id: ' + socket.id);
+		};
 
-        socket.on('disconnect', (reason, details) => {
+        const onDisconnect = (reason, details) => {
             dispatch(toastActions.add({
                 message: 'Disconnected from websocket server due to reason ' + reason,
                 status: 'danger'
             }));
-        });
+        };
 
-        socket.io.on('reconnect_attempt', attemptNumber => {
+        const onReconnectAttempt = attemptNumber => {
             if(attemptNumber === 1) {
                 dispatch(toastActions.add({
                     message: 'Reconnecting to websocket server...',
                     status: 'info'
                 }));
             }
-        });
+        };
 
-        socket.on('searching', queueData => {
+        const onSearching = queueData => {
             dispatch(toastActions.add({
                 message: 'Searching for a game...',
                 status: 'info'
@@ -47,60 +46,71 @@ const WebSocketProvider = props => {
                 inQueue: queueData.inQueue,
                 timeElapsed: 0
             }));
-        });
+        };
 
-		socket.on('cancelled', () => {
+        const onCancelled = () => {
             dispatch(toastActions.add({
                 message: 'Search for a game has been cancelled!',
                 status: 'warning'
             }));
-		});
+		};
 
-        socket.on('queueUpdated', queueData => {
+        const onQueueUpdated = queueData => {
             dispatch(queueActions.updateInQueue({
                 inQueue: queueData.inQueue
             }));
-        });
+        };
 
-        socket.on('gameStarted', gameId => {
+        const onGameStarted = gameId => {
             dispatch(toastActions.add({
                 message: 'Game started with id: ' + gameId,
                 status: 'success'
             }));
             dispatch(queueActions.cancelled());
-            // navigate('/games/' + gameId);
-        });
+            navigate('/games/' + gameId);
+        };
 
 		// General error handler
-		socket.on('errorOccured', errorMessage => {
+        const onErrorOccured = errorMessage => {
 			dispatch(toastActions.add({
                 message: errorMessage,
                 status: 'danger'
             }));
-		});
+		};
 
 		// In case authentication middleware fails and throws and error
-		socket.on('connect_error', error => {
+        const onConnectError = error => {
 			dispatch(toastActions.add({
                 message: error.message,
                 status: 'danger'
             }));
 			console.error(error);
-        });
+        };
+
+		socket.on('connect', onConnect);
+        socket.on('disconnect', onDisconnect);
+        socket.io.on('reconnect_attempt', onReconnectAttempt);
+
+        socket.on('searching', onSearching);
+		socket.on('cancelled', onCancelled);
+        socket.on('queueUpdated', onQueueUpdated);
+        socket.on('gameStarted', onGameStarted);
+
+		socket.on('errorOccured', onErrorOccured);
+		socket.on('connect_error', onConnectError);
 
 		return () => {
-			socket.off('connect');
-            socket.off('disconnect');
-            socket.io.off('reconnect_attempt');
-            socket.off('searching');
-			socket.off('cancelled');
-            socket.off('queueUpdated');
-            socket.off('gameStarted');
-			socket.off('errorOccured');
-			socket.off('connect_error');
+			socket.off('connect', onConnect);
+            socket.off('disconnect', onDisconnect);
+            socket.io.off('reconnect_attempt', onReconnectAttempt);
+            socket.off('searching', onSearching);
+			socket.off('cancelled', onCancelled);
+            socket.off('queueUpdated', onQueueUpdated);
+            socket.off('gameStarted', onGameStarted);
+			socket.off('errorOccured', onErrorOccured);
+			socket.off('connect_error', onConnectError);
 		};
-	// }, [dispatch, navigate]);
-    }, [dispatch]);
+    }, [dispatch, navigate]);
 
     return props.children;
 };

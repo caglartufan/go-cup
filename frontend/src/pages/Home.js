@@ -4,6 +4,7 @@ import { gamesListActions } from '../store/gamesListSlice';
 import GamesList from '../components/Games/GamesList';
 
 const HomePage = () => {
+    // TODO: Defer loading
     return (
         <GamesList />
     );
