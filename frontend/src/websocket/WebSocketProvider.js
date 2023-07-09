@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
+// import { useNavigate } from 'react-router-dom';
 
 import { toastActions } from '../store/toastSlice';
 import { queueActions } from '../store/queueSlice';
@@ -9,14 +10,16 @@ import { socket } from '.';
 
 const WebSocketProvider = props => {
     const dispatch = useDispatch();
+    // const navigate = useNavigate();
 
 	useEffect(() => {
 		socket.on('connect', () => {
             setSocketId(socket.id);
-			dispatch(toastActions.add({
-                message: 'Connected to websocket server!'
-            }));
             console.log('Connected with id: ' + socket.id);
+			dispatch(toastActions.add({
+                message: 'Connected to websocket server!',
+                status: 'info'
+            }));
 		});
 
         socket.on('disconnect', (reason, details) => {
@@ -59,6 +62,15 @@ const WebSocketProvider = props => {
             }));
         });
 
+        socket.on('gameStarted', gameId => {
+            dispatch(toastActions.add({
+                message: 'Game started with id: ' + gameId,
+                status: 'success'
+            }));
+            dispatch(queueActions.cancelled());
+            // navigate('/games/' + gameId);
+        });
+
 		// General error handler
 		socket.on('errorOccured', errorMessage => {
 			dispatch(toastActions.add({
@@ -83,10 +95,12 @@ const WebSocketProvider = props => {
             socket.off('searching');
 			socket.off('cancelled');
             socket.off('queueUpdated');
+            socket.off('gameStarted');
 			socket.off('errorOccured');
 			socket.off('connect_error');
 		};
-	}, [dispatch]);
+	// }, [dispatch, navigate]);
+    }, [dispatch]);
 
     return props.children;
 };

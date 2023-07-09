@@ -13,6 +13,8 @@ module.exports = {
 		try {
 			const userDTO = await services.userService.authenticate(token);
 			socket.data.user = userDTO;
+
+			socket.join(userDTO.username);
 		} catch(error) {
 			socket.emit('errorOccured', ErrorHandler.handle(error).message);
 		}
@@ -20,6 +22,8 @@ module.exports = {
     onLoggedOut: socket => {
 		// TODO: On log out or on disconnection, set a timeout that will
 		// dequeue user if user is already in queue
+		socket.leave(socket.data.user.username);
+
 		delete socket.handshake.auth.token;
 		delete socket.data.user;
 	},

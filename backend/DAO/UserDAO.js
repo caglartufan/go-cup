@@ -32,6 +32,16 @@ class UserDAO {
         });
     }
 
+    static async getUserIdsByUsernames(...usernames) {
+        const users = await User.find({
+            username: {
+                $in: usernames
+            }
+        }).select('_id');
+
+        return users.map(user => user._id);
+    }
+
     static async createUser(user) {
         user = new User({
             username: user.username,

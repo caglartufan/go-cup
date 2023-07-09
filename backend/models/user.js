@@ -53,7 +53,8 @@ const userSchema = new mongoose.Schema({
         match: [Validator.COUNTRY_REGEX, VALIDATION.user.country['string.pattern.base']]
     },
     games: [{
-        type: mongoose.SchemaTypes.ObjectId
+        type: mongoose.SchemaTypes.ObjectId,
+        ref: 'Game'
     }],
     elo: {
         type: Number,

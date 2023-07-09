@@ -54,6 +54,25 @@ const VALIDATION = {
         },
         status: {
             'any.only': 'Game status can only be waiting, started, finished, white_resigned or black_resigned.'
+        },
+        moves: {
+            player: {
+                'any.required': 'Move requires a player (black or white) to be associated with.',
+                'any.only': 'Associated player has to be either black or white.'
+            },
+            position: {
+                'any.required': 'Move requires a position (e.g. C3) to be assoicated with.'
+            }
+        },
+        black: {
+            user: {
+                'any.required': 'Black player\'s user id is required!',
+            }
+        },
+        white: {
+            user: {
+                'any.required': 'White player\'s user id is required!',
+            }
         }
     }
 };

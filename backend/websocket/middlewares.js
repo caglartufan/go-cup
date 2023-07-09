@@ -7,8 +7,10 @@ exports.auth = async (services, socket, next) => {
 		try {
 			const userDTO = await services.userService.authenticate(token);
 			socket.data.user = userDTO;
+			
+			socket.join(userDTO.username);
 		} catch(error) {
-			next(ErrorHandler.handle(error));
+			socket.emit('errorOccured', ErrorHandler.handle(error).message);
 		}
 	}
 

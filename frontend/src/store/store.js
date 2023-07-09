@@ -5,6 +5,7 @@ import loginFormSlice from './loginFormSlice';
 import signupFormSlice from './signupFormSlice';
 import toastSlice from './toastSlice';
 import queueSlice from './queueSlice';
+import gamesListSlice from './gamesListSlice';
 
 export const store = configureStore({
     reducer: {
@@ -12,6 +13,7 @@ export const store = configureStore({
         'login-form': loginFormSlice,
         'signup-form': signupFormSlice,
         'toast': toastSlice,
-        'queue': queueSlice
+        'queue': queueSlice,
+        'games-list': gamesListSlice
     }
 });

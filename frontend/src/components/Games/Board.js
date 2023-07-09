@@ -84,13 +84,15 @@ const Board = props => {
         // Draw stones
         state.forEach((row, rowIndex) => {
             row.forEach((stone, columnIndex) => {
-                ctx.beginPath();
-                const centerX = gridPadding + Math.floor(columnIndex * gridOffset);
-                const centerY = gridPadding + Math.floor(rowIndex * gridOffset);
-                ctx.moveTo(centerX, centerY);
-                ctx.arc(centerX, centerY, clientWidth / (size * 2.75), 0, 2 * Math.PI);
-                ctx.fillStyle = stone ? '#fff' : '#000';
-                ctx.fill();
+                if(stone !== null) {
+                    ctx.beginPath();
+                    const centerX = gridPadding + Math.floor(columnIndex * gridOffset);
+                    const centerY = gridPadding + Math.floor(rowIndex * gridOffset);
+                    ctx.moveTo(centerX, centerY);
+                    ctx.arc(centerX, centerY, clientWidth / (size * 2.75), 0, 2 * Math.PI);
+                    ctx.fillStyle = stone ? '#000' : '#fff';
+                    ctx.fill();
+                }
             });
         });
     }, [size, state]);

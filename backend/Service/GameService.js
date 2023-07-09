@@ -1,4 +1,5 @@
 const GameDAO = require('../DAO/GameDAO');
+const UserDAO = require('../DAO/UserDAO');
 const UserDTO = require('../DTO/UserDTO');
 const { InvalidDTOError, UserNotFoundError } = require('../utils/ErrorHandler');
 
@@ -162,7 +163,7 @@ class GameService {
         this.#processing = false;
     }
 
-    #startGame(colorsAssociatedWithPlayers) {
+    async #startGame(colorsAssociatedWithPlayers) {
         const { black, white } = colorsAssociatedWithPlayers;
 
         this.dequeue(black);
@@ -170,7 +171,11 @@ class GameService {
 
         console.log(`Starting a match between ${black.username} (black) and ${white.username} (white)!`);
 
-        // TODO: Start a new game!
+        const [blackUserId, whiteUserId] = await UserDAO.getUserIdsByUsernames(black.username, white.username);
+
+        const game = await GameDAO.createGame(blackUserId, whiteUserId);
+
+        this.#io.to([black.username, white.username]).emit('gameStarted', game._id);
     }
 
     isUserInQueue(username) {
