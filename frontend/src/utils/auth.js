@@ -83,7 +83,6 @@ export const authLoader = async () => {
     store.dispatch(userActions.update(user));
 
     if(user.isInQueue) {
-        // TODO: Get queue data from websocket server and update queue slice
         const { inQueue, timeElapsed } = await socket.emitWithAck('fetchQueueData');
         store.dispatch(queueActions.searching({
             inQueue,
