@@ -9,7 +9,8 @@ const ERRORS = {
     INVALID_IO_OBJECT: 'Received an object that is instance of #{RECEIVED_CLASS} which is not a valid socket.io (io) object.',
     NOT_FOUND: 'Page or resource could not found!',
     UNAUTHORIZED: 'Unauthorized user.',
-    USER_NOT_FOUND: 'Could not find user!'
+    USER_NOT_FOUND: 'Could not find user!',
+    GAME_NOT_FOUND: 'Could not find game!'
 };
 
 module.exports = ERRORS;

@@ -10,7 +10,7 @@ import LoginPage, { action as loginAction } from './pages/Login';
 import SignupPage, { action as signupAction } from './pages/Signup';
 import LeaderbordPage from './pages/Leaderboard';
 import GamesPage from './pages/Games';
-import GameDetailPage from './pages/GameDetail';
+import GameDetailPage, { loader as gameDetailLoader } from './pages/GameDetail';
 import ProfilePage from './pages/Profile';
 
 import { authLoader, authMiddleware, logoutAction, noAuthMiddleware } from './utils/auth';
@@ -35,7 +35,8 @@ const router = createBrowserRouter([
 					},
 					{
 						path: ':gameId',
-						element: <GameDetailPage />
+						element: <GameDetailPage />,
+						loader: gameDetailLoader
 					}
 				]
 			},

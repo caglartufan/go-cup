@@ -95,6 +95,14 @@ class UserNotFoundError extends NotFoundError {
     }
 }
 
+class GameNotFoundError extends NotFoundError {
+    constructor() {
+        super();
+        this.message = ERRORS.GAME_NOT_FOUND;
+        this.name = 'GameNotFoundError';
+    }
+}
+
 class InvalidDTOError extends TypeError {
     constructor(object, ExpectedDTOClass) {
         let message = ERRORS.INVALID_DTO_OBJECT;
@@ -146,6 +154,7 @@ module.exports = {
     NotFoundError,
     UnauthorizedError,
     UserNotFoundError,
+    GameNotFoundError,
     InvalidDTOError,
     InvalidIOError,
     ErrorHandler

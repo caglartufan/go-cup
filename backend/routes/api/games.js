@@ -1,47 +1,29 @@
 const express = require('express');
 const router = express.Router();
-const auth = require('../../middlewares/auth');
 const { ErrorHandler } = require('../../utils/ErrorHandler');
-const UserDTO = require('../../DTO/UserDTO');
 
 router.get('/', async function(req, res) {
     // TODO: Add pagination, filter and search with UI
-    const games = await req.app.get('services').gameService.getGames();
+    const gameDTOs = await req.app.get('services').gameService.getGames();
+
+    const serializedGameDTOs = gameDTOs.map(gameDTO => gameDTO.toObject());
 
     return res.json({
-        total: games.length,
-        games
+        ok: true,
+        total: gameDTOs.length,
+        games: serializedGameDTOs
     });
 });
 
-router.post('/play', auth, function(req, res, next) {
-    const reqData = req.body;
-
-    const preferences = {
-        size: reqData.size
-    };
+router.get('/:gameId', async function(req, res, next) {
+    const gameId = req.params.gameId;
 
     try {
-        const user = UserDTO.withUserObject(req.user);
-
-        req.app.get('services').gameService.enqueue(user, preferences);
+        const gameDTO = await req.app.get('services').gameService.findGameById(gameId);
 
         return res.json({
-            ok: true
-        });
-    } catch(error) {
-        next(ErrorHandler.handle(error));
-    }
-});
-
-router.delete('/cancel', auth, function(req, res, next) {
-    try {
-        const user = UserDTO.withUserObject(req.user);
-
-        req.app.get('services').gameService.dequeue(user);
-
-        return res.json({
-            ok: true
+            ok: true,
+            game: gameDTO.toObject()
         });
     } catch(error) {
         next(ErrorHandler.handle(error));
@@ -50,6 +32,7 @@ router.delete('/cancel', auth, function(req, res, next) {
 
 router.get('/queue', function(req, res) {
     return res.json({
+        ok: true,
         queue: req.app.get('services').gameService.getQueue()
     });
 });

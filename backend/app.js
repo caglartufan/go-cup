@@ -124,6 +124,7 @@ app.use(function(err, req, res, next) {
 	// Render the error page or respond with error
 	res.status(err.status);
 	res.json({
+		ok: false,
 		message: err.message,
 		errors: err.errors
 	});

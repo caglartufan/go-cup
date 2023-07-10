@@ -8,6 +8,16 @@ class GameDAO {
             .populate('white.user', '-_id username elo');
     }
 
+    static async findGameById(gameId) {
+        return await Game
+            .findOne({
+                _id: gameId,
+                isPrivate: false
+            })
+            .populate('black.user', '-_id username elo')
+            .populate('white.user', '-_id username elo');
+    }
+
     static async createGame(blackUserId, whiteUserId) {
         const game = new Game({
             size: 9,

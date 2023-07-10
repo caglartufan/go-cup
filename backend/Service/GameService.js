@@ -1,7 +1,9 @@
+const mongoose = require('mongoose');
 const GameDAO = require('../DAO/GameDAO');
 const UserDAO = require('../DAO/UserDAO');
 const UserDTO = require('../DTO/UserDTO');
-const { InvalidDTOError, UserNotFoundError } = require('../utils/ErrorHandler');
+const { InvalidDTOError, UserNotFoundError, GameNotFoundError } = require('../utils/ErrorHandler');
+const GameDTO = require('../DTO/GameDTO');
 
 class GameService {
     queue = [];
@@ -14,7 +16,27 @@ class GameService {
     }
 
     async getGames() {
-        return await GameDAO.getGames();
+        const games = await GameDAO.getGames();
+
+        const gameDTOs = games.map(game => GameDTO.withGameObject(game));
+
+        return gameDTOs;
+    }
+
+    async findGameById(gameId) {
+        if(!mongoose.isValidObjectId(gameId)) {
+            throw new GameNotFoundError();
+        }
+
+        const game = await GameDAO.findGameById(gameId);
+
+        if(!game) {
+            throw new GameNotFoundError();
+        }
+
+        const gameDTO = GameDTO.withGameObject(game);
+
+        return gameDTO;
     }
 
     enqueue(user, preferences) {

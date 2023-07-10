@@ -21,6 +21,20 @@ class GameDTO {
         this.#createdAt = createdAt;
     }
 
+    static withGameObject(game) {
+        return new GameDTO(
+            game._id,
+            game.size,
+            game.status,
+            game.board,
+            game.moves,
+            game.black,
+            game.white,
+            game.isPrivate,
+            game.createdAt
+        );
+    }
+
     toObject() {
         return {
             _id: this.#_id,
