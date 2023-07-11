@@ -1,0 +1,17 @@
+@use '../../sass/abstracts/variables' as *;
+
+.chat {
+    padding: 0;
+
+    &-messages {
+        border-bottom: 1px solid #000;
+    
+        &__message {
+            padding: 1rem 2rem;
+        }
+
+        &__user-link {
+
+        }
+    }
+}

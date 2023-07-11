@@ -14,8 +14,8 @@ class GameDAO {
                 _id: gameId,
                 isPrivate: false
             })
-            .populate('black.user', '-_id username elo')
-            .populate('white.user', '-_id username elo');
+            .populate('black.user', '-_id username elo avatar')
+            .populate('white.user', '-_id username elo avatar');
     }
 
     static async createGame(blackUserId, whiteUserId) {

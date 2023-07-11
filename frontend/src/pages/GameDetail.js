@@ -1,13 +1,16 @@
 import { redirect, useLoaderData } from 'react-router-dom';
 
 import { store } from '../store/store';
+import { toastActions } from '../store/toastSlice';
 
 import Row from '../layout/Grid/Row';
 import Container from '../layout/Grid/Container';
 import Column from '../layout/Grid/Column';
 import Board from '../components/Games/Board';
-import { toastActions } from '../store/toastSlice';
-import Card from '../components/UI/Card';
+
+import './GameDetail.scss';
+import PlayerCard from '../components/Games/PlayerCard';
+import Chat from '../components/Games/Chat';
 
 
 const GameDetailPage = () => {
@@ -22,19 +25,28 @@ const GameDetailPage = () => {
                 <Column size={5}>
                     <Row>
                         <Column>
-                            <Card color="success" className="card-player-black">
-                                Black
-                            </Card>
+                            <PlayerCard
+                                color="black"
+                                username={game.black.user.username}
+                                elo={game.black.user.elo}
+                                avatar={game.black.user.avatar}
+                                time-remaining={game.black.timeRemaining}
+                                score={game.black.score}
+                                active={true}
+                            />
                         </Column>
                         <Column>
-                            <Card color="success">
-                                White
-                            </Card>
+                            <PlayerCard
+                                color="white"
+                                username={game.white.user.username}
+                                elo={game.white.user.elo}
+                                avatar={game.white.user.avatar}
+                                time-remaining={game.white.timeRemaining}
+                                score={game.white.score}
+                            />
                         </Column>
                     </Row>
-                    <div>
-                        Chat
-                    </div>
+                    <Chat />
                 </Column>
             </Row>
         </Container>

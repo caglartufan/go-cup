@@ -9,6 +9,4 @@ const options = {
     }
 };
 
-console.log('Called');
-
 export const socket = io(URL, options);
