@@ -1,8 +1,15 @@
 @use '../../sass/abstracts/variables' as *;
 
 .board {
+    display: block;
     width: 100%;
     aspect-ratio: 1;
     background-color: brown;
-    border: 1px solid $black;
+    // border: 1px solid $black;
+
+    &--dynamic-height {
+        width: auto;
+        height: 100%;
+        margin: 0 auto;
+    }
 }

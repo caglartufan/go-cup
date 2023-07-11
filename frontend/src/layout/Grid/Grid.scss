@@ -10,6 +10,14 @@
     padding: 2rem;
     box-sizing: border-box;
 
+    &--fill-vertically {
+        height: calc(100vh - 90px);
+    }
+
+    &--fluid {
+        max-width: 100% !important;
+    }
+
     @include respond-to(large) {
         max-width: map.get($container-max-widths, lg);
     }

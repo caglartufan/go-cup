@@ -5,16 +5,27 @@ import './Board.scss';
 const Board = props => {
     const {
         size,
-        state
+        state,
+        dynamicHeight
     } = props;
     const board = useRef();
 
-    const initializeBoard = useCallback(() => {
+    let className = 'board';
+
+    if(dynamicHeight) {
+        className = `${className} board--dynamic-height`;
+    }
+
+    const resizeBoard = useCallback(() => {
         const { clientWidth, clientHeight } = board.current;
-        const ctx = board.current.getContext('2d');
 
         board.current.height = clientHeight;
         board.current.width = clientWidth;
+    }, []);
+
+    const drawBoard = useCallback(() => {
+        const { clientWidth, clientHeight } = board.current;
+        const ctx = board.current.getContext('2d');
 
         // Constant definitions related to board
         const gridPadding = Math.floor(clientWidth / 22) + .5;
@@ -98,11 +109,23 @@ const Board = props => {
     }, [size, state]);
 
     useEffect(() => {
-        initializeBoard(board.current);
-    }, [initializeBoard]);
+        resizeBoard();
+        drawBoard();
+
+        const resizeHandler = () => {
+            resizeBoard();
+            drawBoard();
+        };
+
+        window.addEventListener('resize', resizeHandler);
+
+        return () => {
+            window.removeEventListener('resize', resizeHandler);
+        };
+    }, [resizeBoard, drawBoard]);
 
     return (
-        <canvas className="board" ref={board}></canvas>
+        <canvas className={className} ref={board}></canvas>
     );
 };
 
