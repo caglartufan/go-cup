@@ -23,30 +23,32 @@ const GameDetailPage = () => {
                     <Board size={game.size} state={game.board} dynamicHeight />
                 </Column>
                 <Column size={5}>
-                    <Row>
-                        <Column>
-                            <PlayerCard
-                                color="black"
-                                username={game.black.user.username}
-                                elo={game.black.user.elo}
-                                avatar={game.black.user.avatar}
-                                time-remaining={game.black.timeRemaining}
-                                score={game.black.score}
-                                active={true}
-                            />
-                        </Column>
-                        <Column>
-                            <PlayerCard
-                                color="white"
-                                username={game.white.user.username}
-                                elo={game.white.user.elo}
-                                avatar={game.white.user.avatar}
-                                time-remaining={game.white.timeRemaining}
-                                score={game.white.score}
-                            />
-                        </Column>
-                    </Row>
-                    <Chat />
+                    <div className="d-flex flex-column h-100">
+                        <Row>
+                            <Column>
+                                <PlayerCard
+                                    color="black"
+                                    username={game.black.user.username}
+                                    elo={game.black.user.elo}
+                                    avatar={game.black.user.avatar}
+                                    time-remaining={game.black.timeRemaining}
+                                    score={game.black.score}
+                                    active={true}
+                                />
+                            </Column>
+                            <Column>
+                                <PlayerCard
+                                    color="white"
+                                    username={game.white.user.username}
+                                    elo={game.white.user.elo}
+                                    avatar={game.white.user.avatar}
+                                    time-remaining={game.white.timeRemaining}
+                                    score={game.white.score}
+                                />
+                            </Column>
+                        </Row>
+                        <Chat />
+                    </div>
                 </Column>
             </Row>
         </Container>
