@@ -15,7 +15,7 @@ const GamesListItem = props => {
     // is no more in the spectators room in websocket server !!!
 
     return (
-        <Link className="games-list-item" to={`/games/${game._id}`}>
+        <Link className="games-list-item" to={'/games/' + game._id}>
             <div className="games-list-item__player-preview games-list-item__player-preview--white">
                 <span>
                     {game.white.user.username} ({game.white.user.elo})

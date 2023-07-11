@@ -3,6 +3,7 @@
 @use '../../sass/abstracts/mixins' as *;
 
 #toast-container {
+    // TODO: Do this sticky for showing toast messages when scrolling very bottom
     position: absolute;
     top: 9rem;
     right: 2rem;
