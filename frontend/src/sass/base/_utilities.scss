@@ -22,9 +22,32 @@
     height: 100% !important;
 }
 
-.my-4 {
-    margin-top: 1rem !important;
-    margin-bottom: 1rem !important;
+@for $i from 1 through 12 {
+    .mt-#{$i} {
+        margin-top: calc(.25rem * $i) !important;
+    }
+
+    .me-#{$i} {
+        margin-right: calc(.25rem * $i) !important;
+    }
+
+    .mb-#{$i} {
+        margin-bottom: calc(.25rem * $i) !important;
+    }
+
+    .ms-#{$i} {
+        margin-left: calc(.25rem * $i) !important;
+    }
+
+    .mx-#{$i} {
+        margin-left: calc(.25rem * $i) !important;
+        margin-right: calc(.25rem * $i) !important;
+    }
+
+    .my-#{$i} {
+        margin-top: calc(.25rem * $i) !important;
+        margin-bottom: calc(.25rem * $i) !important;
+    }
 }
 
 .text-center {

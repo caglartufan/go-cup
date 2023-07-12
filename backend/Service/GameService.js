@@ -39,6 +39,27 @@ class GameService {
         return gameDTO;
     }
 
+    async createChatEntryById(gameId, userId, message) {
+        if(!mongoose.isValidObjectId(gameId)) {
+            throw new GameNotFoundError();
+        }
+
+        const game = await GameDAO.findGameById(gameId);
+
+        game.chat.push({
+            user: userId,
+            message
+        });
+
+        await game.save();
+
+        await game.populate('chat.' + (game.chat.length - 1) + '.user', '-_id username elo');
+
+        const chatEntry = game.chat[game.chat.length - 1];
+
+        return chatEntry;
+    }
+
     enqueue(user, preferences) {
         if(!(user instanceof UserDTO)) {
             throw new InvalidDTOError(user, UserDTO);

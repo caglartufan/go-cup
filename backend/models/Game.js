@@ -69,7 +69,7 @@ const gameSchema = new mongoose.Schema({
         score: {
             type: Number,
             min: 0,
-            default: 0
+            default: .5
         },
         timeRemaining: {
             type: Number,
@@ -77,9 +77,45 @@ const gameSchema = new mongoose.Schema({
             default: 5 * 60
         }
     },
+    chat: {
+        type: [{
+            user: {
+                type: mongoose.Types.ObjectId,
+                ref: 'User'
+            },
+            message: {
+                // TODO: Add some validation and XSS prevention
+                type: String
+            },
+            isSystem: {
+                type: Boolean,
+                default: false
+            },
+            createdAt: {
+                type: Date,
+                default: Date.now
+            }
+        }],
+        default: [{
+            isSystem: true,
+            message: 'Beginning of the chat'
+        }]
+    },
     isPrivate: {
         type: Boolean,
         default: false
+    },
+    gameStartedAt: {
+        type: Date
+    },
+    waitingEndsAt: {
+        type: Date,
+        default: function() {
+            const now = new Date();
+            now.setMinutes(now.getMinutes() + 20);
+
+            return now;
+        }
     },
     createdAt: {
         type: Date,

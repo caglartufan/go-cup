@@ -3,6 +3,7 @@ import { useDispatch } from 'react-redux';
 
 import { toastActions } from '../store/toastSlice';
 import { queueActions } from '../store/queueSlice';
+import { gameActions } from '../store/gameSlice';
 
 import { setSocketId } from '../utils/websocket';
 import { socket } from '.';
@@ -63,11 +64,23 @@ const WebSocketProvider = props => {
 
         const onGameStarted = gameId => {
             dispatch(toastActions.add({
-                message: 'Game started with id: ' + gameId,
+                message: 'Game has started!',
                 status: 'success'
             }));
             dispatch(queueActions.cancelled());
             navigate('/games/' + gameId);
+        };
+
+        const userJoinedGameRoomHandler = username => {
+            dispatch(toastActions.add({
+                message: `${username} has joined to the game room!`,
+                status: 'info'
+            }));
+        };
+
+        const onGameChatMessage = chatEntry => {
+            console.log(chatEntry);
+            dispatch(gameActions.addChatEntry({ chatEntry }));
         };
 
 		// General error handler
@@ -95,6 +108,8 @@ const WebSocketProvider = props => {
 		socket.on('cancelled', onCancelled);
         socket.on('queueUpdated', onQueueUpdated);
         socket.on('gameStarted', onGameStarted);
+        socket.on('userJoinedGameRoom', userJoinedGameRoomHandler);
+        socket.on('gameChatMessage', onGameChatMessage);
 
 		socket.on('errorOccured', onErrorOccured);
 		socket.on('connect_error', onConnectError);
@@ -103,10 +118,14 @@ const WebSocketProvider = props => {
 			socket.off('connect', onConnect);
             socket.off('disconnect', onDisconnect);
             socket.io.off('reconnect_attempt', onReconnectAttempt);
+
             socket.off('searching', onSearching);
 			socket.off('cancelled', onCancelled);
             socket.off('queueUpdated', onQueueUpdated);
             socket.off('gameStarted', onGameStarted);
+            socket.off('userJoinedGameRoom', userJoinedGameRoomHandler);
+            socket.off('gameChatMessage', onGameChatMessage);
+
 			socket.off('errorOccured', onErrorOccured);
 			socket.off('connect_error', onConnectError);
 		};

@@ -1,4 +1,4 @@
-const { ErrorHandler } = require('../utils/ErrorHandler');
+const { ErrorHandler, UnauthorizedError } = require('../utils/ErrorHandler');
 
 module.exports = {
     onConnection: socket => {
@@ -66,5 +66,30 @@ module.exports = {
 		io.in('queue').emit('queueUpdated', {
 			inQueue
 		});
+	},
+	onJoinGameRoom: (socket, gameId) => {
+		if(!socket.data.user) {
+			socket.emit('errorOccured', new UnauthorizedError().message);
+			return;
+		}
+
+		socket.join('game-' + gameId);
+		socket.in('game-' + gameId).emit('userJoinedGameRoom', socket.data.user.username);
+	},
+	onGameChatMessage: async (io, services, socket, gameId, message) => {
+		if(!socket.data.user) {
+			socket.emit('errorOccured', new UnauthorizedError().message);
+			return;
+		}
+
+		try {
+			const userId = await services.userService.getUserIdByUser(socket.data.user);
+
+			const chatEntry = await services.gameService.createChatEntryById(gameId, userId, message);
+
+			io.in('game-' + gameId).emit('gameChatMessage', chatEntry);
+		} catch(error) {
+			socket.emit('errorOccured', error.message);
+		}
 	}
 };

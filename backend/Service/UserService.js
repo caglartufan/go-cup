@@ -82,6 +82,16 @@ class UserService {
 
         return userDTO;
     }
+
+    async getUserIdByUser(userDTO) {
+        if(!(userDTO instanceof UserDTO)) {
+            throw new InvalidDTOError(userDTO, userDTO);
+        }
+
+        const userId = await UserDAO.getUserIdByUsernameAndEmail(userDTO.username, userDTO.email);
+
+        return userId;
+    }
 }
 
 module.exports = UserService;

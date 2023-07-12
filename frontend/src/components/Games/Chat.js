@@ -1,13 +1,19 @@
 import { useCallback, useRef } from 'react';
+import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCircleChevronRight } from '@fortawesome/free-solid-svg-icons';
+import { formatDateToHoursAndMinutes } from '../../utils/helpers';
+
+import { socket } from '../../websocket';
 
 import Card from '../UI/Card';
 
 import './Chat.scss';
 
 const Chat = props => {
+    const gameId = useSelector(state => state.game.game._id);
+    const chat = useSelector(state => state.game.game.chat);
     const textareaRef = useRef();
     const formRef = useRef();
 
@@ -32,24 +38,32 @@ const Chat = props => {
     const submitHandler = useCallback(event => {
         event.preventDefault();
 
-        // Submit the message
-        console.log(textareaRef.current.value.trim());
-    }, []);
+        // TODO: Make sure message is safe for XSS
+        const message = textareaRef.current.value.trim();
+
+        socket.emit('gameChatMessage', gameId, message);
+    }, [gameId]);
 
     return (
         <Card box-shadow="light" className="chat">
             <div className="chat-messages">
-                <p className="chat-messages__message chat-messages__message--info">
-                    Beginning of the chat <span className="chat-messages__time">(22:18)</span>
-                </p>
-                <p className="chat-messages__message">
-                    <Link className="chat-messages__user">
-                        n3pixe (530)
-                    </Link>: lorem ipsum message <span className="chat-messages__time">(22:19)</span>
-                </p>
-                <p className="chat-messages__message">
-                    <span className="chat-messages__user">n3pix (500)</span>: lorem ipsum message  <span className="chat-messages__time">(22:21)</span>
-                </p>
+                {chat.map(chatEntry => {
+                    const createdAtDate = new Date(chatEntry.createdAt);
+
+                    if(chatEntry.isSystem) {
+                        return (
+                            <p className="chat-messages__message chat-messages__message--info" key={createdAtDate}>
+                                {chatEntry.message} <span className="chat-messages__time">({formatDateToHoursAndMinutes(createdAtDate)})</span>
+                            </p>
+                        );
+                    } else {
+                        return (
+                            <p className="chat-messages__message" key={createdAtDate}>
+                                <Link className="chat-messages__user" to={'/users/' + chatEntry.user.username}>{chatEntry.user.username} ({chatEntry.user.elo})</Link>: {chatEntry.message} <span className="chat-messages__time">({createdAtDate.toLocaleTimeString()})</span>
+                            </p>
+                        );
+                    }
+                })}
             </div>
             <div className="chat-controls">
                 <form className="chat-controls__form" onSubmit={submitHandler} ref={formRef}>

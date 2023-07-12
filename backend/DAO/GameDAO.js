@@ -2,6 +2,7 @@ const { Game } = require('../models/Game');
 
 class GameDAO {
     static async getGames() {
+        // TODO: Filter unnecessary data requested such as chat, waitingEndsAt etc.
         return await Game
             .find({ isPrivate: false })
             .populate('black.user', '-_id username elo')
@@ -15,7 +16,8 @@ class GameDAO {
                 isPrivate: false
             })
             .populate('black.user', '-_id username elo avatar')
-            .populate('white.user', '-_id username elo avatar');
+            .populate('white.user', '-_id username elo avatar')
+            .populate('chat.user', '-_id username elo');
     }
 
     static async createGame(blackUserId, whiteUserId) {

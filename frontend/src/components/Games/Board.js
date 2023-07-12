@@ -6,7 +6,8 @@ const Board = props => {
     const {
         size,
         state,
-        dynamicHeight
+        dynamicHeight,
+        className: customClassName
     } = props;
     const board = useRef();
 
@@ -14,6 +15,10 @@ const Board = props => {
 
     if(dynamicHeight) {
         className = `${className} board--dynamic-height`;
+    }
+
+    if(customClassName) {
+        className = `${className} ${customClassName}`;
     }
 
     const resizeBoard = useCallback(() => {
@@ -107,6 +112,31 @@ const Board = props => {
             });
         });
     }, [size, state]);
+    
+    const clickHandler = ({ clientX, clientY }) => {
+        const { clientWidth, clientHeight } = board.current;
+        const { x: clientRectX, y: clientRectY } = board.current.getClientRects()[0];
+
+        // Constant definitions related to board
+        const gridPadding = Math.floor(clientWidth / 22) + .5;
+        const innerSize = clientHeight - (2 * gridPadding);
+        const gridOffset = innerSize / (size - 1);
+
+        // Clicked point's coordinates with respect to canvas' origin (top left corner)
+        const coordinates = {
+            x: clientX - clientRectX,
+            y: clientY - clientRectY
+        };
+        // Clicked point's index numbers (i for row, j for column index)
+        const row = Math.round((coordinates.y - gridPadding) / gridOffset);
+        const column = Math.round((coordinates.x - gridPadding) / gridOffset);
+
+        if(state[row][column] === null) {
+            // state[row][column] = Math.random() < .5;
+            drawBoard();
+        }
+        console.log(coordinates, row, column);
+    };
 
     useEffect(() => {
         resizeBoard();
@@ -125,7 +155,7 @@ const Board = props => {
     }, [resizeBoard, drawBoard]);
 
     return (
-        <canvas className={className} ref={board}></canvas>
+        <canvas className={className} ref={board} onClick={clickHandler}></canvas>
     );
 };
 
