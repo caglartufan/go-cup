@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -14,6 +14,7 @@ import './Chat.scss';
 const Chat = props => {
     const gameId = useSelector(state => state.game.game._id);
     const chat = useSelector(state => state.game.game.chat);
+    const [isScrolled, setIsScrolled] = useState(false);
     const textareaRef = useRef();
     const formRef = useRef();
     const chatMessagesRef = useRef();
@@ -53,15 +54,22 @@ const Chat = props => {
         adjustTextareaHeight();
     }, [gameId, adjustTextareaHeight]);
 
+    const scrollHandler = useCallback(() => {
+        setIsScrolled(true);
+    }, []);
+
     useEffect(() => {
         // Todo chec kif user scrolled
         // https://stackoverflow.com/questions/18614301/keep-overflow-div-scrolled-to-bottom-unless-user-scrolls-up
-        chatMessagesRef.current.scrollTop = chatMessagesRef.current.scrollHeight;
-    }, [chat]);
+        console.log('up!');
+        if(!isScrolled) {
+            chatMessagesRef.current.scrollTop = chatMessagesRef.current.scrollHeight;
+        }
+    }, [chat, isScrolled]);
 
     return (
         <Card box-shadow="light" className="chat">
-            <div className="chat-messages" ref={chatMessagesRef}>
+            <div className="chat-messages" ref={chatMessagesRef} onScroll={scrollHandler}>
                 {chat.map(chatEntry => {
                     const createdAtDate = new Date(chatEntry.createdAt);
 
