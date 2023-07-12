@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -16,13 +16,18 @@ const Chat = props => {
     const chat = useSelector(state => state.game.game.chat);
     const textareaRef = useRef();
     const formRef = useRef();
+    const chatMessagesRef = useRef();
 
     // Dynamically modify the height of textarea when new line was added
-    const inputHandler = useCallback(event => {
-        const textareaElement = event.target;
+    const adjustTextareaHeight = useCallback(() => {
+        const textareaElement = textareaRef.current;
         textareaElement.style.height = '2.1rem'; // 1.4rem font-size, 1.5 line-height = 2.1rem
         textareaElement.style.height = `calc(${textareaElement.scrollHeight}px - 1rem)`;
     }, []);
+
+    const inputHandler = useCallback(() => {
+        adjustTextareaHeight();
+    }, [adjustTextareaHeight]);
 
     // To trigger form submit when Enter (only and only Enter) key is pressed
     // If Enter was pressed with Shift key, then browser automatically adds a line break
@@ -42,11 +47,21 @@ const Chat = props => {
         const message = textareaRef.current.value.trim();
 
         socket.emit('gameChatMessage', gameId, message);
-    }, [gameId]);
+
+        textareaRef.current.value = '';
+
+        adjustTextareaHeight();
+    }, [gameId, adjustTextareaHeight]);
+
+    useEffect(() => {
+        // Todo chec kif user scrolled
+        // https://stackoverflow.com/questions/18614301/keep-overflow-div-scrolled-to-bottom-unless-user-scrolls-up
+        chatMessagesRef.current.scrollTop = chatMessagesRef.current.scrollHeight;
+    }, [chat]);
 
     return (
         <Card box-shadow="light" className="chat">
-            <div className="chat-messages">
+            <div className="chat-messages" ref={chatMessagesRef}>
                 {chat.map(chatEntry => {
                     const createdAtDate = new Date(chatEntry.createdAt);
 
@@ -59,7 +74,7 @@ const Chat = props => {
                     } else {
                         return (
                             <p className="chat-messages__message" key={createdAtDate}>
-                                <Link className="chat-messages__user" to={'/users/' + chatEntry.user.username}>{chatEntry.user.username} ({chatEntry.user.elo})</Link>: {chatEntry.message} <span className="chat-messages__time">({createdAtDate.toLocaleTimeString()})</span>
+                                <Link className="chat-messages__user" to={'/users/' + chatEntry.user.username}>{chatEntry.user.username} ({chatEntry.user.elo})</Link>: {chatEntry.message} <span className="chat-messages__time">({formatDateToHoursAndMinutes(createdAtDate)})</span>
                             </p>
                         );
                     }
