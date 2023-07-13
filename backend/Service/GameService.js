@@ -242,6 +242,21 @@ class GameService {
         }
     }
 
+    async cancelGame(gameId, username) {
+        const game = await this.findGameById(gameId);
+
+		const isPlayer = game.black.user.username === username || game.white.user.username === username;
+
+		if(isPlayer && game.status === 'waiting') {
+            const cancelledBy = game.black.user.username === username ? 'black' : 'white';
+			await GameDAO.cancelGame(gameId, cancelledBy);
+
+            return cancelledBy;
+		} else {
+            return false;
+        }
+    }
+
     isUserInQueue(username) {
         return this.queue.findIndex(queueObject => queueObject.user.username === username) > -1;
     }

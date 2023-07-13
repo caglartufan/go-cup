@@ -97,7 +97,11 @@ module.exports = {
 			socket.emit('errorOccured', error.message);
 		}
 	},
-	onCancelGame: async () => {
-		
+	onCancelGame: async (services, socket, gameId) => {
+		if(!socket.data.user) {
+			return;
+		}
+
+		const isCancelled = await services.gameService.cancelGame(gameId, socket.data.user.username);
 	}
 };

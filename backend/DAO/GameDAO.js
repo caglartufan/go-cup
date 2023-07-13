@@ -1,5 +1,6 @@
 const { default: mongoose } = require('mongoose');
 const { Game } = require('../models/Game');
+const { GameNotFoundError } = require('../utils/ErrorHandler');
 
 class GameDAO {
     static async getGames() {
@@ -28,8 +29,8 @@ class GameDAO {
         }).distinct('_id');
 
         if(gameIdsToBeCancelled.length) {
-            // TODO: @@@ Find a way to update socket with this cancelled message and move this message and
-            // "beginning of the chat" message in Game model to messages folder
+            // TODO:  move this message and "beginning of the chat" message in
+            // Game model to messages folder
             await Game.updateMany({
                 _id: { $in: gameIdsToBeCancelled }
             }, {
@@ -41,6 +42,18 @@ class GameDAO {
         }
 
         return gameIdsToBeCancelled;
+    }
+
+    static async cancelGame(gameId, cancelledBy) {
+        const game = await this.findGameById(gameId);
+
+        if(!game) {
+            throw new GameNotFoundError();
+        }
+
+        game.status = 'cancelled_by_' + cancelledBy;
+
+        await game.save();
     }
 
     static async getGamesWithLatestSystemChatEntryByGameIds(gameIds) {

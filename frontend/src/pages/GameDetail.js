@@ -32,7 +32,7 @@ const GameDetailPage = () => {
             // is player of the game and game is on waiting status
             socket.emit('cancelGame', game._id);
         }
-    }, [game.status]);
+    }, [game.status, game._id]);
 
     useEffect(() => {
         if(game.status === 'waiting') {
