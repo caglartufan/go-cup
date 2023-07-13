@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 
 import { toastActions } from '../store/toastSlice';
 import { queueActions } from '../store/queueSlice';
@@ -11,7 +11,7 @@ import { socket } from '.';
 const WebSocketProvider = props => {
     const { navigate } = props;
     const dispatch = useDispatch();
-    
+
 	useEffect(() => {
         const onConnect = () => {
             setSocketId(socket.id);
