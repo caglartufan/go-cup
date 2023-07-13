@@ -53,7 +53,7 @@ const VALIDATION = {
             'any.only': 'Board size can only be 9x9, 13x13 or 19x19.'
         },
         status: {
-            'any.only': 'Game status can only be waiting, started, finished, white_resigned or black_resigned.'
+            'any.only': 'Game status can only be waiting, started, finished, white_resigned, black_resigned or cancelled.'
         },
         moves: {
             player: {

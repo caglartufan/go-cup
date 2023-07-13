@@ -14,7 +14,7 @@ import './Chat.scss';
 const Chat = props => {
     const gameId = useSelector(state => state.game.game._id);
     const chat = useSelector(state => state.game.game.chat);
-    const [isScrolled, setIsScrolled] = useState(false);
+    const [shouldScrollBottom, setShouldScrollBottom] = useState(true);
     const textareaRef = useRef();
     const formRef = useRef();
     const chatMessagesRef = useRef();
@@ -54,18 +54,24 @@ const Chat = props => {
         adjustTextareaHeight();
     }, [gameId, adjustTextareaHeight]);
 
+    // Check if messages div should be scrolled to bottom depending on the offset (10 pixels)
+    // If user scrolled to top at more than 10 pixels, then messages div won't be scrolled to bottom automatically
+    // when new message is rendered, otherwise it will be scrolled to bottom
     const scrollHandler = useCallback(() => {
-        setIsScrolled(true);
+        const scrollTop = chatMessagesRef.current.scrollTop;
+        const scrollableHeight = chatMessagesRef.current.scrollHeight - chatMessagesRef.current.clientHeight;
+        const scrollOffset = 10;
+
+        setShouldScrollBottom(scrollableHeight - scrollTop <= scrollOffset);
     }, []);
 
     useEffect(() => {
-        // Todo chec kif user scrolled
-        // https://stackoverflow.com/questions/18614301/keep-overflow-div-scrolled-to-bottom-unless-user-scrolls-up
-        console.log('up!');
-        if(!isScrolled) {
-            chatMessagesRef.current.scrollTop = chatMessagesRef.current.scrollHeight;
+        // Scroll to bottom if shouldScrollButton is true
+        if(shouldScrollBottom) {
+            const scrollableHeight = chatMessagesRef.current.scrollHeight - chatMessagesRef.current.clientHeight;
+            chatMessagesRef.current.scrollTop = scrollableHeight;
         }
-    }, [chat, isScrolled]);
+    }, [chat, shouldScrollBottom]);
 
     return (
         <Card box-shadow="light" className="chat">
@@ -75,13 +81,13 @@ const Chat = props => {
 
                     if(chatEntry.isSystem) {
                         return (
-                            <p className="chat-messages__message chat-messages__message--info" key={createdAtDate}>
+                            <p className="chat-messages__message chat-messages__message--info" key={chatEntry._id}>
                                 {chatEntry.message} <span className="chat-messages__time">({formatDateToHoursAndMinutes(createdAtDate)})</span>
                             </p>
                         );
                     } else {
                         return (
-                            <p className="chat-messages__message" key={createdAtDate}>
+                            <p className="chat-messages__message" key={chatEntry._id}>
                                 <Link className="chat-messages__user" to={'/users/' + chatEntry.user.username}>{chatEntry.user.username} ({chatEntry.user.elo})</Link>: {chatEntry.message} <span className="chat-messages__time">({formatDateToHoursAndMinutes(createdAtDate)})</span>
                             </p>
                         );

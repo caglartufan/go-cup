@@ -135,7 +135,6 @@ const Board = props => {
             // state[row][column] = Math.random() < .5;
             drawBoard();
         }
-        console.log(coordinates, row, column);
     };
 
     useEffect(() => {

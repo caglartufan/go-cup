@@ -20,6 +20,29 @@ class GameDAO {
             .populate('chat.user', '-_id username elo');
     }
 
+    static async cancelGamesThatAreTimedOutOnWaitingStatus() {
+        // TODO: Maybe count beforehand and update if count is greater than 0
+        const gameIdsToBeCancelled = await Game.find({
+            status: 'waiting',
+            waitingEndsAt: { $lte: Date.now() }
+        }).distinct('_id');
+
+        if(gameIdsToBeCancelled.length) {
+            // TODO: @@@ Find a way to update socket with this cancelled message and move this message and
+            // "beginning of the chat" message in Game model to messages folder
+            await Game.updateMany({
+                _id: { $in: gameIdsToBeCancelled }
+            }, {
+                status: 'cancelled',
+                $push: {
+                    chat: { message: 'The game has been cancelled!', isSystem: true }
+                }
+            });
+        }
+
+        return gameIdsToBeCancelled;
+    }
+
     static async createGame(blackUserId, whiteUserId) {
         const game = new Game({
             size: 9,

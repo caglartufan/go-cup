@@ -68,13 +68,18 @@ module.exports = {
 		});
 	},
 	onJoinGameRoom: (socket, gameId) => {
-		if(!socket.data.user) {
-			socket.emit('errorOccured', new UnauthorizedError().message);
-			return;
-		}
-
 		socket.join('game-' + gameId);
-		socket.in('game-' + gameId).emit('userJoinedGameRoom', socket.data.user.username);
+
+		// TODO: Add online/offline visibility in GameDetail page for PlayerCards, if the joined user is
+		// black or white player of the game set user as online or other ways to implement this
+		// 1) Add "online" proeprty in User model, set it true/false when socket connects/disconnects
+		// but how can I emit this to only sockets that are viewing that user??
+		// 2) Or maybe "socketId" proeprty can be added to User model and when user connects to websocket
+		// server, I can emit  user's active game room (last and playing game in user.games) that "userOnline"
+		// event or smh
+		if(socket.data.user) {
+			socket.in('game-' + gameId).emit('userJoinedGameRoom', socket.data.user.username);
+		}
 	},
 	onGameChatMessage: async (io, services, socket, gameId, message) => {
 		if(!socket.data.user) {

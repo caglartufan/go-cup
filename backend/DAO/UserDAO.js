@@ -33,22 +33,18 @@ class UserDAO {
     }
 
     static async getUserIdByUsernameAndEmail(username, email) {
-        const user = await User.findOne({
+        return await User.findOne({
             username,
             email
-        }).select('_id');
-
-        return user._id;
+        }).distinct('_id');
     }
 
     static async getUserIdsByUsernames(...usernames) {
-        const users = await User.find({
+        return  await User.find({
             username: {
                 $in: usernames
             }
-        }).select('_id');
-
-        return users.map(user => user._id);
+        }).distinct('_id');
     }
 
     static async createUser(user) {

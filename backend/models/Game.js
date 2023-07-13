@@ -14,7 +14,7 @@ const gameSchema = new mongoose.Schema({
     status: {
         type: String,
         enum: {
-            values: ['waiting', 'started', 'finished', 'white_resigned', 'black_resigned'],
+            values: ['waiting', 'started', 'finished', 'white_resigned', 'black_resigned', 'cancelled'],
             message: VALIDATION.game.status['any.only']
         },
         default: 'waiting'
@@ -112,7 +112,9 @@ const gameSchema = new mongoose.Schema({
         type: Date,
         default: function() {
             const now = new Date();
-            now.setMinutes(now.getMinutes() + 20);
+            
+            now.setSeconds(now.getSeconds() + 20);
+            // now.setMinutes(now.getMinutes() + 20);
 
             return now;
         }

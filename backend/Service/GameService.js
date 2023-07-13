@@ -9,10 +9,15 @@ class GameService {
     queue = [];
     #io = null;
     #processing = false;
-    #interval = null;
+    #gameProcessInterval = null;
+    #cancelledGamesInterval = null;
 
     constructor(io) {
         this.#io = io;
+
+        this.#cancelledGamesInterval = setInterval(() => {
+            this.#cancelMatchesThatAreTimedOutOnWaitingStatus();
+        }, 1000);
     }
 
     async getGames() {
@@ -102,7 +107,7 @@ class GameService {
     }
 
     #startProcessingQueue() {
-        this.#interval = setInterval(() => {
+        this.#gameProcessInterval = setInterval(() => {
             console.log('processing queue...');
             // Current date when this loop of process has started
             const processDate = new Date();
@@ -202,7 +207,7 @@ class GameService {
     }
 
     #stopProcessingQueue() {
-        clearInterval(this.#interval);
+        clearInterval(this.#gameProcessInterval);
         this.#processing = false;
     }
 
@@ -219,6 +224,16 @@ class GameService {
         const game = await GameDAO.createGame(blackUserId, whiteUserId);
 
         this.#io.to([black.username, white.username]).emit('gameStarted', game._id);
+    }
+
+    async #cancelMatchesThatAreTimedOutOnWaitingStatus() {
+        const idsOfGamesThatAreTimedOut = await GameDAO.cancelGamesThatAreTimedOutOnWaitingStatus();
+        
+        if(idsOfGamesThatAreTimedOut.length) {
+            const rooms = idsOfGamesThatAreTimedOut.map(gameId => 'game-' + gameId);
+            
+            this.#io.in(rooms).emit('gameCancelled');
+        }
     }
 
     isUserInQueue(username) {

@@ -30,6 +30,7 @@ router.get('/:gameId', async function(req, res, next) {
     }
 });
 
+// TODO: Remove this end point and related service methods
 router.get('/queue', function(req, res) {
     return res.json({
         ok: true,

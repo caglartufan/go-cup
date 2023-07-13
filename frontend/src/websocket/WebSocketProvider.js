@@ -79,8 +79,15 @@ const WebSocketProvider = props => {
         };
 
         const onGameChatMessage = chatEntry => {
-            console.log(chatEntry);
             dispatch(gameActions.addChatEntry({ chatEntry }));
+        };
+
+        const onGameCancelled = () => {
+            dispatch(toastActions.add({
+                message: 'The game has been cancelled!',
+                status: 'warning'
+            }));
+            dispatch(gameActions.updateStatus({ status: 'cancelled' }));
         };
 
 		// General error handler
@@ -110,6 +117,7 @@ const WebSocketProvider = props => {
         socket.on('gameStarted', onGameStarted);
         socket.on('userJoinedGameRoom', userJoinedGameRoomHandler);
         socket.on('gameChatMessage', onGameChatMessage);
+        socket.on('gameCancelled', onGameCancelled);
 
 		socket.on('errorOccured', onErrorOccured);
 		socket.on('connect_error', onConnectError);
@@ -125,6 +133,7 @@ const WebSocketProvider = props => {
             socket.off('gameStarted', onGameStarted);
             socket.off('userJoinedGameRoom', userJoinedGameRoomHandler);
             socket.off('gameChatMessage', onGameChatMessage);
+            socket.off('gameCancelled', onGameCancelled);
 
 			socket.off('errorOccured', onErrorOccured);
 			socket.off('connect_error', onConnectError);
