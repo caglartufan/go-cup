@@ -60,7 +60,7 @@ class GameService {
 
         await game.populate('chat.' + (game.chat.length - 1) + '.user', '-_id username elo');
 
-        const chatEntry = game.chat[game.chat.length - 1];
+        const chatEntry = game.chat.pop();
 
         return chatEntry;
     }
@@ -249,9 +249,10 @@ class GameService {
 
 		if(isPlayer && game.status === 'waiting') {
             const cancelledBy = game.black.user.username === username ? 'black' : 'white';
-			await GameDAO.cancelGame(gameId, cancelledBy);
 
-            return cancelledBy;
+			const { latestSystemChatEntry } = await GameDAO.cancelGame(gameId, cancelledBy);
+
+            return { cancelledBy, latestSystemChatEntry };
 		} else {
             return false;
         }

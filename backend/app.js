@@ -101,7 +101,7 @@ io.on('connection', socket => {
 	socket.on('cancel', handlers.onCancel.bind(null, io, services, socket));
 	socket.on('joinGameRoom', handlers.onJoinGameRoom.bind(null, socket));
 	socket.on('gameChatMessage', handlers.onGameChatMessage.bind(null, io, services, socket));
-	socket.on('cancelGame', handlers.onCancelGame.bind(null, services, socket)) // @@@
+	socket.on('cancelGame', handlers.onCancelGame.bind(null, io, services, socket));
 });
 
 // Web routes

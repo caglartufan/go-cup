@@ -76,7 +76,7 @@ module.exports = {
 		// but how can I emit this to only sockets that are viewing that user??
 		// 2) Or maybe "socketId" proeprty can be added to User model and when user connects to websocket
 		// server, I can emit  user's active game room (last and playing game in user.games) that "userOnline"
-		// event or smh
+		// event or smh@@@
 		if(socket.data.user) {
 			socket.in('game-' + gameId).emit('userJoinedGameRoom', socket.data.user.username);
 		}
@@ -97,11 +97,21 @@ module.exports = {
 			socket.emit('errorOccured', error.message);
 		}
 	},
-	onCancelGame: async (services, socket, gameId) => {
+	onCancelGame: async (io, services, socket, gameId) => {
 		if(!socket.data.user) {
+			socket.emit('errorOccured', new UnauthorizedError().message);
 			return;
 		}
 
-		const isCancelled = await services.gameService.cancelGame(gameId, socket.data.user.username);
+		try {
+			const cancelGameResult = await services.gameService.cancelGame(gameId, socket.data.user.username);
+
+			if(cancelGameResult.cancelledBy && cancelGameResult.latestSystemChatEntry) {
+				io.in('game-' + gameId).emit('gameCancelled', cancelGameResult.cancelledBy);
+				io.in('game-' + gameId).emit('gameChatMessage', cancelGameResult.latestSystemChatEntry);
+			}
+		} catch(error) {
+			socket.emit('errorOccured', error.message);
+		}
 	}
 };

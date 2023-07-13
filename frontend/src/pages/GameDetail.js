@@ -27,12 +27,10 @@ const GameDetailPage = () => {
     const [timer, setTimer] = useState(null);
 
     const cancelGameHandler = useCallback(() => {
-        if(game.status === 'waiting') {
-            // TODO: @@@ Emit this event to server and implement a way to validate the event submitter
-            // is player of the game and game is on waiting status
+        if(isPlayer && game.status === 'waiting') {
             socket.emit('cancelGame', game._id);
         }
-    }, [game.status, game._id]);
+    }, [isPlayer, game.status, game._id]);
 
     useEffect(() => {
         if(game.status === 'waiting') {
@@ -60,10 +58,11 @@ const GameDetailPage = () => {
     return (
         <Container fluid fillVertically>
             <Row columns={2} className="h-100">
-                <Column size={7} style={{ height: isPlayer && game.status !== 'cancelled' ? 'calc(100% - 7.3rem)' : 'calc(100% - 3.25rem)' }}>
+                <Column size={7} style={{ height: isPlayer ? 'calc(100% - 7.3rem)' : 'calc(100% - 3.25rem)' }}>
                     <h2 className="board-heading">
                         {game.status === 'waiting' && `Waiting for black to play (${formatSeconds(timer)})`}
                         {game.status === 'cancelled' && 'The game has been cancelled!'}
+                        {(game.status === 'cancelled_by_black' || game.status === 'cancelled_by_white') && `The game has been cancelled by ${game.status.replace('cancelled_by_', '')} player!`}
                     </h2>
                     <Board size={game.size} state={game.board} className="mb-4" dynamicHeight />
                     {isPlayer && (
@@ -84,6 +83,11 @@ const GameDetailPage = () => {
                             {game.status === 'waiting' && (
                                 <Button onClick={cancelGameHandler}>
                                     Cancel game
+                                </Button>
+                            )}
+                            {(game.status.includes('cancelled') || game.status === 'finished') && (
+                                <Button>
+                                    Rematch
                                 </Button>
                             )}
                         </div>

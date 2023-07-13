@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
-const VALIDATION = require('../messages/validation');
 const { User } = require('./User');
+const VALIDATION = require('../messages/validation');
+const MESSAGES = require('../messages/messages');
 
 const gameSchema = new mongoose.Schema({
     size: {
@@ -97,8 +98,8 @@ const gameSchema = new mongoose.Schema({
             }
         }],
         default: [{
-            isSystem: true,
-            message: 'Beginning of the chat'
+            message: MESSAGES.models.Game.BEGINNING_OF_THE_CHAT,
+            isSystem: true
         }]
     },
     isPrivate: {
@@ -113,6 +114,7 @@ const gameSchema = new mongoose.Schema({
         default: function() {
             const now = new Date();
             
+            // Game will be automatically cancelled after 20 minutes
             now.setMinutes(now.getMinutes() + 20);
 
             return now;

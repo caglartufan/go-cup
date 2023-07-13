@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 
 import { toastActions } from '../store/toastSlice';
 import { queueActions } from '../store/queueSlice';
@@ -11,7 +11,7 @@ import { socket } from '.';
 const WebSocketProvider = props => {
     const { navigate } = props;
     const dispatch = useDispatch();
-
+    
 	useEffect(() => {
         const onConnect = () => {
             setSocketId(socket.id);
@@ -82,12 +82,14 @@ const WebSocketProvider = props => {
             dispatch(gameActions.addChatEntry({ chatEntry }));
         };
 
-        const onGameCancelled = () => {
+        const onGameCancelled = cancelledBy => {
             dispatch(toastActions.add({
-                message: 'The game has been cancelled!',
+                message: cancelledBy
+                    ? `The game has been cancelled by ${cancelledBy} player!`
+                    : 'The game has been cancelled!',
                 status: 'warning'
             }));
-            dispatch(gameActions.updateStatus({ status: 'cancelled' }));
+            dispatch(gameActions.updateStatus({ status: cancelledBy ? ('cancelled_by_' + cancelledBy) : 'cancelled' }));
         };
 
 		// General error handler

@@ -1,6 +1,6 @@
-const { default: mongoose } = require('mongoose');
 const { Game } = require('../models/Game');
 const { GameNotFoundError } = require('../utils/ErrorHandler');
+const MESSAGES = require('../messages/messages');
 
 class GameDAO {
     static async getGames() {
@@ -36,7 +36,7 @@ class GameDAO {
             }, {
                 status: 'cancelled',
                 $push: {
-                    chat: { message: 'The game has been cancelled!', isSystem: true }
+                    chat: { message: MESSAGES.DAO.GameDAO.GAME_CANCELLED, isSystem: true }
                 }
             });
         }
@@ -52,8 +52,14 @@ class GameDAO {
         }
 
         game.status = 'cancelled_by_' + cancelledBy;
+        game.chat.push({
+            message: MESSAGES.DAO.GameDAO.GAME_CANCELLED_BY.replace('#{CANCELLED_BY}', cancelledBy),
+            isSystem: true
+        });
 
         await game.save();
+
+        return { _id: game._id, latestSystemChatEntry: game.chat.filter(chatEntry => chatEntry.isSystem === true).pop() }
     }
 
     static async getGamesWithLatestSystemChatEntryByGameIds(gameIds) {
