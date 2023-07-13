@@ -230,10 +230,10 @@ class GameService {
         const idsOfGamesThatAreTimedOut = await GameDAO.cancelGamesThatAreTimedOutOnWaitingStatus();
         
         if(idsOfGamesThatAreTimedOut.length) {
-            const gamesWithSystemMessages = await GameDAO.getSystemMessagesOfGamesByIds(idsOfGamesThatAreTimedOut);
+            const gamesWithLatestSystemChatEntry = await GameDAO.getGamesWithLatestSystemChatEntryByGameIds(idsOfGamesThatAreTimedOut);
 
-            gamesWithSystemMessages.forEach(game => {
-                console.log(game._id, game.chat);
+            gamesWithLatestSystemChatEntry.forEach(({ _id: gameId, latestSystemChatEntry }) => {
+                this.#io.in('game-' + gameId).emit('gameChatMessage', latestSystemChatEntry);
             });
 
             const rooms = idsOfGamesThatAreTimedOut.map(gameId => 'game-' + gameId);

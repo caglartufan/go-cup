@@ -22,19 +22,10 @@ let interval;
 
 const GameDetailPage = () => {
     const username = useSelector(state => state.user.username);
-    const game = useSelector(state => state.game.game);
+    const game = useSelector(state => state.game);
     const isPlayer = username && (game.white.user.username === username || game.black.user.username === username);
     const isShowGameOptions = isPlayer && game.status === 'started';
-    const [timeRemaining, setTimeRemaining] = useState(() => {
-        if(game.status === 'waiting') {
-            const waitingEndsAt = new Date(game.waitingEndsAt);
-            const waitingTimeoutInSeconds = Math.floor((waitingEndsAt - Date.now()) / 1000);
-
-            return waitingTimeoutInSeconds;
-        }
-
-        return null;
-    });
+    const [timer, setTimer] = useState(null);
 
     const cancelGameHandler = useCallback(() => {
         if(game.status === 'waiting') {
@@ -45,24 +36,32 @@ const GameDetailPage = () => {
     }, [game.status]);
 
     useEffect(() => {
-        if(timeRemaining !== null) {
+        if(game.status === 'waiting') {
+            const waitingEndsAt = new Date(game.waitingEndsAt);
+            const waitingTimeoutInSeconds = Math.floor((waitingEndsAt - Date.now()) / 1000);
+
+            setTimer(waitingTimeoutInSeconds);
+        }
+    }, [game.status, game.waitingEndsAt]);
+
+    useEffect(() => {
+        if(timer >= 0) {
             interval = setInterval(() => {
-                setTimeRemaining(prevTimeRemaining => prevTimeRemaining - 1);
+                setTimer(prevTimer => prevTimer - 1);
             }, 1000);
-    
+
             return () => {
-                // TODO: Leave game room upon leaving the game detail page
                 clearInterval(interval);
             };
         }
-    }, [timeRemaining]);
+    }, [timer]);
 
     return (
         <Container fluid fillVertically>
             <Row columns={2} className="h-100">
                 <Column size={7} style={{ height: isShowGameOptions ? 'calc(100% - 7.3rem)' : 'calc(100% - 3.25rem)' }}>
                     <h2 className="board-heading">
-                        {game.status === 'waiting' && `Waiting for black to play (${formatSeconds(timeRemaining)})`}
+                        {game.status === 'waiting' && `Waiting for black to play (${formatSeconds(timer)})`}
                         {game.status === 'cancelled' && 'The game has been cancelled!'}
                     </h2>
                     <Board size={game.size} state={game.board} className="mb-4" dynamicHeight />
@@ -133,7 +132,7 @@ export const loader = async ({ params }) => {
         return redirect('/');
     }
 
-    store.dispatch(gameActions.updateGame({ game: resData.game }));
+    store.dispatch(gameActions.updateGame(resData.game));
 
     socket.emit('joinGameRoom', resData.game._id);
 

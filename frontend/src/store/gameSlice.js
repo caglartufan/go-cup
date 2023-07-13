@@ -1,7 +1,17 @@
 import { createSlice } from '@reduxjs/toolkit';
 
 const initialGameState = {
-    game: null
+    _id: null,
+    size: null,
+    status: null,
+    black: null,
+    white: null,
+    isPrivate: null,
+    board: null,
+    moves: [],
+    chat: [],
+    waitingEndsAt: null,
+    createdAt: null
 };
 
 const gameSlice = createSlice({
@@ -9,15 +19,23 @@ const gameSlice = createSlice({
     initialState: initialGameState,
     reducers: {
         updateGame: (state, action) => {
-            state.game = action.payload.game;
+            state._id = action.payload._id;
+            state.size = action.payload.size;
+            state.status = action.payload.status;
+            state.black = action.payload.black;
+            state.white = action.payload.white;
+            state.isPrivate = action.payload.isPrivate;
+            state.board = action.payload.board;
+            state.moves = action.payload.moves;
+            state.chat = action.payload.chat;
+            state.waitingEndsAt = action.payload.waitingEndsAt;
+            state.createdAt = action.payload.createdAt;
         },
         updateStatus: (state, action) => {
-            state.game.status = action.payload.status;
+            state.status = action.payload.status;
         },
         addChatEntry: (state, action) => {
-            if(state.game?.chat) {
-                state.game.chat.push(action.payload.chatEntry);
-            }
+            state.chat.push(action.payload.chatEntry);
         }
     }
 });

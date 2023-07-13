@@ -12,8 +12,8 @@ import Card from '../UI/Card';
 import './Chat.scss';
 
 const Chat = props => {
-    const gameId = useSelector(state => state.game.game._id);
-    const chat = useSelector(state => state.game.game.chat);
+    const gameId = useSelector(state => state.game._id);
+    const chat = useSelector(state => state.game.chat);
     const [shouldScrollBottom, setShouldScrollBottom] = useState(true);
     const textareaRef = useRef();
     const formRef = useRef();

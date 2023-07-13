@@ -43,17 +43,28 @@ class GameDAO {
         return gameIdsToBeCancelled;
     }
 
-    static async getSystemMessagesOfGamesByIds(gameIds) {
-        if(gameIds instanceof Array) {
-            return await Game.find({
-                _id: { $in: gameIds },
-                'chat.isSystem': true
-            }).select('_id chat');
-        } else if((typeof gameIds === 'string') || (gameIds instanceof mongoose.Types.ObjectId)) {
-            return Game.findById(gameIds).select('_id chat');
-        } else {
-            return null;
-        }
+    static async getGamesWithLatestSystemChatEntryByGameIds(gameIds) {
+        return await Game.aggregate([
+            {
+                $match: {
+                    _id: { $in: gameIds }
+                }
+            },
+            {
+                $unwind: '$chat'
+            },
+            {
+                $match: {
+                    'chat.isSystem': true
+                }
+            },
+            {
+                $group: {
+                    _id: '$_id',
+                    latestSystemChatEntry: { $last: '$chat' }
+                }
+            }
+        ]);
     }
 
     static async createGame(blackUserId, whiteUserId) {
