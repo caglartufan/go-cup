@@ -1,3 +1,4 @@
+const { default: mongoose } = require('mongoose');
 const { Game } = require('../models/Game');
 
 class GameDAO {
@@ -21,7 +22,6 @@ class GameDAO {
     }
 
     static async cancelGamesThatAreTimedOutOnWaitingStatus() {
-        // TODO: Maybe count beforehand and update if count is greater than 0
         const gameIdsToBeCancelled = await Game.find({
             status: 'waiting',
             waitingEndsAt: { $lte: Date.now() }
@@ -41,6 +41,19 @@ class GameDAO {
         }
 
         return gameIdsToBeCancelled;
+    }
+
+    static async getSystemMessagesOfGamesByIds(gameIds) {
+        if(gameIds instanceof Array) {
+            return await Game.find({
+                _id: { $in: gameIds },
+                'chat.isSystem': true
+            }).select('_id chat');
+        } else if((typeof gameIds === 'string') || (gameIds instanceof mongoose.Types.ObjectId)) {
+            return Game.findById(gameIds).select('_id chat');
+        } else {
+            return null;
+        }
     }
 
     static async createGame(blackUserId, whiteUserId) {

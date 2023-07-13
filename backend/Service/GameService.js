@@ -44,7 +44,7 @@ class GameService {
         return gameDTO;
     }
 
-    async createChatEntryById(gameId, userId, message) {
+    async createChatEntryByGameId(gameId, userId, message) {
         if(!mongoose.isValidObjectId(gameId)) {
             throw new GameNotFoundError();
         }
@@ -230,6 +230,12 @@ class GameService {
         const idsOfGamesThatAreTimedOut = await GameDAO.cancelGamesThatAreTimedOutOnWaitingStatus();
         
         if(idsOfGamesThatAreTimedOut.length) {
+            const gamesWithSystemMessages = await GameDAO.getSystemMessagesOfGamesByIds(idsOfGamesThatAreTimedOut);
+
+            gamesWithSystemMessages.forEach(game => {
+                console.log(game._id, game.chat);
+            });
+
             const rooms = idsOfGamesThatAreTimedOut.map(gameId => 'game-' + gameId);
             
             this.#io.in(rooms).emit('gameCancelled');

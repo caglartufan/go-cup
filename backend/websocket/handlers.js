@@ -90,7 +90,7 @@ module.exports = {
 		try {
 			const userId = await services.userService.getUserIdByUser(socket.data.user);
 
-			const chatEntry = await services.gameService.createChatEntryById(gameId, userId, message);
+			const chatEntry = await services.gameService.createChatEntryByGameId(gameId, userId, message);
 
 			io.in('game-' + gameId).emit('gameChatMessage', chatEntry);
 		} catch(error) {
