@@ -113,8 +113,7 @@ const gameSchema = new mongoose.Schema({
         default: function() {
             const now = new Date();
             
-            now.setSeconds(now.getSeconds() + 20);
-            // now.setMinutes(now.getMinutes() + 20);
+            now.setMinutes(now.getMinutes() + 20);
 
             return now;
         }

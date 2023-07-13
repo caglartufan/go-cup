@@ -96,5 +96,8 @@ module.exports = {
 		} catch(error) {
 			socket.emit('errorOccured', error.message);
 		}
+	},
+	onCancelGame: async () => {
+		
 	}
 };

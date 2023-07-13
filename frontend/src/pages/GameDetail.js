@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, Fragment } from 'react';
 import { useSelector } from 'react-redux';
 import { redirect } from 'react-router-dom';
 import { formatSeconds } from '../utils/helpers';
@@ -24,14 +24,13 @@ const GameDetailPage = () => {
     const username = useSelector(state => state.user.username);
     const game = useSelector(state => state.game);
     const isPlayer = username && (game.white.user.username === username || game.black.user.username === username);
-    const isShowGameOptions = isPlayer && game.status === 'started';
     const [timer, setTimer] = useState(null);
 
     const cancelGameHandler = useCallback(() => {
         if(game.status === 'waiting') {
             // TODO: @@@ Emit this event to server and implement a way to validate the event submitter
             // is player of the game and game is on waiting status
-            socket.emit('cancelGame');
+            socket.emit('cancelGame', game._id);
         }
     }, [game.status]);
 
@@ -46,6 +45,8 @@ const GameDetailPage = () => {
 
     useEffect(() => {
         if(timer >= 0) {
+            // TODO: Use worker timers instead to prevent suspension of intervals
+            // https://www.npmjs.com/package/worker-timers
             interval = setInterval(() => {
                 setTimer(prevTimer => prevTimer - 1);
             }, 1000);
@@ -59,23 +60,27 @@ const GameDetailPage = () => {
     return (
         <Container fluid fillVertically>
             <Row columns={2} className="h-100">
-                <Column size={7} style={{ height: isShowGameOptions ? 'calc(100% - 7.3rem)' : 'calc(100% - 3.25rem)' }}>
+                <Column size={7} style={{ height: isPlayer && game.status !== 'cancelled' ? 'calc(100% - 7.3rem)' : 'calc(100% - 3.25rem)' }}>
                     <h2 className="board-heading">
                         {game.status === 'waiting' && `Waiting for black to play (${formatSeconds(timer)})`}
                         {game.status === 'cancelled' && 'The game has been cancelled!'}
                     </h2>
                     <Board size={game.size} state={game.board} className="mb-4" dynamicHeight />
-                    {isShowGameOptions === 'started' && (
+                    {isPlayer && (
                         <div className="board-options">
-                            <Button>
-                                Resign
-                            </Button>
-                            <Button>
-                                Pass
-                            </Button>
-                            <Button>
-                                Undo
-                            </Button>
+                            {game.status === 'started' && (
+                                <Fragment>
+                                    <Button>
+                                        Resign
+                                    </Button>
+                                    <Button>
+                                        Pass
+                                    </Button>
+                                    <Button>
+                                        Undo
+                                    </Button>
+                                </Fragment>
+                            )}
                             {game.status === 'waiting' && (
                                 <Button onClick={cancelGameHandler}>
                                     Cancel game
