@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState, Fragment } from 'react';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { redirect } from 'react-router-dom';
 import { formatSeconds } from '../utils/helpers';
 
@@ -21,9 +21,12 @@ import './GameDetail.scss';
 let interval;
 
 const GameDetailPage = () => {
+    const dispatch = useDispatch();
     const username = useSelector(state => state.user.username);
     const game = useSelector(state => state.game);
-    const isPlayer = username && (game.white.user.username === username || game.black.user.username === username);
+    const isBlackPlayer = username && game.black.user.username === username;
+    const isWhitePlayer = username && game.white.user.username === username;
+    const isPlayer = isBlackPlayer || isWhitePlayer;
     const [timer, setTimer] = useState(null);
 
     const cancelGameHandler = useCallback(() => {
@@ -54,6 +57,14 @@ const GameDetailPage = () => {
             };
         }
     }, [timer]);
+
+    // @@@ reset gameSlice state when user leaves this page/router element
+    useEffect(() => {
+        console.log('rendering', timer);
+        return () => {
+            console.log('leaving!');
+        };
+    }, []);
 
     return (
         <Container fluid fillVertically>
@@ -104,6 +115,7 @@ const GameDetailPage = () => {
                                     avatar={game.black.user.avatar}
                                     time-remaining={game.black.timeRemaining}
                                     score={game.black.score}
+                                    is-online={isBlackPlayer || game.black.user.isOnline}
                                     active={true}
                                 />
                             </Column>
@@ -115,6 +127,7 @@ const GameDetailPage = () => {
                                     avatar={game.white.user.avatar}
                                     time-remaining={game.white.timeRemaining}
                                     score={game.white.score}
+                                    is-online={isWhitePlayer || game.white.user.isOnline}
                                 />
                             </Column>
                         </Row>
@@ -144,6 +157,7 @@ export const loader = async ({ params }) => {
     store.dispatch(gameActions.updateGame(resData.game));
 
     socket.emit('joinGameRoom', resData.game._id);
+    console.log('joining!');
 
     return null;
 };

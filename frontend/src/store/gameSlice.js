@@ -36,6 +36,21 @@ const gameSlice = createSlice({
         },
         addChatEntry: (state, action) => {
             state.chat.push(action.payload.chatEntry);
+        },
+        updatePlayerOnlineStatus: (state, action) => {
+            const usernameOfPlayerToBeUpdated = action.payload.username;
+            const onlineStatus = action.payload.isOnline; // true for online, false for offline
+
+            if(state.white?.user?.username === usernameOfPlayerToBeUpdated) {
+                state.white.user.isOnline = onlineStatus;
+            }
+
+            if(state.black?.user?.username === usernameOfPlayerToBeUpdated) {
+                state.black.user.isOnline = onlineStatus;
+            }
+        },
+        reset: state => {
+            return initialGameState;
         }
     }
 });

@@ -17,8 +17,8 @@ class GameDAO {
                 _id: gameId,
                 isPrivate: false
             })
-            .populate('black.user', '-_id username elo avatar')
-            .populate('white.user', '-_id username elo avatar')
+            .populate('black.user', '-_id username elo avatar isOnline')
+            .populate('white.user', '-_id username elo avatar isOnline')
             .populate('chat.user', '-_id username elo');
     }
 

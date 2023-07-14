@@ -38,6 +38,14 @@ const WebSocketProvider = props => {
             }
         };
 
+        const onPlayerOnlineStatus = (username, isOnline) => {
+            dispatch(toastActions.add({
+                message: `User ${isOnline ? 'online' : 'offline'} ${username}`,
+                status: 'info'
+            }));
+            dispatch(gameActions.updatePlayerOnlineStatus({ username, isOnline }));
+        };
+
         const onSearching = queueData => {
             dispatch(toastActions.add({
                 message: 'Searching for a game...',
@@ -113,6 +121,8 @@ const WebSocketProvider = props => {
         socket.on('disconnect', onDisconnect);
         socket.io.on('reconnect_attempt', onReconnectAttempt);
 
+        socket.on('playerOnlineStatus', onPlayerOnlineStatus);
+
         socket.on('searching', onSearching);
 		socket.on('cancelled', onCancelled);
         socket.on('queueUpdated', onQueueUpdated);
@@ -128,6 +138,8 @@ const WebSocketProvider = props => {
 			socket.off('connect', onConnect);
             socket.off('disconnect', onDisconnect);
             socket.io.off('reconnect_attempt', onReconnectAttempt);
+
+            socket.off('playerOnlineStatus', onPlayerOnlineStatus);
 
             socket.off('searching', onSearching);
 			socket.off('cancelled', onCancelled);

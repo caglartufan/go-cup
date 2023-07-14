@@ -91,10 +91,11 @@ app.set('io', io);
 io.use(auth.bind(null, services));
 
 io.on('connection', socket => {
-	handlers.onConnection(socket);
+	handlers.onConnection(services, socket);
+	socket.on('disconnect', handlers.onDisconnect.bind(null, services, socket));
 
 	socket.on('authenticated', handlers.onAuthenticated.bind(null, services, socket));
-	socket.on('loggedOut', handlers.onLoggedOut.bind(null, socket));
+	socket.on('loggedOut', handlers.onLoggedOut.bind(null, services, socket));
 
 	socket.on('play', handlers.onPlay.bind(null, io, services, socket));
 	socket.on('fetchQueueData', handlers.onFetchQueueData.bind(null, services, socket));

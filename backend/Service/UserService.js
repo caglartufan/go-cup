@@ -83,14 +83,38 @@ class UserService {
         return userDTO;
     }
 
-    async getUserIdByUser(userDTO) {
-        if(!(userDTO instanceof UserDTO)) {
-            throw new InvalidDTOError(userDTO, userDTO);
+    async getUserIdByUser(user) {
+        if(!(user instanceof UserDTO)) {
+            throw new InvalidDTOError(user, UserDTO);
         }
 
-        const userId = await UserDAO.getUserIdByUsernameAndEmail(userDTO.username, userDTO.email);
+        const userId = await UserDAO.getUserIdByUsernameAndEmail(user.username, user.email);
 
         return userId;
+    }
+
+    async getGamesOfUser(user) {
+        if(!(user instanceof UserDTO)) {
+            throw new InvalidDTOError(user, UserDTO);
+        }
+
+        return await UserDAO.getGamesOfUser(user);
+    }
+
+    async setUserOnline(user) {
+        if(!(user instanceof UserDTO)) {
+            throw new InvalidDTOError(user, UserDTO);
+        }
+
+        await UserDAO.setUserOnline(user);
+    }
+
+    async setUserOffline(user) {
+        if(!(user instanceof UserDTO)) {
+            throw new InvalidDTOError(user, UserDTO);
+        }
+
+        await UserDAO.setUserOffline(user);
     }
 }
 

@@ -7,6 +7,8 @@ class UserDTO {
     #email = '';
     #password = '';
     #passwordConfirmation = '';
+    #isAdmin = false;
+    #isOnline = false;
     #country = '';
     #games = null;
     #elo = 0;
@@ -14,7 +16,7 @@ class UserDTO {
     #createdAt = null;
     #updatedAt = null;
     
-    constructor(login, username, avatar, firstname, lastname, email, password, passwordConfirmation, country, games, elo, isInQueue, createdAt, updatedAt) {
+    constructor(login, username, avatar, firstname, lastname, email, password, passwordConfirmation, isAdmin, isOnline, country, games, elo, isInQueue, createdAt, updatedAt) {
         this.#login = login;
         this.#username = username;
         this.#avatar = avatar;
@@ -23,6 +25,8 @@ class UserDTO {
         this.#email = email;
         this.#password = password;
         this.#passwordConfirmation = passwordConfirmation;
+        this.#isAdmin = isAdmin;
+        this.#isOnline = isOnline;
         this.#country = country;
         this.#games = games;
         this.#elo = elo;
@@ -41,6 +45,8 @@ class UserDTO {
             requestData['email'],
             requestData['password'],
             requestData['password-confirmation'],
+            undefined,
+            undefined,
             requestData['country']
         )
     }
@@ -55,6 +61,8 @@ class UserDTO {
             user.email,
             undefined,
             undefined,
+            user.isAdmin,
+            user.isOnline,
             user.country,
             user.games,
             user.elo,
@@ -74,6 +82,8 @@ class UserDTO {
             email: this.#email,
             password: this.#password,
             passwordConfirmation: this.#passwordConfirmation,
+            isAdmin: this.#isAdmin,
+            isOnline: this.#isOnline,
             country: this.#country,
             games: this.#games,
             elo: this.#elo,
@@ -145,6 +155,22 @@ class UserDTO {
 
     set passwordConfirmation(value) {
         this.#passwordConfirmation = value;
+    }
+
+    get isAdmin() {
+        return this.#isAdmin;
+    }
+
+    set isAdmin(value) {
+        this.#isAdmin = value;
+    }
+
+    get isOnline() {
+        return this.#isOnline;
+    }
+
+    set isOnline(value) {
+        this.#isOnline = value;
     }
 
     get country() {

@@ -48,6 +48,10 @@ const userSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
+    isOnline: {
+        type: Boolean,
+        default: false
+    },
     country: {
         type: String,
         match: [Validator.COUNTRY_REGEX, VALIDATION.user.country['string.pattern.base']]

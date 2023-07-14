@@ -1,3 +1,4 @@
+@use 'sass:math';
 @use '../../sass/abstracts/variables' as *;
 
 .player-card {
@@ -49,14 +50,34 @@
         }
     }
 
-    &__avatar-container {
-        margin-right: 1.5rem;
-    }
-
     &__avatar {
-        width: 5rem;
-        aspect-ratio: 1;
-        border-radius: 50%;
+        position: relative;
+        margin-right: 1.5rem;
+
+        &-image {
+            width: 5rem;
+            aspect-ratio: 1;
+            border-radius: 50%;
+        }
+
+        &-badge {
+            display: block;
+            position: absolute;
+            top: calc(2.5rem - (2.5rem / math.sqrt(2)));
+            right: calc(2.5rem - (2.5rem / math.sqrt(2)));
+            width: 1.1rem;
+            height: 1.1rem;
+            border-radius: 50%;
+            transform: translate(50%, -50%);
+
+            &--online {
+                background-color: map-get($status, success);
+            }
+
+            &--offline {
+                background-color: map-get($status, danger);
+            }
+        }
     }
 
     &__meta {

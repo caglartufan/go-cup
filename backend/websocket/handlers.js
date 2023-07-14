@@ -1,12 +1,35 @@
 const { ErrorHandler, UnauthorizedError } = require('../utils/ErrorHandler');
 
 module.exports = {
-    onConnection: socket => {
+    onConnection: async (services, socket) => {
         console.log(socket.id, socket.rooms, socket.handshake.auth.token, socket.data);
         if(socket.data.user) {
-            console.log('User:', socket.data.user.toObject());
+			try {
+				await services.userService.setUserOnline(socket.data.user);
+
+				const gameIdsOfSocket = await services.userService.getGamesOfUser(socket.data.user);
+				if(gameIdsOfSocket.length) {
+					const gameRoomsOfSocket = gameIdsOfSocket.map(gameId => ('game-' + gameId));
+					socket.in(gameRoomsOfSocket).emit('playerOnlineStatus', socket.data.user.username, true);
+				}
+
+				console.log('User:', socket.data.user.toObject());
+			} catch(error) {
+				socket.emit('errorOccured', ErrorHandler.handle(error).message);
+			}
         }
     },
+	onDisconnect: async (services, socket) => {
+		if(socket.data.user) {
+			await services.userService.setUserOffline(socket.data.user);
+
+			const gameIdsOfSocket = await services.userService.getGamesOfUser(socket.data.user);
+			if(gameIdsOfSocket.length) {
+				const gameRoomsOfSocket = gameIdsOfSocket.map(gameId => ('game-' + gameId));
+				socket.in(gameRoomsOfSocket).emit('playerOnlineStatus', socket.data.user.username, false);
+			}
+		}
+	},
     onAuthenticated: async (services, socket, token) => {
 		socket.handshake.auth.token = token;
 
@@ -14,18 +37,34 @@ module.exports = {
 			const userDTO = await services.userService.authenticate(token);
 			socket.data.user = userDTO;
 
+			services.userService.setUserOnline(socket.data.user);
+
+			const gameIdsOfSocket = await services.userService.getGamesOfUser(socket.data.user);
+			if(gameIdsOfSocket.length) {
+				const gameRoomsOfSocket = gameIdsOfSocket.map(gameId => ('game-' + gameId));
+				socket.in(gameRoomsOfSocket).emit('playerOnlineStatus', socket.data.user.username, true);
+			}
+
 			socket.join(userDTO.username);
 		} catch(error) {
 			socket.emit('errorOccured', ErrorHandler.handle(error).message);
 		}
 	},
-    onLoggedOut: socket => {
+    onLoggedOut: async (services, socket) => {
 		// TODO: On log out or on disconnection, set a timeout that will
 		// dequeue user if user is already in queue
-		socket.leave(socket.data.user.username);
+		if(socket.data.user && socket.handshake.auth.token) {
+			await services.userService.setUserOffline(socket.data.user);
 
-		delete socket.handshake.auth.token;
-		delete socket.data.user;
+			const gameIdsOfSocket = await services.userService.getGamesOfUser(socket.data.user);
+			if(gameIdsOfSocket.length) {
+				const gameRoomsOfSocket = gameIdsOfSocket.map(gameId => ('game-' + gameId));
+				socket.in(gameRoomsOfSocket).emit('playerOnlineStatus', socket.data.user.username, false);
+			}
+	
+			delete socket.handshake.auth.token;
+			delete socket.data.user;
+		}
 	},
 	onPlay: (io, services, socket, preferences) => {
 		// TODO: Add authentication validation to play, cancel, fetchQueueData
@@ -70,16 +109,12 @@ module.exports = {
 	onJoinGameRoom: (socket, gameId) => {
 		socket.join('game-' + gameId);
 
-		// TODO: Add online/offline visibility in GameDetail page for PlayerCards, if the joined user is
-		// black or white player of the game set user as online or other ways to implement this
-		// 1) Add "online" proeprty in User model, set it true/false when socket connects/disconnects
-		// but how can I emit this to only sockets that are viewing that user??
-		// 2) Or maybe "socketId" proeprty can be added to User model and when user connects to websocket
-		// server, I can emit  user's active game room (last and playing game in user.games) that "userOnline"
-		// event or smh@@@
 		if(socket.data.user) {
 			socket.in('game-' + gameId).emit('userJoinedGameRoom', socket.data.user.username);
 		}
+	},
+	onLeaveGameRoom: (socket, gameId) => {
+		socket.leave('game-' + gameId);
 	},
 	onGameChatMessage: async (io, services, socket, gameId, message) => {
 		if(!socket.data.user) {

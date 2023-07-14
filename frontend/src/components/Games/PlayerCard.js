@@ -12,6 +12,7 @@ const PlayerCard = props => {
         avatar,
         'time-remaining': timeRemaining,
         score,
+        'is-online': isOnline,
         color,
         active
     } = props;
@@ -24,11 +25,12 @@ const PlayerCard = props => {
 
     return (
         <Card box-shadow="light" className={className}>
-            <div className="player-card__avatar-container">
+            <div className="player-card__avatar">
                 <img
                     src={'http://localhost:3000' + avatar}
-                    alt={username} className="player-card__avatar"
+                    alt={username} className="player-card__avatar-image"
                 />
+                <span className={`player-card__avatar-badge player-card__avatar-badge--${isOnline ? 'online' : 'offline'}`}></span>
             </div>
             <div className="player-card__meta">
                 {/* TODO: Add a button to report user (afk, inappropriate language etc.) */}

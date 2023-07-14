@@ -34,6 +34,7 @@ const router = createBrowserRouter([
 						element: <GamesPage />
 					},
 					{
+						id: 'GameDetailPage',
 						path: ':gameId',
 						element: <GameDetailPage />,
 						loader: gameDetailLoader
