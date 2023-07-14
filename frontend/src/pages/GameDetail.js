@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState, Fragment } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { redirect } from 'react-router-dom';
+import { redirect, useLoaderData, useLocation } from 'react-router-dom';
 import { formatSeconds } from '../utils/helpers';
 
 import { store } from '../store/store';
@@ -21,9 +21,13 @@ import './GameDetail.scss';
 let interval;
 
 const GameDetailPage = () => {
+    const resData = useLoaderData();
     const dispatch = useDispatch();
+    const location = useLocation();
+
     const username = useSelector(state => state.user.username);
-    const game = useSelector(state => state.game);
+    const game = useSelector(state => state.game._id ? state.game : null) || resData.game;
+
     const isBlackPlayer = username && game.black.user.username === username;
     const isWhitePlayer = username && game.white.user.username === username;
     const isPlayer = isBlackPlayer || isWhitePlayer;
@@ -35,6 +39,7 @@ const GameDetailPage = () => {
         }
     }, [isPlayer, game.status, game._id]);
 
+    // Side effect to initialize timer's value depending on game status
     useEffect(() => {
         if(game.status === 'waiting') {
             const waitingEndsAt = new Date(game.waitingEndsAt);
@@ -44,8 +49,9 @@ const GameDetailPage = () => {
         }
     }, [game.status, game.waitingEndsAt]);
 
+    // Side effect to run timer down, if timer value is greater than 0
     useEffect(() => {
-        if(timer >= 0) {
+        if(timer > 0) {
             // TODO: Use worker timers instead to prevent suspension of intervals
             // https://www.npmjs.com/package/worker-timers
             interval = setInterval(() => {
@@ -58,13 +64,20 @@ const GameDetailPage = () => {
         }
     }, [timer]);
 
-    // @@@ reset gameSlice state when user leaves this page/router element
     useEffect(() => {
-        console.log('rendering', timer);
+        // When game data is loaded by loader, update gameSlice state
+        dispatch(gameActions.updateGame(resData.game));
+
+        socket.emit('joinGameRoom', resData.game._id);
+        
         return () => {
-            console.log('leaving!');
+            // Reset gameSlice state when user leaves this page/router
+            // using clean-up function
+            dispatch(gameActions.reset());
+
+            socket.emit('leaveGameRoom', resData.game._id);
         };
-    }, []);
+    }, [dispatch, location, resData.game]);
 
     return (
         <Container fluid fillVertically>
@@ -74,6 +87,7 @@ const GameDetailPage = () => {
                         {game.status === 'waiting' && `Waiting for black to play (${formatSeconds(timer)})`}
                         {game.status === 'cancelled' && 'The game has been cancelled!'}
                         {(game.status === 'cancelled_by_black' || game.status === 'cancelled_by_white') && `The game has been cancelled by ${game.status.replace('cancelled_by_', '')} player!`}
+                        (Online: {game.viewersCount})
                     </h2>
                     <Board size={game.size} state={game.board} className="mb-4" dynamicHeight />
                     {isPlayer && (
@@ -154,12 +168,7 @@ export const loader = async ({ params }) => {
         return redirect('/');
     }
 
-    store.dispatch(gameActions.updateGame(resData.game));
-
-    socket.emit('joinGameRoom', resData.game._id);
-    console.log('joining!');
-
-    return null;
+    return resData;
 };
 
 export default GameDetailPage;

@@ -79,10 +79,17 @@ const WebSocketProvider = props => {
             navigate('/games/' + gameId);
         };
 
-        const userJoinedGameRoomHandler = username => {
-            dispatch(toastActions.add({
-                message: `${username} has joined to the game room!`,
-                status: 'info'
+        const userJoinedGameRoomHandler = (socketName, roomSocketsCount) => {
+            // TODO: Update online viewers count in gameState and show on UI
+            dispatch(gameActions.updateViewersCount({
+                viewersCount: roomSocketsCount
+            }));
+        };
+
+        const userLeftGameRoomHandler = (socketName, roomSocketsCount) => {
+            // TODO: Update online viewers count in gameState and show on UI
+            dispatch(gameActions.updateViewersCount({
+                viewersCount: roomSocketsCount
             }));
         };
 
@@ -128,6 +135,7 @@ const WebSocketProvider = props => {
         socket.on('queueUpdated', onQueueUpdated);
         socket.on('gameStarted', onGameStarted);
         socket.on('userJoinedGameRoom', userJoinedGameRoomHandler);
+        socket.on('userLeftGameRoom', userLeftGameRoomHandler);
         socket.on('gameChatMessage', onGameChatMessage);
         socket.on('gameCancelled', onGameCancelled);
 
@@ -146,6 +154,7 @@ const WebSocketProvider = props => {
             socket.off('queueUpdated', onQueueUpdated);
             socket.off('gameStarted', onGameStarted);
             socket.off('userJoinedGameRoom', userJoinedGameRoomHandler);
+            socket.off('userLeftGameRoom', userLeftGameRoomHandler);
             socket.off('gameChatMessage', onGameChatMessage);
             socket.off('gameCancelled', onGameCancelled);
 

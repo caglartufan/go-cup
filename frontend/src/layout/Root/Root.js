@@ -1,4 +1,4 @@
-import { Fragment, useEffect } from 'react';
+import { Fragment } from 'react';
 import { Outlet } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 
@@ -11,13 +11,6 @@ const RootLayout = () => {
     // https://beta.reactrouter.com/en/main/guides/deferred
     const toasts = useSelector(store => store.toast);
     const isInQueue = useSelector(store => store.queue.isInQueue);
-
-    useEffect(() => {
-        console.log('rendering2');
-        return () => {
-            console.log('leaving2!');
-        };
-    }, []);
 
     return (
         <Fragment>

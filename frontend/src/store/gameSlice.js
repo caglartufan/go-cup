@@ -11,7 +11,8 @@ const initialGameState = {
     moves: [],
     chat: [],
     waitingEndsAt: null,
-    createdAt: null
+    createdAt: null,
+    viewersCount: 0
 };
 
 const gameSlice = createSlice({
@@ -51,6 +52,9 @@ const gameSlice = createSlice({
         },
         reset: state => {
             return initialGameState;
+        },
+        updateViewersCount: (state, action) => {
+            state.viewersCount = action.payload.viewersCount;
         }
     }
 });

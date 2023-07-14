@@ -92,15 +92,17 @@ io.use(auth.bind(null, services));
 
 io.on('connection', socket => {
 	handlers.onConnection(services, socket);
+	socket.on('disconnecting', handlers.onDisconnecting.bind(null, io, socket));
 	socket.on('disconnect', handlers.onDisconnect.bind(null, services, socket));
 
 	socket.on('authenticated', handlers.onAuthenticated.bind(null, services, socket));
-	socket.on('loggedOut', handlers.onLoggedOut.bind(null, services, socket));
+	socket.on('loggedOut', handlers.onLoggedOut.bind(null, io, services, socket));
 
 	socket.on('play', handlers.onPlay.bind(null, io, services, socket));
 	socket.on('fetchQueueData', handlers.onFetchQueueData.bind(null, services, socket));
 	socket.on('cancel', handlers.onCancel.bind(null, io, services, socket));
-	socket.on('joinGameRoom', handlers.onJoinGameRoom.bind(null, socket));
+	socket.on('joinGameRoom', handlers.onJoinGameRoom.bind(null, io, socket));
+	socket.on('leaveGameRoom', handlers.onLeaveGameRoom.bind(null, io, socket));
 	socket.on('gameChatMessage', handlers.onGameChatMessage.bind(null, io, services, socket));
 	socket.on('cancelGame', handlers.onCancelGame.bind(null, io, services, socket));
 });

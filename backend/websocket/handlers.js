@@ -2,7 +2,7 @@ const { ErrorHandler, UnauthorizedError } = require('../utils/ErrorHandler');
 
 module.exports = {
     onConnection: async (services, socket) => {
-        console.log(socket.id, socket.rooms, socket.handshake.auth.token, socket.data);
+        console.log(socket.id, socket.rooms, socket.handshake.auth.token, socket.data.user?.username);
         if(socket.data.user) {
 			try {
 				await services.userService.setUserOnline(socket.data.user);
@@ -12,13 +12,24 @@ module.exports = {
 					const gameRoomsOfSocket = gameIdsOfSocket.map(gameId => ('game-' + gameId));
 					socket.in(gameRoomsOfSocket).emit('playerOnlineStatus', socket.data.user.username, true);
 				}
-
-				console.log('User:', socket.data.user.toObject());
 			} catch(error) {
 				socket.emit('errorOccured', ErrorHandler.handle(error).message);
 			}
         }
     },
+	onDisconnecting: async (io, socket) => {
+		const socketName = socket.data.user
+			? socket.data.user.username
+			: socket.id;
+		const socketGameRooms = Array.from(socket.rooms).filter(roomName => roomName.startsWith('game-'));
+		console.log(socket.rooms, socketGameRooms);
+
+		for(const gameRoom of socketGameRooms) {
+			const roomSockets = await io.in(gameRoom).fetchSockets();
+	
+			io.in(gameRoom).emit('userLeftGameRoom', socketName, roomSockets.length);
+		}
+	},
 	onDisconnect: async (services, socket) => {
 		if(socket.data.user) {
 			await services.userService.setUserOffline(socket.data.user);
@@ -29,6 +40,7 @@ module.exports = {
 				socket.in(gameRoomsOfSocket).emit('playerOnlineStatus', socket.data.user.username, false);
 			}
 		}
+
 	},
     onAuthenticated: async (services, socket, token) => {
 		socket.handshake.auth.token = token;
@@ -50,7 +62,7 @@ module.exports = {
 			socket.emit('errorOccured', ErrorHandler.handle(error).message);
 		}
 	},
-    onLoggedOut: async (services, socket) => {
+    onLoggedOut: async (io, services, socket) => {
 		// TODO: On log out or on disconnection, set a timeout that will
 		// dequeue user if user is already in queue
 		if(socket.data.user && socket.handshake.auth.token) {
@@ -60,6 +72,13 @@ module.exports = {
 			if(gameIdsOfSocket.length) {
 				const gameRoomsOfSocket = gameIdsOfSocket.map(gameId => ('game-' + gameId));
 				socket.in(gameRoomsOfSocket).emit('playerOnlineStatus', socket.data.user.username, false);
+			}
+			
+			const socketGameRooms = Array.from(socket.rooms).filter(roomName => roomName.startsWith('game-'));
+			for(let gameRoom of socketGameRooms) {
+				const roomSockets = await io.in(gameRoom).fetchSockets();
+		
+				io.in(gameRoom).emit('userLeftGameRoom', socket.data.user.username, roomSockets.length);
 			}
 	
 			delete socket.handshake.auth.token;
@@ -106,15 +125,29 @@ module.exports = {
 			inQueue
 		});
 	},
-	onJoinGameRoom: (socket, gameId) => {
-		socket.join('game-' + gameId);
+	onJoinGameRoom: async (io, socket, gameId) => {
+		const socketName = socket.data.user
+			? socket.data.user.username
+			: socket.id;
+		const gameRoom = 'game-' + gameId;
 
-		if(socket.data.user) {
-			socket.in('game-' + gameId).emit('userJoinedGameRoom', socket.data.user.username);
-		}
+		socket.join(gameRoom);
+
+		const roomSockets = await io.in(gameRoom).fetchSockets();
+
+		io.in(gameRoom).emit('userJoinedGameRoom', socketName, roomSockets.length);
 	},
-	onLeaveGameRoom: (socket, gameId) => {
-		socket.leave('game-' + gameId);
+	onLeaveGameRoom: async (io, socket, gameId) => {
+		const socketName = socket.data.user
+			? socket.data.user.username
+			: socket.id;
+		const gameRoom = 'game-' + gameId;
+
+		socket.leave(gameRoom);
+
+		const roomSockets = await io.in(gameRoom).fetchSockets();
+
+		io.in(gameRoom).emit('userLeftGameRoom', socketName, roomSockets.length);
 	},
 	onGameChatMessage: async (io, services, socket, gameId, message) => {
 		if(!socket.data.user) {
