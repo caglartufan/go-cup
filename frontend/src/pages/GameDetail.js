@@ -87,7 +87,6 @@ const GameDetailPage = () => {
                         {game.status === 'waiting' && `Waiting for black to play (${formatSeconds(timer)})`}
                         {game.status === 'cancelled' && 'The game has been cancelled!'}
                         {(game.status === 'cancelled_by_black' || game.status === 'cancelled_by_white') && `The game has been cancelled by ${game.status.replace('cancelled_by_', '')} player!`}
-                        (Online: {game.viewersCount})
                     </h2>
                     <Board size={game.size} state={game.board} className="mb-4" dynamicHeight />
                     {isPlayer && (

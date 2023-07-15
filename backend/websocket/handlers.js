@@ -22,7 +22,6 @@ module.exports = {
 			? socket.data.user.username
 			: socket.id;
 		const socketGameRooms = Array.from(socket.rooms).filter(roomName => roomName.startsWith('game-'));
-		console.log(socket.rooms, socketGameRooms);
 
 		for(const gameRoom of socketGameRooms) {
 			const roomSockets = await io.in(gameRoom).fetchSockets();
@@ -86,10 +85,6 @@ module.exports = {
 		}
 	},
 	onPlay: (io, services, socket, preferences) => {
-		// TODO: Add authentication validation to play, cancel, fetchQueueData
-		// and other authentication required listeners and return error if user is not
-		// authenticated. Preferably, find a way to implement such middleware to
-		// specified listeners
 		const gameService = services.gameService;
 
 		gameService.enqueue(socket.data.user, preferences);
@@ -175,7 +170,7 @@ module.exports = {
 			const cancelGameResult = await services.gameService.cancelGame(gameId, socket.data.user.username);
 
 			if(cancelGameResult.cancelledBy && cancelGameResult.latestSystemChatEntry) {
-				io.in('game-' + gameId).emit('gameCancelled', cancelGameResult.cancelledBy);
+				io.in('game-' + gameId).emit('gameCancelled', gameId, cancelGameResult.cancelledBy);
 				io.in('game-' + gameId).emit('gameChatMessage', cancelGameResult.latestSystemChatEntry);
 			}
 		} catch(error) {

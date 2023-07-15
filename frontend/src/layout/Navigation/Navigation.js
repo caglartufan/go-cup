@@ -1,18 +1,26 @@
 import { useSelector } from 'react-redux/es/hooks/useSelector';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 
 import './Navigation.scss';
 import MiniProfile from '../MiniProfile/MiniProfile';
 import { socket } from '../../websocket';
+import { useCallback } from 'react';
 
 const Navigation = () => {
+    const navigate = useNavigate();
+    const location = useLocation();
     const isUserAuthenticated = useSelector(state => state.user.username && state.user.email);
+    const activeGame = useSelector(state => state.user.activeGame);
     const isUserAlreadyInQueue = useSelector(state => state.queue.isInQueue);
 
-    const playHandler = () => {
-        // TODO: Ask for preferences in a modal and send it
-        socket.emit('play', {});
-    };
+    const playHandler = useCallback(() => {
+        if(activeGame) {
+            navigate('/games/' + activeGame);
+        } else {
+            // TODO: Ask for preferences in a modal and send it
+            socket.emit('play', {});
+        }
+    }, [navigate, activeGame]);
 
     return (
         <nav className="navigation">
@@ -54,7 +62,7 @@ const Navigation = () => {
                         Leaderbord
                     </NavLink>
                 </li>
-                {isUserAuthenticated && (
+                {isUserAuthenticated && !activeGame && (
                     <li className="navigation__list-item">
                         <button
                             className="navigation__list-item-link navigation__list-item-link--button"
@@ -62,6 +70,17 @@ const Navigation = () => {
                             disabled={isUserAlreadyInQueue}
                         >
                             Play
+                        </button>
+                    </li>
+                )}
+                {isUserAuthenticated && activeGame && (
+                    <li className="navigation__list-item">
+                        <button
+                            className="navigation__list-item-link navigation__list-item-link--button"
+                            onClick={playHandler}
+                            disabled={location.pathname === ('/games/' + activeGame)}
+                        >
+                            Return to the game
                         </button>
                     </li>
                 )}

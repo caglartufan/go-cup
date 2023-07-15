@@ -22,17 +22,23 @@ class GameDAO {
             .populate('chat.user', '-_id username elo');
     }
 
-    static async cancelGamesThatAreTimedOutOnWaitingStatus() {
-        const gameIdsToBeCancelled = await Game.find({
+    static async cancelGamesThatAreTimedOutOnWaitingStatusAndReturnGameIdsAndUserIds() {
+        const gamesToBeCancelledWithIdsAndPlayers = await Game.find({
             status: 'waiting',
             waitingEndsAt: { $lte: Date.now() }
-        }).distinct('_id');
+        }).select('_id black.user white.user')
+        .populate('black.user', '-_id username')
+        .populate('white.user', '-_id username');
 
-        if(gameIdsToBeCancelled.length) {
-            // TODO:  move this message and "beginning of the chat" message in
-            // Game model to messages folder
+        const gameIds = gamesToBeCancelledWithIdsAndPlayers.map(game => game._id);
+        const users = gamesToBeCancelledWithIdsAndPlayers.reduce(
+            (prevValue, game) => prevValue.concat(game.black.user, game.white.user),
+            []
+        );
+
+        if(gameIds.length) {
             await Game.updateMany({
-                _id: { $in: gameIdsToBeCancelled }
+                _id: { $in: gameIds }
             }, {
                 status: 'cancelled',
                 $push: {
@@ -41,7 +47,7 @@ class GameDAO {
             });
         }
 
-        return gameIdsToBeCancelled;
+        return { gameIds, users };
     }
 
     static async cancelGame(gameId, cancelledBy) {

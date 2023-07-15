@@ -139,7 +139,8 @@ gameSchema.pre('save', async function() {
         }, {
             $push: {
                 games: this._id
-            }
+            },
+            activeGame: this._id
         });
     }
 });

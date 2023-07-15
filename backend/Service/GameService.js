@@ -227,18 +227,20 @@ class GameService {
     }
 
     async #cancelMatchesThatAreTimedOutOnWaitingStatus() {
-        const idsOfGamesThatAreTimedOut = await GameDAO.cancelGamesThatAreTimedOutOnWaitingStatus();
+        const { gameIds, users } = await GameDAO.cancelGamesThatAreTimedOutOnWaitingStatusAndReturnGameIdsAndUserIds();
         
-        if(idsOfGamesThatAreTimedOut.length) {
-            const gamesWithLatestSystemChatEntry = await GameDAO.getGamesWithLatestSystemChatEntryByGameIds(idsOfGamesThatAreTimedOut);
+        if(gameIds.length && users.length) {
+            const gamesWithLatestSystemChatEntry = await GameDAO.getGamesWithLatestSystemChatEntryByGameIds(gameIds);
+
+            await UserDAO.nullifyActiveGameOfUsers(...users);
 
             gamesWithLatestSystemChatEntry.forEach(({ _id: gameId, latestSystemChatEntry }) => {
                 this.#io.in('game-' + gameId).emit('gameChatMessage', latestSystemChatEntry);
             });
 
-            const rooms = idsOfGamesThatAreTimedOut.map(gameId => 'game-' + gameId);
-            
-            this.#io.in(rooms).emit('gameCancelled');
+            gameIds.forEach(gameId => {
+                this.#io.in('game-' + gameId).emit('gameCancelled', gameId);
+            })
         }
     }
 
@@ -251,6 +253,8 @@ class GameService {
             const cancelledBy = game.black.user.username === username ? 'black' : 'white';
 
 			const { latestSystemChatEntry } = await GameDAO.cancelGame(gameId, cancelledBy);
+
+            await UserDAO.nullifyActiveGameOfUsers(game.black.user, game.white.user);
 
             return { cancelledBy, latestSystemChatEntry };
 		} else {

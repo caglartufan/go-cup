@@ -7,7 +7,6 @@ const {
     InvalidDTOError,
     UserValidationError,
     InvalidUserCredentialsError,
-    InvalidJWTError,
     UnauthorizedError
 } = require('../utils/ErrorHandler');
 const Validator = require('../utils/Validator');

@@ -1,4 +1,5 @@
 @use '../../sass/abstracts/variables' as *;
+@use '../../sass/abstracts/mixins' as *;
 
 .chat {
     flex: 1;
@@ -6,6 +7,25 @@
     flex-direction: column;
     padding: 0;
     background-color: darken($white, 7%);
+    
+    overflow: hidden;
+
+    &-header {
+        color: $white;
+        padding: 1rem;
+        background-color: lighten(#000, 15%);
+        @include box-shadow(light);
+
+        &__watching {
+            display: flex;
+            align-items: center;
+            font-size: 1.5rem;
+
+            &-icon {
+                margin-right: .6rem;
+            }
+        }
+    }
 
     &-messages {
         flex: 1 1 1px;

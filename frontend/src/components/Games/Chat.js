@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCircleChevronRight } from '@fortawesome/free-solid-svg-icons';
+import { faCircleChevronRight, faEye } from '@fortawesome/free-solid-svg-icons';
 import { formatDateToHoursAndMinutes } from '../../utils/helpers';
 
 import { socket } from '../../websocket';
@@ -13,6 +13,7 @@ import './Chat.scss';
 
 const Chat = props => {
     const gameId = useSelector(state => state.game._id);
+    const viewersCount = useSelector(state => state.game.viewersCount);
     const chat = useSelector(state => state.game.chat);
     const [shouldScrollBottom, setShouldScrollBottom] = useState(true);
     const textareaRef = useRef();
@@ -75,6 +76,11 @@ const Chat = props => {
 
     return (
         <Card box-shadow="light" className="chat">
+            <div className="chat-header">
+                <span className="chat-header__watching">
+                    <FontAwesomeIcon icon={faEye} className="chat-header__watching-icon" /> Watching: {viewersCount}
+                </span>
+            </div>
             <div className="chat-messages" ref={chatMessagesRef} onScroll={scrollHandler}>
                 {chat.map(chatEntry => {
                     const createdAtDate = new Date(chatEntry.createdAt);

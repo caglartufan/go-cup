@@ -11,7 +11,7 @@ const debug = require('debug')('go-cup:app');
 
 const ServiceRegistry = require('./Service/ServiceRegistry');
 const { NotFoundError, ErrorHandler } = require('./utils/ErrorHandler');
-const { auth } = require('./websocket/middlewares');
+const { auth, forceAuth } = require('./websocket/middlewares');
 const handlers = require('./websocket/handlers');
 
 // General Routes
@@ -91,6 +91,9 @@ app.set('io', io);
 io.use(auth.bind(null, services));
 
 io.on('connection', socket => {
+	const disallowedEvents = ['loggedOut', 'play', 'fetchQueueData', 'cancel', 'cancelGame'];
+	socket.use(forceAuth(disallowedEvents, socket));
+
 	handlers.onConnection(services, socket);
 	socket.on('disconnecting', handlers.onDisconnecting.bind(null, io, socket));
 	socket.on('disconnect', handlers.onDisconnect.bind(null, services, socket));

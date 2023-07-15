@@ -1,4 +1,4 @@
-const { ErrorHandler } = require('../utils/ErrorHandler');
+const { ErrorHandler, UnauthorizedError } = require('../utils/ErrorHandler');
 
 exports.auth = async (services, socket, next) => {
 	const token = socket.handshake.auth.token;
@@ -18,4 +18,15 @@ exports.auth = async (services, socket, next) => {
 	}
 
 	next();
+};
+
+exports.forceAuth = (disallowedEvents, socket) => {
+	return ([event, ...args], next) => {
+		if(!socket.data.user && !socket.handshake.authn.token && disallowedEvents.indexOf(event) > -1) {
+			socket.emit('errorOccured', new UnauthorizedError().message);
+			return;
+		}
+
+		next();
+	}
 };

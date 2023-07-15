@@ -60,6 +60,11 @@ const userSchema = new mongoose.Schema({
         type: mongoose.SchemaTypes.ObjectId,
         ref: 'Game'
     }],
+    activeGame: {
+        type: mongoose.SchemaTypes.ObjectId,
+        ref: 'Game',
+        default: null
+    },
     elo: {
         type: Number,
         default: 500

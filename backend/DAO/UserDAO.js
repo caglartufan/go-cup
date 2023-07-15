@@ -91,6 +91,14 @@ class UserDAO {
             isOnline: false
         });
     }
+
+    static async nullifyActiveGameOfUsers(...users) {
+        await User.updateMany({
+            username: { $in: users.map(user => user.username) }
+        }, {
+            activeGame: null
+        });
+    }
 }
 
 module.exports = UserDAO;

@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 
 import { toastActions } from '../store/toastSlice';
 import { queueActions } from '../store/queueSlice';
@@ -7,10 +7,12 @@ import { gameActions } from '../store/gameSlice';
 
 import { setSocketId } from '../utils/websocket';
 import { socket } from '.';
+import { userActions } from '../store/userSlice';
 
 const WebSocketProvider = props => {
     const { navigate } = props;
     const dispatch = useDispatch();
+    const activeGameOfUser = useSelector(state => state.user.activeGame);
 
 	useEffect(() => {
         const onConnect = () => {
@@ -76,6 +78,7 @@ const WebSocketProvider = props => {
                 status: 'success'
             }));
             dispatch(queueActions.cancelled());
+            dispatch(userActions.updateActiveGame({ gameId }));
             navigate('/games/' + gameId);
         };
 
@@ -90,7 +93,7 @@ const WebSocketProvider = props => {
             dispatch(gameActions.addChatEntry({ chatEntry }));
         };
 
-        const onGameCancelled = cancelledBy => {
+        const onGameCancelled = (gameId, cancelledBy) => {
             dispatch(toastActions.add({
                 message: cancelledBy
                     ? `The game has been cancelled by ${cancelledBy} player!`
@@ -98,6 +101,9 @@ const WebSocketProvider = props => {
                 status: 'warning'
             }));
             dispatch(gameActions.updateStatus({ status: cancelledBy ? ('cancelled_by_' + cancelledBy) : 'cancelled' }));
+            if(activeGameOfUser === gameId) {
+                dispatch(userActions.updateActiveGame({ gameId: null }));
+            }
         };
 
 		// General error handler
@@ -154,7 +160,7 @@ const WebSocketProvider = props => {
 			socket.off('errorOccured', onErrorOccured);
 			socket.off('connect_error', onConnectError);
 		};
-    }, [dispatch, navigate]);
+    }, [dispatch, navigate, activeGameOfUser]);
 
     return props.children;
 };
