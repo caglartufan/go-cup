@@ -91,7 +91,7 @@ app.set('io', io);
 io.use(auth.bind(null, services));
 
 io.on('connection', socket => {
-	const disallowedEvents = ['loggedOut', 'play', 'fetchQueueData', 'cancel', 'cancelGame', 'addStone'];
+	const disallowedEvents = ['loggedOut', 'play', 'fetchQueueData', 'cancel', 'gameChatMessage', 'cancelGame', 'addStone'];
 	socket.use(forceAuth(disallowedEvents, socket));
 
 	handlers.onConnection(services, socket);

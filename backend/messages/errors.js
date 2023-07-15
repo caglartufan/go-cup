@@ -9,8 +9,10 @@ const ERRORS = {
     INVALID_IO_OBJECT: 'Received an object that is instance of #{RECEIVED_CLASS} which is not a valid socket.io (io) object.',
     NOT_FOUND: 'Page or resource could not found!',
     UNAUTHORIZED: 'Unauthorized user.',
-    USER_NOT_FOUND: 'Could not find user!',
-    GAME_NOT_FOUND: 'Could not find game!'
+    USER_NOT_FOUND: 'Could not find user.',
+    GAME_NOT_FOUND: 'Could not find game.',
+    GAME_HAS_ALREADY_FINISHED_OR_CANCELLED: 'Game has already finished or cancelled.',
+    NOT_YOUR_TURN: 'Not your turn.'
 };
 
 module.exports = ERRORS;

@@ -125,6 +125,27 @@ class InvalidIOError extends TypeError {
     }
 }
 
+class GameError extends Error {
+    constructor(message) {
+        super(message);
+        this.name = 'GameError';
+    }
+}
+
+class GameHasAlreadyFinishedOrCancelledError extends GameError {
+    constructor() {
+        super(ERRORS.GAME_HAS_ALREADY_FINISHED_OR_CANCELLED);
+        this.name = 'GameHasAlreadyFinishedOrCancelledError';
+    }
+}
+
+class NotYourTurnError extends GameError {
+    constructor() {
+        super(ERRORS.NOT_YOUR_TURN);
+        this.name = 'NotYourTurnError';
+    }
+}
+
 class ErrorHandler {
     static handle(error) {
         if(error instanceof mongoose.Error.ValidationError) {
@@ -135,7 +156,7 @@ class ErrorHandler {
             return new InvalidJWTError();
         } else {
             debug(error);
-            if(error instanceof HTTPError || error instanceof InvalidDTOError) {
+            if(error instanceof HTTPError || error instanceof InvalidDTOError || error instanceof GameError) {
                 return error;
             } else {
                 return new InternalServerError(error.message);
@@ -157,5 +178,7 @@ module.exports = {
     GameNotFoundError,
     InvalidDTOError,
     InvalidIOError,
+    GameHasAlreadyFinishedOrCancelledError,
+    NotYourTurnError,
     ErrorHandler
 };

@@ -35,9 +35,17 @@ const gameSchema = new mongoose.Schema({
                 message: VALIDATION.game.moves.player['any.only']
             }
         },
-        position: {
-            type: String,
-            required: [true, VALIDATION.game.moves.position['any.required']]
+        row: {
+            type: Number,
+            required: [true, VALIDATION.game.moves.row['any.required']],
+            min: [0, VALIDATION.game.moves.row['number.min']],
+            max: [18, VALIDATION.game.moves.row['number.min']]
+        },
+        column: {
+            type: Number,
+            required: [true, VALIDATION.game.moves.column['any.required']],
+            min: [0, VALIDATION.game.moves.column['number.min']],
+            max: [18, VALIDATION.game.moves.column['number.min']]
         },
         createdAt: {
             type: Date,
@@ -106,7 +114,10 @@ const gameSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
-    gameStartedAt: {
+    startedAt: {
+        type: Date
+    },
+    finishedAt: {
         type: Date
     },
     waitingEndsAt: {

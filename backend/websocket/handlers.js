@@ -171,11 +171,23 @@ module.exports = {
 	},
 	onAddStone: async (io, services, socket, gameId, row, column) => {
 		console.log(socket.data.user.username, gameId, row, column);
-		if(gameId !== socket.data.user.activeGame) {
+		if(gameId !== socket.data.user.activeGame.toString()) {
 			return;
 		}
 
-		const game = await services.gameService.addStoneToTheGame(socket.data.user, gameId, row, column);
-		console.log(socket.data.user.activeGame);
+		try {
+			const updatedGame = await services.gameService.addStoneToTheGame(socket.data.user, gameId, row, column);
+
+			io.in('game-' + gameId).emit(
+				'addedStone',
+				updatedGame.status,
+				updatedGame.black,
+				updatedGame.white,
+				updatedGame.board,
+				updatedGame.moves
+			);
+		} catch(error) {
+			socket.emit('errorOccured', ErrorHandler.handle(error).message);
+		}
 	}
 };

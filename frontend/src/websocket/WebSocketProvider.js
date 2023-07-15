@@ -106,6 +106,16 @@ const WebSocketProvider = props => {
             }
         };
 
+        const onAddedStone = (status, black, white, board, moves) => {
+            dispatch(gameActions.updateGame({
+                status,
+                black,
+                white,
+                board,
+                moves,
+            }));
+        };
+
 		// General error handler
         const onErrorOccured = errorMessage => {
 			dispatch(toastActions.add({
@@ -137,6 +147,7 @@ const WebSocketProvider = props => {
         socket.on('userLeftGameRoom', userJoinedOrLeftGameRoomHandler);
         socket.on('gameChatMessage', onGameChatMessage);
         socket.on('gameCancelled', onGameCancelled);
+        socket.on('addedStone', onAddedStone);
 
 		socket.on('errorOccured', onErrorOccured);
 		socket.on('connect_error', onConnectError);
@@ -156,6 +167,7 @@ const WebSocketProvider = props => {
             socket.off('userLeftGameRoom', userJoinedOrLeftGameRoomHandler);
             socket.off('gameChatMessage', onGameChatMessage);
             socket.off('gameCancelled', onGameCancelled);
+            socket.off('addedStone', onAddedStone);
 
 			socket.off('errorOccured', onErrorOccured);
 			socket.off('connect_error', onConnectError);

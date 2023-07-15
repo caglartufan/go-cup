@@ -8,11 +8,12 @@ class GameDTO {
     #white;
     #chat;
     #isPrivate;
-    #gameStartedAt;
+    #startedAt;
+    #finishedAt;
     #waitingEndsAt;
     #createdAt;
 
-    constructor(_id, size, status, board, moves, black, white, chat, isPrivate, gameStartedAt, waitingEndsAt, createdAt) {
+    constructor(_id, size, status, board, moves, black, white, chat, isPrivate, startedAt, finishedAt, waitingEndsAt, createdAt) {
         this.#_id = _id;
         this.#size = size;
         this.#status = status;
@@ -22,7 +23,8 @@ class GameDTO {
         this.#white = white;
         this.#chat = chat;
         this.#isPrivate = isPrivate;
-        this.#gameStartedAt = gameStartedAt;
+        this.#startedAt = startedAt;
+        this.#finishedAt = finishedAt;
         this.#waitingEndsAt = waitingEndsAt;
         this.#createdAt = createdAt;
     }
@@ -38,7 +40,8 @@ class GameDTO {
             game.white,
             game.chat,
             game.isPrivate,
-            game.gameStartedAt,
+            game.startedAt,
+            game.finishedAt,
             game.waitingEndsAt,
             game.createdAt
         );
@@ -55,7 +58,8 @@ class GameDTO {
             white: this.#white,
             chat: this.#chat,
             isPrivate: this.#isPrivate,
-            gameStartedAt: this.#gameStartedAt,
+            startedAt: this.#startedAt,
+            finishedAt: this.#finishedAt,
             waitingEndsAt: this.#waitingEndsAt,
             createdAt: this.#createdAt
         };
@@ -97,8 +101,12 @@ class GameDTO {
         return this.#isPrivate;
     }
 
-    get gameStartedAt() {
-        return this.#gameStartedAt;
+    get startedAt() {
+        return this.#startedAt;
+    }
+
+    get finishedAt() {
+        return this.#finishedAt;
     }
 
     get waitingEndsAt() {

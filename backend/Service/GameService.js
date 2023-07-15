@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const GameDAO = require('../DAO/GameDAO');
 const UserDAO = require('../DAO/UserDAO');
 const UserDTO = require('../DTO/UserDTO');
-const { InvalidDTOError, UserNotFoundError, GameNotFoundError, UnauthorizedError } = require('../utils/ErrorHandler');
+const { InvalidDTOError, UserNotFoundError, GameNotFoundError, UnauthorizedError, GameHasAlreadyFinishedOrCancelledError, NotYourTurnError } = require('../utils/ErrorHandler');
 const GameDTO = require('../DTO/GameDTO');
 
 class GameService {
@@ -219,7 +219,6 @@ class GameService {
 
         console.log(`Starting a match between ${black.username} (black) and ${white.username} (white)!`);
 
-        
         const [blackUserId, whiteUserId] = await UserDAO.getUserIdsByUsernames(black.username, white.username);
         
         const game = await GameDAO.createGame(blackUserId, whiteUserId);
@@ -298,10 +297,15 @@ class GameService {
     }
 
     async addStoneToTheGame(user, gameId, row, column) {
-        const game = await this.findGameById(gameId);
+        const game = await GameDAO.findGameById(gameId);
 
         if(!game) {
             throw new GameNotFoundError();
+        }
+
+        console.log(game.status);
+        if(game.status !== 'waiting' && game.status !== 'started') {
+            throw new GameHasAlreadyFinishedOrCancelledError();
         }
 
         const isBlackPlayer = user.username === game.black.user.username;
@@ -313,8 +317,9 @@ class GameService {
         }
 
         let whosTurn = 'black';
-        if(game.moves.length) {
-            const lastMove = game.moves[game.moves.length - 1];
+        let lastMove = null;
+        if(game.status !== 'waiting' && game.moves.length) {
+            lastMove = game.moves[game.moves.length - 1];
             if(lastMove.player === 'black') {
                 whosTurn = 'white';
             }
@@ -324,10 +329,44 @@ class GameService {
             (isBlackPlayer && whosTurn === 'white')
             || (isWhitePlayer && whosTurn === 'black')
         ) {
-            throw new Error('Not your turn!');
+            throw new NotYourTurnError();
         }
 
-        // @@@ KEEP GOING MODIFY MODEL
+        const currentMoveAt = new Date();
+        const lastMoveAt = lastMove ? lastMove.createdAt : null;
+        const timeElapsedSinceLastMoveInSeconds = lastMoveAt ? ((currentMoveAt - lastMoveAt) / 1000) : 0;
+        const playerNewTimeRemaining = game[whosTurn].timeRemaining - timeElapsedSinceLastMoveInSeconds;
+        
+        if(playerNewTimeRemaining < 0) {
+            game.status = 'finished';
+            game[whosTurn].timeRemaining = 0;
+            // TODO: Add a function which will auytomatically finish games that are timed out at
+            // started status and emit game update on sockets who are in game rooms
+            // TODO: Show timer on PlayerCard s
+        } else {
+            if(game.status === 'waiting') {
+                game.status = 'started';
+                game.startedAt = currentMoveAt;
+            }
+    
+            game.board[row][column] = isBlackPlayer; // true or false
+    
+            game.moves.push({
+                player: whosTurn,
+                row,
+                column,
+                createdAt: currentMoveAt
+            });
+    
+            console.log(timeElapsedSinceLastMoveInSeconds);
+            game[whosTurn].timeRemaining = playerNewTimeRemaining;
+        }
+
+        await game.save();
+
+        const gameDTO = GameDTO.withGameObject(game);
+
+        return gameDTO;
     }
 
     isUserInQueue(username) {

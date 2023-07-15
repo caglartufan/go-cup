@@ -140,7 +140,6 @@ const Board = props => {
             if((status === 'waiting' || status === 'started') && isPlayer) {
                 socket.emit('addStone', gameId, row, column);
             }
-            // drawBoard();
         }
     };
 

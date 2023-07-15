@@ -60,9 +60,14 @@ const VALIDATION = {
                 'any.required': 'Move requires a player (black or white) to be associated with.',
                 'any.only': 'Associated player has to be either black or white.'
             },
-            position: {
-                'any.required': 'Move requires a position (e.g. C3) to be assoicated with.'
-            }
+            row: {
+                'any.required': 'Move requires a row index to be assoicated with.',
+                'number.min': 'Move\'s associated row index must be minimum 0 and maximum 18.'
+            },
+            column: {
+                'any.required': 'Move requires a column index to be assoicated with.',
+                'number.min': 'Move\'s associated column index must be minimum 0 and maximum 18.'
+            },
         },
         black: {
             user: {

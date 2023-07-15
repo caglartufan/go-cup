@@ -32,13 +32,22 @@ const GameDetailPage = () => {
     const isWhitePlayer = username && game.white.user.username === username;
     const isPlayer = isBlackPlayer || isWhitePlayer;
     const [timer, setTimer] = useState(null);
-    let playerColor = false;
 
+    let playerColor;
     if(isBlackPlayer) {
         playerColor = 'black';
-    }
-    if(isWhitePlayer) {
+    } else if(isWhitePlayer) {
         playerColor = 'white';
+    } else {
+        playerColor = null;
+    }
+
+    let whosTurn = 'black';
+    if(game.status !== 'waiting' && game.moves.length) {
+        const lastMove = game.moves[game.moves.length - 1];
+        if(lastMove.player === 'black') {
+            whosTurn = 'white';
+        }
     }
 
     const cancelGameHandler = useCallback(() => {
@@ -92,9 +101,13 @@ const GameDetailPage = () => {
             <Row columns={2} className="h-100">
                 <Column size={7} style={{ height: isPlayer ? 'calc(100% - 7.3rem)' : 'calc(100% - 3.25rem)' }}>
                     <h2 className="board-heading">
-                        {game.status === 'waiting' && `Waiting for black to play (${formatSeconds(timer)})`}
+                        {game.status === 'waiting' && `Waiting for black player to play (${formatSeconds(timer)})`}
                         {game.status === 'cancelled' && 'The game has been cancelled!'}
                         {(game.status === 'cancelled_by_black' || game.status === 'cancelled_by_white') && `The game has been cancelled by ${game.status.replace('cancelled_by_', '')} player!`}
+                        {game.status === 'started' && isPlayer && ((isBlackPlayer && whosTurn === 'black') || (isWhitePlayer && whosTurn === 'white')) && `Your turn to play`}
+                        {game.status === 'started' && isPlayer && ((isBlackPlayer && whosTurn === 'white') || (isWhitePlayer && whosTurn === 'black')) && `Your opponent's turn to play`}
+                        {game.status === 'started' && !isPlayer && whosTurn === 'black' && `Black player's turn to play`}
+                        {game.status === 'started' && !isPlayer && whosTurn === 'white' && `White player's turn to play`}
                     </h2>
                     <Board
                         game-id={game._id}
@@ -146,7 +159,7 @@ const GameDetailPage = () => {
                                     time-remaining={game.black.timeRemaining}
                                     score={game.black.score}
                                     is-online={isBlackPlayer || game.black.user.isOnline}
-                                    active={true}
+                                    active={whosTurn === 'black'}
                                 />
                             </Column>
                             <Column>
@@ -158,6 +171,7 @@ const GameDetailPage = () => {
                                     time-remaining={game.white.timeRemaining}
                                     score={game.white.score}
                                     is-online={isWhitePlayer || game.white.user.isOnline}
+                                    active={whosTurn === 'white'}
                                 />
                             </Column>
                         </Row>
