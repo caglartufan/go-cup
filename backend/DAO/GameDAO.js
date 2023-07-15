@@ -30,11 +30,12 @@ class GameDAO {
         .populate('black.user', '-_id username')
         .populate('white.user', '-_id username');
 
-        const gameIds = gamesToBeCancelledWithIdsAndPlayers.map(game => game._id);
-        const users = gamesToBeCancelledWithIdsAndPlayers.reduce(
-            (prevValue, game) => prevValue.concat(game.black.user, game.white.user),
-            []
-        );
+        const gameIds = [];
+        const users = [];
+        gamesToBeCancelledWithIdsAndPlayers.forEach(game => {
+            gameIds.push(game._id);
+            users.push(game.black.user, game.white.user);
+        });
 
         if(gameIds.length) {
             await Game.updateMany({
@@ -51,36 +52,156 @@ class GameDAO {
     }
 
     static async finishGamesThatPlayerRanOutOfTimeAndReturnGameIdsAndUserIds() {
-        // const gamesToBeCancelledWithIdsAndPlayers = await Game.find({
-        //     status: 'waiting',
-        //     waitingEndsAt: { $lte: Date.now() }
-        // }).select('_id black.user white.user')
-        // .populate('black.user', '-_id username')
-        // .populate('white.user', '-_id username');
-        const gamesToBeCancelledWithIdsAndPlayers = await Game.aggregate([
+        const gamesToBeFinishedWithIdsAndPlayers = await Game.aggregate([
             {
+                /**
+                 * Filters games that are "started"
+                 */
                 $match: {
-                    status: 'started'
+                    status: "started"
+                }
+            },
+            {
+                /**
+                 * Only include _id, moves, black, white and startedAt fields
+                 */
+                $project: {
+                    _id: 1,
+                    moves: 1,
+                    black: 1,
+                    white: 1,
+                    chat: 1,
+                    startedAt: 1
+                }
+            },
+            {
+                /**
+                 * Join black.user with associated user from users collection
+                 */
+                $lookup: {
+                    from: 'users',
+                    let: { userId: '$black.user' },
+                    pipeline: [
+                        { $match: { $expr: { $eq: [ '$_id', '$$userId' ] } } },
+                        { $project: { _id: 0, username: 1 } }
+                    ],
+                    as: 'black.user'
+                }
+            },
+            {
+                /**
+                 * Join white.user with associated user from users collection
+                 */
+                $lookup: {
+                    from: 'users',
+                    let: { userId: '$white.user' },
+                    pipeline: [
+                        { $match: { $expr: { $eq: [ '$_id', '$$userId' ] } } },
+                        { $project: { _id: 0, username: 1 } }
+                    ],
+                    as: 'white.user'
+                }
+            },
+            {
+                /**
+                 * Replace white.user and black.user fields with join result's first and only element.
+                 * Add "lastMoveAt" date and "whosTurn" (turn player's color) fields
+                 */
+                $addFields: {
+                    'white.user': { $arrayElemAt: ['$white.user', 0] },
+                    'black.user': { $arrayElemAt: ['$black.user', 0] },
+                    lastMoveAt: {
+                        $ifNull: [
+                            { $last: "$moves.createdAt" },
+                            "$startedAt"
+                        ]
+                    },
+                    whosTurn: {
+                        $cond: {
+                            if: {
+                                $eq: [
+                                    { $last: "$moves.player" },
+                                    "black"
+                                ]
+                            },
+                            then: "white",
+                            else: "black",
+                        }
+                    }
+                }
+            },
+            {
+                /**
+                 * Add "isPlayerRanOutOfTime" (boolean) field  which is calculated by comparing elapsed time
+                 * since last move (dateDifferenceBetweenNowAndLastMove) and turn player's remaning time.
+                 * If turn player's reamining time less than the time elapsed since last move, then the player
+                 * is ran out of time and game should be finished with status indicating the oppenent of
+                 * turn player has won.
+                 */
+                $addFields: {
+                    isPlayerRanOutOfTime: {
+                        $let: {
+                            vars: {
+                                playerTimeRemaining: {
+                                    $cond: {
+                                        if: {
+                                            $eq: ["$whosTurn", "black"]
+                                        },
+                                        then: "$black.timeRemaining",
+                                        else: "$white.timeRemaining"
+                                    }
+                                },
+                                dateDifferenceBetweenNowAndLastMove: {
+                                    $dateDiff: {
+                                        startDate: new Date(),
+                                        endDate: "$lastMoveAt",
+                                        unit: "second"
+                                    }
+                                }
+                            },
+                            in: {
+                                $lt: [
+                                    "$$dateDifferenceBetweenNowAndLastMove",
+                                    "$$playerTimeRemaining",
+                                ]
+                            }
+                        }
+                    }
+                }
+            }, {
+                /**
+                 * Filter games that turn player has ran out of time
+                 */
+                $match: {
+                    isPlayerRanOutOfTime: true
                 }
             }
-        ])
+        ]);
 
-        const gameIds = gamesToBeCancelledWithIdsAndPlayers.map(game => game._id);
-        const users = gamesToBeCancelledWithIdsAndPlayers.reduce(
-            (prevValue, game) => prevValue.concat(game.black.user, game.white.user),
-            []
-        );
+        const gameIds = [];
+        const users = [];
 
-        if(gameIds.length) {
-            await Game.updateMany({
-                _id: { $in: gameIds }
-            }, {
-                status: 'cancelled',
+        const updateAndSaveGames = gamesToBeFinishedWithIdsAndPlayers.map(game => {
+            gameIds.push(game._id);
+            users.push(game.white.user, game.black.user);
+
+            const playerWon = game.whosTurn === 'black' ? 'white' : 'black';
+
+            // Test this out
+            return Game.findByIdAndUpdate(game._id, {
+                status: playerWon + '_won',
+                [game.whosTurn + '.timeRemaining']: 0,
                 $push: {
-                    chat: { message: MESSAGES.DAO.GameDAO.GAME_CANCELLED, isSystem: true }
+                    chat: {
+                        // TODO: Move this messages to folder
+                        message: playerWon === 'black' ? 'Black player won the game!' : 'White player won the game!',
+                        isSystem: true
+                    }
                 }
             });
-        }
+        });
+
+        await Promise.all(updateAndSaveGames);
 
         return { gameIds, users };
     }
@@ -111,19 +232,55 @@ class GameDAO {
                 }
             },
             {
-                $unwind: '$chat'
+                $project: {
+                    _id: 1,
+                    status: 1,
+                    chat: 1
+                }
+            },
+            {
+                $addFields: {
+                    latestSystemChatEntry: {
+                        $let: {
+                            vars: {
+                                systemChatEntries: {
+                                    $filter: {
+                                        input: '$chat',
+                                        cond: { $eq: ['$$this.isSystem', true] }
+                                    }
+                                }
+                            },
+                            in: {
+                                $last: '$$systemChatEntries'
+                            }
+                        }
+                    }
+                }
             },
             {
                 $match: {
-                    'chat.isSystem': true
+                    latestSystemChatEntry: { $not: { $eq: null } }
                 }
             },
             {
-                $group: {
-                    _id: '$_id',
-                    latestSystemChatEntry: { $last: '$chat' }
+                $project: {
+                    chat: 0
                 }
             }
+            // {
+            //     $unwind: '$chat'
+            // },
+            // {
+            //     $match: {
+            //         'chat.isSystem': true
+            //     }
+            // },
+            // {
+            //     $group: {
+            //         _id: '$_id',
+            //         latestSystemChatEntry: { $last: '$chat' }
+            //     }
+            // }
         ]);
     }
 

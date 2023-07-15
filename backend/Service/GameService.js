@@ -20,9 +20,9 @@ class GameService {
             this.#cancelGamesThatAreTimedOutOnWaitingStatus();
         }, 1000);
 
-        // this.#playerRanOutOfTimeGamesInterval = setInterval(() => {
-            // this.#finishGamesThatPlayerRanOutOfTime();
-        // }, 1000);
+        this.#playerRanOutOfTimeGamesInterval = setInterval(() => {
+            this.#finishGamesThatPlayerRanOutOfTime();
+        }, 1000);
     }
 
     async getGames() {
@@ -278,7 +278,8 @@ class GameService {
         const { gameIds, users } = await GameDAO.finishGamesThatPlayerRanOutOfTimeAndReturnGameIdsAndUserIds();
         
         if(gameIds.length && users.length) {
-            const gamesWithLatestSystemChatEntry = await GameDAO.getGamesWithLatestSystemChatEntryByGameIds(gameIds);
+            const gamesWithStatusAndLatestSystemChatEntry = await GameDAO.getGamesWithLatestSystemChatEntryByGameIds(gameIds);
+            console.log(gameIds, users, gamesWithStatusAndLatestSystemChatEntry);
 
             await UserDAO.nullifyActiveGameOfUsers(...users);
 
@@ -293,9 +294,9 @@ class GameService {
                 socket.data.user.activeGame = null;
             });
 
-            gamesWithLatestSystemChatEntry.forEach(({ _id: gameId, latestSystemChatEntry }) => {
+            gamesWithStatusAndLatestSystemChatEntry.forEach(({ _id: gameId, status, latestSystemChatEntry }) => {
                 this.#io.in('game-' + gameId).emit('gameChatMessage', latestSystemChatEntry);
-                this.#io.in('game-' + gameId).emit('gameCancelled', gameId);
+                this.#io.in('game-' + gameId).emit('gameFinished', gameId, status);
             });
         }
     }
