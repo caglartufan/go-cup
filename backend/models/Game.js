@@ -15,7 +15,7 @@ const gameSchema = new mongoose.Schema({
     status: {
         type: String,
         enum: {
-            values: ['waiting', 'started', 'finished', 'white_resigned', 'black_resigned', 'cancelled', 'cancelled_by_black', 'cancelled_by_white'],
+            values: ['waiting', 'started', 'black_won', 'white_won', 'white_resigned', 'black_resigned', 'cancelled', 'cancelled_by_black', 'cancelled_by_white'],
             message: VALIDATION.game.status['any.only']
         },
         default: 'waiting'

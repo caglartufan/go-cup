@@ -64,7 +64,21 @@ const GameDetailPage = () => {
 
             setTimer(waitingTimeoutInSeconds);
         }
-    }, [game.status, game.waitingEndsAt]);
+        if(game.status === 'started') {
+            console.log('restate');
+            let lastMove = null;
+            if(game.moves.length) {
+                lastMove = game.moves[game.moves.length - 1];
+            }
+            const dateTimerStartedAt = new Date();
+            const lastMoveAt = new Date(lastMove ? lastMove.createdAt : game.startedAt);
+            const timeElapsedBetweenInSeconds = (dateTimerStartedAt - lastMoveAt) / 1000;
+
+            const timeRemaningOfPlayer = Math.floor(game[whosTurn].timeRemaining - timeElapsedBetweenInSeconds);
+
+            setTimer(timeRemaningOfPlayer);
+        }
+    }, [game, whosTurn]);
 
     // Side effect to run timer down, if timer value is greater than 0
     useEffect(() => {
@@ -108,6 +122,8 @@ const GameDetailPage = () => {
                         {game.status === 'started' && isPlayer && ((isBlackPlayer && whosTurn === 'white') || (isWhitePlayer && whosTurn === 'black')) && `Your opponent's turn to play`}
                         {game.status === 'started' && !isPlayer && whosTurn === 'black' && `Black player's turn to play`}
                         {game.status === 'started' && !isPlayer && whosTurn === 'white' && `White player's turn to play`}
+                        {game.status === 'black_won' && 'Black player won the game!'}
+                        {game.status === 'white_won' && 'White player won the game!'}
                     </h2>
                     <Board
                         game-id={game._id}
@@ -156,7 +172,7 @@ const GameDetailPage = () => {
                                     username={game.black.user.username}
                                     elo={game.black.user.elo}
                                     avatar={game.black.user.avatar}
-                                    time-remaining={game.black.timeRemaining}
+                                    time-remaining={game.status === 'started' && whosTurn === 'black' ? timer : Math.floor(game.black.timeRemaining)}
                                     score={game.black.score}
                                     is-online={isBlackPlayer || game.black.user.isOnline}
                                     active={whosTurn === 'black'}
@@ -168,7 +184,7 @@ const GameDetailPage = () => {
                                     username={game.white.user.username}
                                     elo={game.white.user.elo}
                                     avatar={game.white.user.avatar}
-                                    time-remaining={game.white.timeRemaining}
+                                    time-remaining={game.status === 'started' && whosTurn === 'white' ? timer : Math.floor(game.white.timeRemaining)}
                                     score={game.white.score}
                                     is-online={isWhitePlayer || game.white.user.isOnline}
                                     active={whosTurn === 'white'}

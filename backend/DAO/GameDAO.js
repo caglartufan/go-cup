@@ -50,6 +50,41 @@ class GameDAO {
         return { gameIds, users };
     }
 
+    static async finishGamesThatPlayerRanOutOfTimeAndReturnGameIdsAndUserIds() {
+        // const gamesToBeCancelledWithIdsAndPlayers = await Game.find({
+        //     status: 'waiting',
+        //     waitingEndsAt: { $lte: Date.now() }
+        // }).select('_id black.user white.user')
+        // .populate('black.user', '-_id username')
+        // .populate('white.user', '-_id username');
+        const gamesToBeCancelledWithIdsAndPlayers = await Game.aggregate([
+            {
+                $match: {
+                    status: 'started'
+                }
+            }
+        ])
+
+        const gameIds = gamesToBeCancelledWithIdsAndPlayers.map(game => game._id);
+        const users = gamesToBeCancelledWithIdsAndPlayers.reduce(
+            (prevValue, game) => prevValue.concat(game.black.user, game.white.user),
+            []
+        );
+
+        if(gameIds.length) {
+            await Game.updateMany({
+                _id: { $in: gameIds }
+            }, {
+                status: 'cancelled',
+                $push: {
+                    chat: { message: MESSAGES.DAO.GameDAO.GAME_CANCELLED, isSystem: true }
+                }
+            });
+        }
+
+        return { gameIds, users };
+    }
+
     static async cancelGame(gameId, cancelledBy) {
         const game = await this.findGameById(gameId);
 

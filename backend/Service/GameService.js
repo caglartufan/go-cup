@@ -11,13 +11,18 @@ class GameService {
     #processing = false;
     #gameProcessInterval = null;
     #cancelledGamesInterval = null;
+    #playerRanOutOfTimeGamesInterval = null;
 
     constructor(io) {
         this.#io = io;
 
         this.#cancelledGamesInterval = setInterval(() => {
-            this.#cancelMatchesThatAreTimedOutOnWaitingStatus();
+            this.#cancelGamesThatAreTimedOutOnWaitingStatus();
         }, 1000);
+
+        // this.#playerRanOutOfTimeGamesInterval = setInterval(() => {
+            // this.#finishGamesThatPlayerRanOutOfTime();
+        // }, 1000);
     }
 
     async getGames() {
@@ -217,7 +222,7 @@ class GameService {
         this.dequeue(black);
         this.dequeue(white);
 
-        console.log(`Starting a match between ${black.username} (black) and ${white.username} (white)!`);
+        console.log(`Starting a game between ${black.username} (black) and ${white.username} (white)!`);
 
         const [blackUserId, whiteUserId] = await UserDAO.getUserIdsByUsernames(black.username, white.username);
         
@@ -243,8 +248,34 @@ class GameService {
         this.#io.to([black.username, white.username]).emit('gameStarted', game._id);
     }
 
-    async #cancelMatchesThatAreTimedOutOnWaitingStatus() {
+    async #cancelGamesThatAreTimedOutOnWaitingStatus() {
         const { gameIds, users } = await GameDAO.cancelGamesThatAreTimedOutOnWaitingStatusAndReturnGameIdsAndUserIds();
+        
+        if(gameIds.length && users.length) {
+            const gamesWithLatestSystemChatEntry = await GameDAO.getGamesWithLatestSystemChatEntryByGameIds(gameIds);
+
+            await UserDAO.nullifyActiveGameOfUsers(...users);
+
+            const sockets = await this.#io.fetchSockets();
+            const playerSockets = sockets.filter(
+                socket => users.findIndex(
+                    user => user.username === socket.data.user.username
+                ) > -1
+            );
+    
+            playerSockets.forEach(socket => {
+                socket.data.user.activeGame = null;
+            });
+
+            gamesWithLatestSystemChatEntry.forEach(({ _id: gameId, latestSystemChatEntry }) => {
+                this.#io.in('game-' + gameId).emit('gameChatMessage', latestSystemChatEntry);
+                this.#io.in('game-' + gameId).emit('gameCancelled', gameId);
+            });
+        }
+    }
+
+    async #finishGamesThatPlayerRanOutOfTime() {
+        const { gameIds, users } = await GameDAO.finishGamesThatPlayerRanOutOfTimeAndReturnGameIdsAndUserIds();
         
         if(gameIds.length && users.length) {
             const gamesWithLatestSystemChatEntry = await GameDAO.getGamesWithLatestSystemChatEntryByGameIds(gameIds);
@@ -337,30 +368,42 @@ class GameService {
         const timeElapsedSinceLastMoveInSeconds = lastMoveAt ? ((currentMoveAt - lastMoveAt) / 1000) : 0;
         const playerNewTimeRemaining = game[whosTurn].timeRemaining - timeElapsedSinceLastMoveInSeconds;
         
+        // if(playerNewTimeRemaining < 0) {
+            // // TODO: Add a function which will auytomatically finish games that are timed out at
+            // game.status = whosTurn === 'black' ? 'white_won' : 'black_won';
+            // game[whosTurn].timeRemaining = 0;
+
+            // await UserDAO.nullifyActiveGameOfUsers(game.black.user, game.white.user);
+            
+            // const sockets = await this.#io.fetchSockets();
+            // const playerSockets = sockets.filter(
+            //     socket => socket.data.user.username === game.black.user.username || socket.data.user.username === game.white.user.username
+            // );
+    
+            // playerSockets.forEach(socket => {
+            //     socket.data.user.activeGame = null;
+            // });
+        // }
         if(playerNewTimeRemaining < 0) {
-            game.status = 'finished';
-            game[whosTurn].timeRemaining = 0;
-            // TODO: Add a function which will auytomatically finish games that are timed out at
-            // started status and emit game update on sockets who are in game rooms
-            // TODO: Show timer on PlayerCard s
-        } else {
-            if(game.status === 'waiting') {
-                game.status = 'started';
-                game.startedAt = currentMoveAt;
-            }
-    
-            game.board[row][column] = isBlackPlayer; // true or false
-    
-            game.moves.push({
-                player: whosTurn,
-                row,
-                column,
-                createdAt: currentMoveAt
-            });
-    
-            console.log(timeElapsedSinceLastMoveInSeconds);
-            game[whosTurn].timeRemaining = playerNewTimeRemaining;
+            throw new GameHasAlreadyFinishedOrCancelledError();
         }
+
+        if(game.status === 'waiting') {
+            game.status = 'started';
+            game.startedAt = currentMoveAt;
+        }
+
+        game.board[row][column] = isBlackPlayer; // true or false
+
+        game.moves.push({
+            player: whosTurn,
+            row,
+            column,
+            createdAt: currentMoveAt
+        });
+
+        console.log(timeElapsedSinceLastMoveInSeconds);
+        game[whosTurn].timeRemaining = playerNewTimeRemaining;
 
         await game.save();
 
