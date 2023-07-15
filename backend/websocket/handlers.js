@@ -114,6 +114,8 @@ module.exports = {
 
 		const inQueue = gameService.queue.length;
 
+		socket.leave('queue');
+
 		socket.emit('cancelled');
 
 		io.in('queue').emit('queueUpdated', {
@@ -145,11 +147,6 @@ module.exports = {
 		io.in(gameRoom).emit('userLeftGameRoom', socketName, roomSockets.length);
 	},
 	onGameChatMessage: async (io, services, socket, gameId, message) => {
-		if(!socket.data.user) {
-			socket.emit('errorOccured', new UnauthorizedError().message);
-			return;
-		}
-
 		try {
 			const userId = await services.userService.getUserIdByUser(socket.data.user);
 
@@ -161,11 +158,6 @@ module.exports = {
 		}
 	},
 	onCancelGame: async (io, services, socket, gameId) => {
-		if(!socket.data.user) {
-			socket.emit('errorOccured', new UnauthorizedError().message);
-			return;
-		}
-
 		try {
 			const cancelGameResult = await services.gameService.cancelGame(gameId, socket.data.user.username);
 
@@ -176,5 +168,14 @@ module.exports = {
 		} catch(error) {
 			socket.emit('errorOccured', error.message);
 		}
+	},
+	onAddStone: async (io, services, socket, gameId, row, column) => {
+		console.log(socket.data.user.username, gameId, row, column);
+		if(gameId !== socket.data.user.activeGame) {
+			return;
+		}
+
+		const game = await services.gameService.addStoneToTheGame(socket.data.user, gameId, row, column);
+		console.log(socket.data.user.activeGame);
 	}
 };

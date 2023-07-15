@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const GameDAO = require('../DAO/GameDAO');
 const UserDAO = require('../DAO/UserDAO');
 const UserDTO = require('../DTO/UserDTO');
-const { InvalidDTOError, UserNotFoundError, GameNotFoundError } = require('../utils/ErrorHandler');
+const { InvalidDTOError, UserNotFoundError, GameNotFoundError, UnauthorizedError } = require('../utils/ErrorHandler');
 const GameDTO = require('../DTO/GameDTO');
 
 class GameService {
@@ -219,9 +219,27 @@ class GameService {
 
         console.log(`Starting a match between ${black.username} (black) and ${white.username} (white)!`);
 
+        
         const [blackUserId, whiteUserId] = await UserDAO.getUserIdsByUsernames(black.username, white.username);
-
+        
         const game = await GameDAO.createGame(blackUserId, whiteUserId);
+
+        const sockets = await this.#io.in('queue').fetchSockets();
+        const playerSockets = sockets.filter(
+            socket => socket.data.user.username === black.username || socket.data.user.username === white.username
+        );
+
+        playerSockets.forEach(socket => {
+            socket.leave('queue');
+
+            if(socket.data.user.games?.length) {
+                socket.data.user.games.push(game._id);
+            } else {
+                socket.data.user.games = [game._id];
+            }
+
+            socket.data.user.activeGame = game._id;
+        });
 
         this.#io.to([black.username, white.username]).emit('gameStarted', game._id);
     }
@@ -234,13 +252,21 @@ class GameService {
 
             await UserDAO.nullifyActiveGameOfUsers(...users);
 
-            gamesWithLatestSystemChatEntry.forEach(({ _id: gameId, latestSystemChatEntry }) => {
-                this.#io.in('game-' + gameId).emit('gameChatMessage', latestSystemChatEntry);
+            const sockets = await this.#io.fetchSockets();
+            const playerSockets = sockets.filter(
+                socket => users.findIndex(
+                    user => user.username === socket.data.user.username
+                ) > -1
+            );
+    
+            playerSockets.forEach(socket => {
+                socket.data.user.activeGame = null;
             });
 
-            gameIds.forEach(gameId => {
+            gamesWithLatestSystemChatEntry.forEach(({ _id: gameId, latestSystemChatEntry }) => {
+                this.#io.in('game-' + gameId).emit('gameChatMessage', latestSystemChatEntry);
                 this.#io.in('game-' + gameId).emit('gameCancelled', gameId);
-            })
+            });
         }
     }
 
@@ -255,11 +281,53 @@ class GameService {
 			const { latestSystemChatEntry } = await GameDAO.cancelGame(gameId, cancelledBy);
 
             await UserDAO.nullifyActiveGameOfUsers(game.black.user, game.white.user);
+            
+            const sockets = await this.#io.fetchSockets();
+            const playerSockets = sockets.filter(
+                socket => socket.data.user.username === game.black.user.username || socket.data.user.username === game.white.user.username
+            );
+    
+            playerSockets.forEach(socket => {
+                socket.data.user.activeGame = null;
+            });
 
             return { cancelledBy, latestSystemChatEntry };
 		} else {
             return false;
         }
+    }
+
+    async addStoneToTheGame(user, gameId, row, column) {
+        const game = await this.findGameById(gameId);
+
+        if(!game) {
+            throw new GameNotFoundError();
+        }
+
+        const isBlackPlayer = user.username === game.black.user.username;
+        const isWhitePlayer = user.username === game.white.user.username;
+        const isPlayer = isBlackPlayer || isWhitePlayer;
+
+        if(!isPlayer) {
+            throw new UnauthorizedError();
+        }
+
+        let whosTurn = 'black';
+        if(game.moves.length) {
+            const lastMove = game.moves[game.moves.length - 1];
+            if(lastMove.player === 'black') {
+                whosTurn = 'white';
+            }
+        }
+
+        if(
+            (isBlackPlayer && whosTurn === 'white')
+            || (isWhitePlayer && whosTurn === 'black')
+        ) {
+            throw new Error('Not your turn!');
+        }
+
+        // @@@ KEEP GOING MODIFY MODEL
     }
 
     isUserInQueue(username) {

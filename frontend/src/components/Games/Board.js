@@ -1,13 +1,18 @@
 import { useCallback, useEffect, useRef } from 'react';
 
 import './Board.scss';
+import { socket } from '../../websocket';
 
 const Board = props => {
     const {
+        'game-id': gameId,
         size,
         state,
+        status,
         dynamicHeight,
-        className: customClassName
+        className: customClassName,
+        'is-player': isPlayer,
+        'player-color': playerColor
     } = props;
     const board = useRef();
 
@@ -132,8 +137,10 @@ const Board = props => {
         const column = Math.round((coordinates.x - gridPadding) / gridOffset);
 
         if(state[row][column] === null) {
-            // state[row][column] = Math.random() < .5;
-            drawBoard();
+            if((status === 'waiting' || status === 'started') && isPlayer) {
+                socket.emit('addStone', gameId, row, column);
+            }
+            // drawBoard();
         }
     };
 

@@ -32,6 +32,14 @@ const GameDetailPage = () => {
     const isWhitePlayer = username && game.white.user.username === username;
     const isPlayer = isBlackPlayer || isWhitePlayer;
     const [timer, setTimer] = useState(null);
+    let playerColor = false;
+
+    if(isBlackPlayer) {
+        playerColor = 'black';
+    }
+    if(isWhitePlayer) {
+        playerColor = 'white';
+    }
 
     const cancelGameHandler = useCallback(() => {
         if(isPlayer && game.status === 'waiting') {
@@ -88,7 +96,16 @@ const GameDetailPage = () => {
                         {game.status === 'cancelled' && 'The game has been cancelled!'}
                         {(game.status === 'cancelled_by_black' || game.status === 'cancelled_by_white') && `The game has been cancelled by ${game.status.replace('cancelled_by_', '')} player!`}
                     </h2>
-                    <Board size={game.size} state={game.board} className="mb-4" dynamicHeight />
+                    <Board
+                        game-id={game._id}
+                        size={game.size}
+                        state={game.board}
+                        status={game.status}
+                        is-player={isPlayer}
+                        player-color={playerColor}
+                        className="mb-4"
+                        dynamicHeight
+                    />
                     {isPlayer && (
                         <div className="board-options">
                             {game.status === 'started' && (

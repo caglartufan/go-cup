@@ -22,7 +22,7 @@ exports.auth = async (services, socket, next) => {
 
 exports.forceAuth = (disallowedEvents, socket) => {
 	return ([event, ...args], next) => {
-		if(!socket.data.user && !socket.handshake.authn.token && disallowedEvents.indexOf(event) > -1) {
+		if(!socket.data.user && !socket.handshake.auth.token && disallowedEvents.indexOf(event) > -1) {
 			socket.emit('errorOccured', new UnauthorizedError().message);
 			return;
 		}

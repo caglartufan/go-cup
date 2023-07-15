@@ -91,7 +91,7 @@ app.set('io', io);
 io.use(auth.bind(null, services));
 
 io.on('connection', socket => {
-	const disallowedEvents = ['loggedOut', 'play', 'fetchQueueData', 'cancel', 'cancelGame'];
+	const disallowedEvents = ['loggedOut', 'play', 'fetchQueueData', 'cancel', 'cancelGame', 'addStone'];
 	socket.use(forceAuth(disallowedEvents, socket));
 
 	handlers.onConnection(services, socket);
@@ -108,6 +108,7 @@ io.on('connection', socket => {
 	socket.on('leaveGameRoom', handlers.onLeaveGameRoom.bind(null, io, socket));
 	socket.on('gameChatMessage', handlers.onGameChatMessage.bind(null, io, services, socket));
 	socket.on('cancelGame', handlers.onCancelGame.bind(null, io, services, socket));
+	socket.on('addStone', handlers.onAddStone.bind(null, io, services, socket));
 });
 
 // Web routes
