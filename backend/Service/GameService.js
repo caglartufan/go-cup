@@ -370,22 +370,6 @@ class GameService {
         const timeElapsedSinceLastMoveInSeconds = lastMoveAt ? ((currentMoveAt - lastMoveAt) / 1000) : 0;
         const playerNewTimeRemaining = game[whosTurn].timeRemaining - timeElapsedSinceLastMoveInSeconds;
         
-        // if(playerNewTimeRemaining < 0) {
-            // // TODO: Add a function which will auytomatically finish games that are timed out at
-            // game.status = whosTurn === 'black' ? 'white_won' : 'black_won';
-            // game[whosTurn].timeRemaining = 0;
-
-            // await UserDAO.nullifyActiveGameOfUsers(game.black.user, game.white.user);
-            
-            // const sockets = await this.#io.fetchSockets();
-            // const playerSockets = sockets.filter(
-            //     socket => socket.data.user.username === game.black.user.username || socket.data.user.username === game.white.user.username
-            // );
-    
-            // playerSockets.forEach(socket => {
-            //     socket.data.user.activeGame = null;
-            // });
-        // }
         if(playerNewTimeRemaining < 0) {
             throw new GameHasAlreadyFinishedOrCancelledError();
         }

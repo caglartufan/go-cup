@@ -23,15 +23,20 @@ class GameDAO {
     }
 
     static async cancelGamesThatAreTimedOutOnWaitingStatusAndReturnGameIdsAndUserIds() {
-        const gamesToBeCancelledWithIdsAndPlayers = await Game.find({
-            status: 'waiting',
-            waitingEndsAt: { $lte: Date.now() }
-        }).select('_id black.user white.user')
-        .populate('black.user', '-_id username')
-        .populate('white.user', '-_id username');
+        const processDate = new Date();
+
+        const gamesToBeCancelledWithIdsAndPlayers = await Game
+            .find({
+                status: 'waiting',
+                waitingEndsAt: { $lte: processDate }
+            })
+            .select('_id black.user white.user')
+            .populate('black.user', '-_id username')
+            .populate('white.user', '-_id username');
 
         const gameIds = [];
         const users = [];
+        
         gamesToBeCancelledWithIdsAndPlayers.forEach(game => {
             gameIds.push(game._id);
             users.push(game.black.user, game.white.user);
@@ -44,7 +49,8 @@ class GameDAO {
                 status: 'cancelled',
                 $push: {
                     chat: { message: MESSAGES.DAO.GameDAO.GAME_CANCELLED, isSystem: true }
-                }
+                },
+                finishedAt: processDate
             });
         }
 
@@ -52,6 +58,8 @@ class GameDAO {
     }
 
     static async finishGamesThatPlayerRanOutOfTimeAndReturnGameIdsAndUserIds() {
+        const processDate = new Date();
+
         const gamesToBeFinishedWithIdsAndPlayers = await Game.aggregate([
             {
                 /**
@@ -154,7 +162,7 @@ class GameDAO {
                                 dateDifferenceBetweenNowAndLastMove: {
                                     $dateDiff: {
                                         startDate: "$lastMoveAt",
-                                        endDate: new Date(),
+                                        endDate: processDate,
                                         unit: "second"
                                     }
                                 }
@@ -196,7 +204,8 @@ class GameDAO {
                         message: playerWon === 'black' ? 'Black player won the game!' : 'White player won the game!',
                         isSystem: true
                     }
-                }
+                },
+                finishedAt: processDate
             });
         });
 
@@ -217,6 +226,7 @@ class GameDAO {
             message: MESSAGES.DAO.GameDAO.GAME_CANCELLED_BY.replace('#{CANCELLED_BY}', cancelledBy),
             isSystem: true
         });
+        game.finishedAt = new Date();
 
         await game.save();
 
