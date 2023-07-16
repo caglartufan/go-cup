@@ -60,7 +60,7 @@ const GameDetailPage = () => {
     useEffect(() => {
         if(game.status === 'waiting') {
             const waitingEndsAt = new Date(game.waitingEndsAt);
-            const waitingTimeoutInSeconds = Math.floor((waitingEndsAt - Date.now()) / 1000);
+            const waitingTimeoutInSeconds = ((waitingEndsAt - Date.now()) / 1000).toFixed(2);
 
             setTimer(waitingTimeoutInSeconds);
         }
@@ -74,7 +74,7 @@ const GameDetailPage = () => {
             const lastMoveAt = new Date(lastMove ? lastMove.createdAt : game.startedAt);
             const timeElapsedBetweenInSeconds = (dateTimerStartedAt - lastMoveAt) / 1000;
 
-            const timeRemaningOfPlayer = Math.floor(game[whosTurn].timeRemaining - timeElapsedBetweenInSeconds);
+            const timeRemaningOfPlayer = (game[whosTurn].timeRemaining - timeElapsedBetweenInSeconds).toFixed(2);
 
             setTimer(timeRemaningOfPlayer);
         }
@@ -82,7 +82,7 @@ const GameDetailPage = () => {
 
     // Side effect to run timer down, if timer value is greater than 0
     useEffect(() => {
-        if(timer > 0) {
+        if(timer >= 0) {
             // TODO: Use worker timers instead to prevent suspension of intervals
             // https://www.npmjs.com/package/worker-timers
             interval = setInterval(() => {

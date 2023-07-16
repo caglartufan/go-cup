@@ -67,7 +67,7 @@ const gameSchema = new mongoose.Schema({
             type: Number,
             min: 0,
             // default: 5 * 60
-            default: 1 * 20
+            default: 20
         }
     },
     white: {
@@ -85,7 +85,7 @@ const gameSchema = new mongoose.Schema({
             type: Number,
             min: 0,
             // default: 5 * 60
-            default: 1 * 20
+            default: 20
         }
     },
     chat: {

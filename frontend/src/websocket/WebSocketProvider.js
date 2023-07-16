@@ -12,6 +12,11 @@ import { userActions } from '../store/userSlice';
 const WebSocketProvider = props => {
     const { navigate } = props;
     const dispatch = useDispatch();
+    const viewingGameId = useSelector(state => state.game._id);
+    const whitePlayerUsername = useSelector(state => state.game.white?.user?.username);
+    const blackPlayerUsername = useSelector(state => state.game.black?.user?.username);
+    const username = useSelector(state => state.user.username);
+    const isPlayer = username && (username === whitePlayerUsername || username === blackPlayerUsername);
     const activeGameOfUser = useSelector(state => state.user.activeGame);
 
 	useEffect(() => {
@@ -116,6 +121,21 @@ const WebSocketProvider = props => {
             }));
         };
 
+        const onGameFinished = (gameId, status, black, white) => {
+            if(viewingGameId === gameId) {
+                dispatch(gameActions.updateStatus({
+                    status,
+                }));
+                dispatch(gameActions.updatePlayers({
+                    black,
+                    white
+                }));
+            }
+            if(isPlayer) {
+                dispatch(userActions.updateActiveGame({ gameId: null }));
+            }
+        };
+
 		// General error handler
         const onErrorOccured = errorMessage => {
 			dispatch(toastActions.add({
@@ -148,6 +168,7 @@ const WebSocketProvider = props => {
         socket.on('gameChatMessage', onGameChatMessage);
         socket.on('gameCancelled', onGameCancelled);
         socket.on('addedStone', onAddedStone);
+        socket.on('gameFinished', onGameFinished);
 
 		socket.on('errorOccured', onErrorOccured);
 		socket.on('connect_error', onConnectError);
@@ -168,11 +189,12 @@ const WebSocketProvider = props => {
             socket.off('gameChatMessage', onGameChatMessage);
             socket.off('gameCancelled', onGameCancelled);
             socket.off('addedStone', onAddedStone);
+            socket.off('gameFinished', onGameFinished);
 
 			socket.off('errorOccured', onErrorOccured);
 			socket.off('connect_error', onConnectError);
 		};
-    }, [dispatch, navigate, activeGameOfUser]);
+    }, [dispatch, navigate, activeGameOfUser, viewingGameId, isPlayer]);
 
     return props.children;
 };

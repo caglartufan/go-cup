@@ -59,6 +59,14 @@ const gameSlice = createSlice({
         },
         updateViewersCount: (state, action) => {
             state.viewersCount = action.payload.viewersCount;
+        },
+        updatePlayers: (state, action) => {
+            if(action.payload.black) {
+                state.black = { ...state.black, ...action.payload.black };
+            }
+            if(action.payload.white) {
+                state.white = { ...state.white, ...action.payload.white };
+            }
         }
     }
 });

@@ -279,7 +279,6 @@ class GameService {
         
         if(gameIds.length && users.length) {
             const gamesWithStatusAndLatestSystemChatEntry = await GameDAO.getGamesWithLatestSystemChatEntryByGameIds(gameIds);
-            console.log(gameIds, users, gamesWithStatusAndLatestSystemChatEntry);
 
             await UserDAO.nullifyActiveGameOfUsers(...users);
 
@@ -294,10 +293,12 @@ class GameService {
                 socket.data.user.activeGame = null;
             });
 
-            gamesWithStatusAndLatestSystemChatEntry.forEach(({ _id: gameId, status, latestSystemChatEntry }) => {
-                this.#io.in('game-' + gameId).emit('gameChatMessage', latestSystemChatEntry);
-                this.#io.in('game-' + gameId).emit('gameFinished', gameId, status);
-            });
+            gamesWithStatusAndLatestSystemChatEntry.forEach(
+                ({ _id: gameId, status, black, white, latestSystemChatEntry }) => {
+                    this.#io.in('game-' + gameId).emit('gameChatMessage', latestSystemChatEntry);
+                    this.#io.in('game-' + gameId).emit('gameFinished', gameId, status, black, white);
+                }
+            );
         }
     }
 

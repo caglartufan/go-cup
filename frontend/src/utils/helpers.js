@@ -1,5 +1,5 @@
 export const formatSeconds = totalSeconds => {
-    let seconds = String(totalSeconds % 60);
+    let seconds = String(Math.floor(totalSeconds % 60));
     let minutes = String(Math.floor(totalSeconds / 60));
 
     if(seconds.length === 1) {

@@ -58,7 +58,7 @@ class GameDAO {
                  * Filters games that are "started"
                  */
                 $match: {
-                    status: "started"
+                    status: 'started'
                 }
             },
             {
@@ -153,14 +153,14 @@ class GameDAO {
                                 },
                                 dateDifferenceBetweenNowAndLastMove: {
                                     $dateDiff: {
-                                        startDate: new Date(),
-                                        endDate: "$lastMoveAt",
+                                        startDate: "$lastMoveAt",
+                                        endDate: new Date(),
                                         unit: "second"
                                     }
                                 }
                             },
                             in: {
-                                $lt: [
+                                $gte: [
                                     "$$dateDifferenceBetweenNowAndLastMove",
                                     "$$playerTimeRemaining",
                                 ]
@@ -187,7 +187,6 @@ class GameDAO {
 
             const playerWon = game.whosTurn === 'black' ? 'white' : 'black';
 
-            // Test this out
             return Game.findByIdAndUpdate(game._id, {
                 status: playerWon + '_won',
                 [game.whosTurn + '.timeRemaining']: 0,
@@ -235,6 +234,14 @@ class GameDAO {
                 $project: {
                     _id: 1,
                     status: 1,
+                    black: {
+                        score: '$black.score',
+                        timeRemaining: '$black.timeRemaining'
+                    },
+                    white: {
+                        score: '$white.score',
+                        timeRemaining: '$white.timeRemaining'
+                    },
                     chat: 1
                 }
             },
@@ -267,20 +274,6 @@ class GameDAO {
                     chat: 0
                 }
             }
-            // {
-            //     $unwind: '$chat'
-            // },
-            // {
-            //     $match: {
-            //         'chat.isSystem': true
-            //     }
-            // },
-            // {
-            //     $group: {
-            //         _id: '$_id',
-            //         latestSystemChatEntry: { $last: '$chat' }
-            //     }
-            // }
         ]);
     }
 
