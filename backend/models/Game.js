@@ -52,6 +52,44 @@ const gameSchema = new mongoose.Schema({
             default: Date.now
         }
     }],
+    groups: [{
+        player: {
+            type: String,
+            required: [true, VALIDATION.game.groups.player['any.required']],
+            enum: {
+                values: ['black', 'white'],
+                message: VALIDATION.game.groups.player['any.only']
+            }
+        },
+        stones: [{
+            row: {
+                type: Number,
+                required: [true, VALIDATION.game.groups.stones.row['any.required']],
+                min: [0, VALIDATION.game.groups.stones.row['number.min']],
+                max: [18, VALIDATION.game.groups.stones.row['number.min']]
+            },
+            column: {
+                type: Number,
+                required: [true, VALIDATION.game.groups.stones.column['any.required']],
+                min: [0, VALIDATION.game.groups.stones.column['number.min']],
+                max: [18, VALIDATION.game.groups.stones.column['number.min']]
+            }
+        }],
+        liberties: [{
+            row: {
+                type: Number,
+                required: [true, VALIDATION.game.groups.liberties.row['any.required']],
+                min: [0, VALIDATION.game.groups.liberties.row['number.min']],
+                max: [18, VALIDATION.game.groups.liberties.row['number.min']]
+            },
+            column: {
+                type: Number,
+                required: [true, VALIDATION.game.groups.liberties.column['any.required']],
+                min: [0, VALIDATION.game.groups.liberties.column['number.min']],
+                max: [18, VALIDATION.game.groups.liberties.column['number.min']]
+            }
+        }]
+    }],
     black: {
         user: {
             type: mongoose.Types.ObjectId,
@@ -66,8 +104,7 @@ const gameSchema = new mongoose.Schema({
         timeRemaining: {
             type: Number,
             min: 0,
-            // default: 5 * 60
-            default: 20
+            default: 5 * 60
         }
     },
     white: {
@@ -84,8 +121,7 @@ const gameSchema = new mongoose.Schema({
         timeRemaining: {
             type: Number,
             min: 0,
-            // default: 5 * 60
-            default: 20
+            default: 5 * 60
         }
     },
     chat: {

@@ -122,8 +122,10 @@ const GameDetailPage = () => {
                         {game.status === 'started' && isPlayer && ((isBlackPlayer && whosTurn === 'white') || (isWhitePlayer && whosTurn === 'black')) && `Your opponent's turn to play`}
                         {game.status === 'started' && !isPlayer && whosTurn === 'black' && `Black player's turn to play`}
                         {game.status === 'started' && !isPlayer && whosTurn === 'white' && `White player's turn to play`}
-                        {game.status === 'black_won' && 'Black player won the game!'}
-                        {game.status === 'white_won' && 'White player won the game!'}
+                        {((game.status === 'black_won' && isPlayer && isBlackPlayer) || (game.status === 'white_won' && isPlayer && isWhitePlayer)) && 'You have won!'}
+                        {((game.status === 'black_won' && isPlayer && !isBlackPlayer) || (game.status === 'white_won' && isPlayer && !isWhitePlayer)) && 'You have lost!'}
+                        {game.status === 'black_won' && !isPlayer && 'Black player won the game!'}
+                        {game.status === 'white_won' && !isPlayer && 'White player won the game!'}
                     </h2>
                     <Board
                         game-id={game._id}

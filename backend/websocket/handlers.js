@@ -170,7 +170,6 @@ module.exports = {
 		}
 	},
 	onAddStone: async (io, services, socket, gameId, row, column) => {
-		console.log(socket.data.user.username, gameId, row, column);
 		if(gameId !== socket.data.user.activeGame.toString()) {
 			return;
 		}
@@ -178,6 +177,10 @@ module.exports = {
 		try {
 			const updatedGame = await services.gameService.addStoneToTheGame(socket.data.user, gameId, row, column);
 
+			if(!updatedGame) {
+				return;
+			}
+			
 			io.in('game-' + gameId).emit(
 				'addedStone',
 				updatedGame.status,

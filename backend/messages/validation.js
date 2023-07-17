@@ -58,7 +58,7 @@ const VALIDATION = {
         moves: {
             player: {
                 'any.required': 'Move requires a player (black or white) to be associated with.',
-                'any.only': 'Associated player has to be either black or white.'
+                'any.only': 'Move\'s associated player has to be either black or white.'
             },
             row: {
                 'any.required': 'Move requires a row index to be assoicated with.',
@@ -68,6 +68,32 @@ const VALIDATION = {
                 'any.required': 'Move requires a column index to be assoicated with.',
                 'number.min': 'Move\'s associated column index must be minimum 0 and maximum 18.'
             },
+        },
+        groups: {
+            player: {
+                'any.required': 'Group requires a player (black or white) to be associated with.',
+                'any.only': 'Group\'s associated player has to be either black or white.'
+            },
+            stones: {
+                row: {
+                    'any.required': 'Group stone requires a row index to be assoicated with.',
+                    'number.min': 'Group stone\'s associated row index must be minimum 0 and maximum 18.'
+                },
+                column: {
+                    'any.required': 'Group stone requires a column index to be assoicated with.',
+                    'number.min': 'Group stone\'s associated column index must be minimum 0 and maximum 18.'
+                }
+            },
+            liberties: {
+                row: {
+                    'any.required': 'Group liberty requires a row index to be assoicated with.',
+                    'number.min': 'Group liberty\'s associated row index must be minimum 0 and maximum 18.'
+                },
+                column: {
+                    'any.required': 'Group liberty requires a column index to be assoicated with.',
+                    'number.min': 'Group liberty\'s associated column index must be minimum 0 and maximum 18.'
+                }
+            }
         },
         black: {
             user: {

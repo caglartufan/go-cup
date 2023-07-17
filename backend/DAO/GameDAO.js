@@ -48,7 +48,11 @@ class GameDAO {
             }, {
                 status: 'cancelled',
                 $push: {
-                    chat: { message: MESSAGES.DAO.GameDAO.GAME_CANCELLED, isSystem: true }
+                    chat: {
+                        message: MESSAGES.DAO.GameDAO.GAME_CANCELLED,
+                        isSystem: true,
+                        createdAt: processDate
+                    }
                 },
                 finishedAt: processDate
             });
@@ -189,27 +193,82 @@ class GameDAO {
         const gameIds = [];
         const users = [];
 
-        const updateAndSaveGames = gamesToBeFinishedWithIdsAndPlayers.map(game => {
+        gamesToBeFinishedWithIdsAndPlayers.forEach(game => {
             gameIds.push(game._id);
-            users.push(game.white.user, game.black.user);
-
-            const playerWon = game.whosTurn === 'black' ? 'white' : 'black';
-
-            return Game.findByIdAndUpdate(game._id, {
-                status: playerWon + '_won',
-                [game.whosTurn + '.timeRemaining']: 0,
-                $push: {
-                    chat: {
-                        // TODO: Move this messages to folder
-                        message: playerWon === 'black' ? 'Black player won the game!' : 'White player won the game!',
-                        isSystem: true
-                    }
-                },
-                finishedAt: processDate
-            });
+            users.push(game.black.user, game.white.user);
         });
 
-        await Promise.all(updateAndSaveGames);
+        // To update many object in one go to MongoDB server.
+        // Used bulkWrite instead of updateMany to update fields conditionally
+        await Game.bulkWrite([
+            {
+                updateMany: {
+                    filter: {
+                        _id: { $in: gameIds }
+                    },
+                    update: [
+                        {
+                            $addFields: {
+                                whosTurn: {
+                                    $cond: {
+                                        if: {
+                                            $eq: [
+                                                { $last: "$moves.player" },
+                                                "black"
+                                            ]
+                                        },
+                                        then: "white",
+                                        else: "black",
+                                    }
+                                }
+                            }
+                        },
+                        {
+                            $addFields: {
+                                status: {
+                                    $cond: {
+                                        if: { $eq: ['$whosTurn', 'black'] },
+                                        then: 'white_won',
+                                        else: 'black_won'
+                                    }
+                                },
+                                'black.timeRemaining': {
+                                    $cond: {
+                                        if: { $eq: ['$whosTurn', 'black'] },
+                                        then: 0,
+                                        else: '$black.timeRemaining'
+                                    }
+                                },
+                                'white.timeRemaining': {
+                                    $cond: {
+                                        if: { $eq: ['$whosTurn', 'white'] },
+                                        then: 0,
+                                        else: '$white.timeRemaining'
+                                    }
+                                },
+                                chat: {
+                                    $concatArrays: [
+                                        '$chat',
+                                        [{
+                                            message: {
+                                                $cond: {
+                                                    if: { $eq: ['$whosTurn', 'black'] },
+                                                    then: MESSAGES.DAO.GameDAO.WHITE_WON,
+                                                    else: MESSAGES.DAO.GameDAO.BLACK_WON
+                                                }
+                                            },
+                                            isSystem: true,
+                                            createdAt: processDate
+                                        }]
+                                    ]
+                                },
+                                finishedAt: processDate
+                            }
+                        }
+                    ]
+                }
+            }
+        ]);
 
         return { gameIds, users };
     }

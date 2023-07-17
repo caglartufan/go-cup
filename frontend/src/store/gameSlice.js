@@ -4,11 +4,11 @@ const initialGameState = {
     _id: null,
     size: null,
     status: null,
+    board: null,
+    moves: [],
     black: null,
     white: null,
     isPrivate: null,
-    board: null,
-    moves: [],
     chat: [],
     startedAt: null,
     finishedAt: null,
@@ -25,11 +25,11 @@ const gameSlice = createSlice({
             state._id = action.payload._id || state._id;
             state.size = action.payload.size || state.size;
             state.status = action.payload.status || state.status;
+            state.board = action.payload.board || state.board;
+            state.moves = action.payload.moves || state.moves;
             state.black = action.payload.black || state.black;
             state.white = action.payload.white || state.white;
             state.isPrivate = action.payload.isPrivate || state.isPrivate;
-            state.board = action.payload.board || state.board;
-            state.moves = action.payload.moves || state.moves;
             state.chat = action.payload.chat || state.chat;
             state.startedAt = action.payload.startedAt || state.startedAt;
             state.finishedAt = action.payload.finishedAt || state.finishedAt;

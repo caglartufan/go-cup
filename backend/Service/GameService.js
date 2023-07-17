@@ -336,7 +336,6 @@ class GameService {
             throw new GameNotFoundError();
         }
 
-        console.log(game.status);
         if(game.status !== 'waiting' && game.status !== 'started') {
             throw new GameHasAlreadyFinishedOrCancelledError();
         }
@@ -379,7 +378,74 @@ class GameService {
             game.startedAt = currentMoveAt;
         }
 
+        // Do nothing if there's already a stone at position where new stone is wanted to be added
+        if(game.board[row][column] !== null) {
+            return;
+        }
+
+        // Calculate the liberty points of added stone
+        const liberties = this.#calculateLibertyPointsOfGivenPointForGivenGameBoard(game.board, row, column);
+
+        // If position where stone is being added has no liberties (dead point) then do nothing
+        if(!liberties.length) {
+            return;
+        }
+
+        // Add stone to the poisiton (true for block, false for white stone)
         game.board[row][column] = isBlackPlayer; // true or false
+
+        // Check if stone is placed at liberty point of existing groups
+        const groupsWhichLibertyPointIsCapturedByAddedStone = game.groups.filter(
+            group => group.liberties.find(
+                liberty => liberty.row === row && liberty.column === column
+            )
+        );
+
+        // TODO: If stone added conencts at least 2 groups, merge them @@@
+        // Disable feature _id being added to stones and liberties and group objects.
+        if(groupsWhichLibertyPointIsCapturedByAddedStone.length) {
+            groupsWhichLibertyPointIsCapturedByAddedStone.forEach((group, groupIndex) => {
+                const isTurnPlayersGroup = group.player === whosTurn;
+
+                const indexOfLibertyPointCaptured = group.liberties.findIndex(
+                    liberty => liberty.row === row && liberty.column === column
+                );
+
+                // Remove the liberty point
+                group.liberties.splice(indexOfLibertyPointCaptured, 1);
+
+                if(isTurnPlayersGroup) {
+                    // Add stone to the stones of group
+                    group.stones.push({
+                        row,
+                        column
+                    });
+
+                    // Merge added stone's liberties with group's liberties
+                    liberties.forEach(libertyToBeAdded => {
+                        if(
+                            !group.liberties.find(
+                                existingLiberty =>
+                                    existingLiberty.row === libertyToBeAdded.row
+                                    && existingLiberty.column === libertyToBeAdded.column
+                            )
+                        ) {
+                            group.liberties.push(libertyToBeAdded);
+                        }
+                    });
+                }
+            });
+        } else {
+            // Create a new group for turn player
+            game.groups.push({
+                player: whosTurn,
+                stones: [{
+                    row,
+                    column
+                }],
+                liberties
+            });
+        }
 
         game.moves.push({
             player: whosTurn,
@@ -388,7 +454,6 @@ class GameService {
             createdAt: currentMoveAt
         });
 
-        console.log(timeElapsedSinceLastMoveInSeconds);
         game[whosTurn].timeRemaining = playerNewTimeRemaining;
 
         await game.save();
@@ -396,6 +461,50 @@ class GameService {
         const gameDTO = GameDTO.withGameObject(game);
 
         return gameDTO;
+    }
+
+    #calculateLibertyPointsOfGivenPointForGivenGameBoard(board, row, column) {
+        const liberties = [];
+
+        // Possible liberty point positions (top, bottom, left, right)
+        const topRow = row - 1;
+        const bottomRow = row + 1;
+        const leftColumn = column - 1;
+        const rightColumn = column + 1;
+
+        // Calculate liberty points
+        const isTopPositionALibertyPoint = board[topRow][column] === null;
+        const isBottomPositionALibertyPoint = board[bottomRow][column] === null;
+        const isLeftPositionALibertyPoint = board[row][leftColumn] === null;
+        const isRightPositionALibertyPoint = board[row][rightColumn] === null;
+
+        // If liberty point is valid, add to liberties array
+        if(isTopPositionALibertyPoint) {
+            liberties.push({
+                row: topRow,
+                column
+            });
+        }
+        if(isBottomPositionALibertyPoint) {
+            liberties.push({
+                row: bottomRow,
+                column
+            });
+        }
+        if(isLeftPositionALibertyPoint) {
+            liberties.push({
+                row,
+                column: leftColumn
+            });
+        }
+        if(isRightPositionALibertyPoint) {
+            liberties.push({
+                row,
+                column: rightColumn
+            });
+        }
+
+        return liberties;
     }
 
     isUserInQueue(username) {
