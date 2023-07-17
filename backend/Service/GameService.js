@@ -384,75 +384,189 @@ class GameService {
         }
 
         // Calculate the liberty points of added stone
-        const liberties = this.#calculateLibertyPointsOfGivenPointForGivenGameBoard(game.board, row, column);
+        const { liberties, suicide } = this.#calculateLibertyPointsOfGivenPointForGivenGameBoard(game.board, row, column, whosTurn);
 
-        // If position where stone is being added has no liberties (dead point) then do nothing
-        if(!liberties.length) {
+        // If position where stone is being added has no liberties and is surrounded
+        // by opponent's stones (suicide) then do nothing
+        if(!liberties.length && suicide) {
             return;
         }
 
         // Add stone to the poisiton (true for block, false for white stone)
         game.board[row][column] = isBlackPlayer; // true or false
 
-        // Check if stone is placed at liberty point of existing groups
-        const groupsWhichLibertyPointIsCapturedByAddedStone = game.groups.filter(
-            group => group.liberties.find(
-                liberty => liberty.row === row && liberty.column === column
-            )
-        );
-
-        // TODO: If stone added conencts at least 2 groups, merge them @@@
-        // Disable feature _id being added to stones and liberties and group objects.
-        if(groupsWhichLibertyPointIsCapturedByAddedStone.length) {
-            groupsWhichLibertyPointIsCapturedByAddedStone.forEach((group, groupIndex) => {
-                const isTurnPlayersGroup = group.player === whosTurn;
-
-                const indexOfLibertyPointCaptured = group.liberties.findIndex(
-                    liberty => liberty.row === row && liberty.column === column
-                );
-
-                // Remove the liberty point
-                group.liberties.splice(indexOfLibertyPointCaptured, 1);
-
-                if(isTurnPlayersGroup) {
-                    // Add stone to the stones of group
-                    group.stones.push({
-                        row,
-                        column
-                    });
-
-                    // Merge added stone's liberties with group's liberties
-                    liberties.forEach(libertyToBeAdded => {
-                        if(
-                            !group.liberties.find(
-                                existingLiberty =>
-                                    existingLiberty.row === libertyToBeAdded.row
-                                    && existingLiberty.column === libertyToBeAdded.column
-                            )
-                        ) {
-                            group.liberties.push(libertyToBeAdded);
-                        }
-                    });
-                }
-            });
-        } else {
-            // Create a new group for turn player
-            game.groups.push({
-                player: whosTurn,
-                stones: [{
-                    row,
-                    column
-                }],
-                liberties
-            });
-        }
-
+        // Accept the stone added and add move
         game.moves.push({
             player: whosTurn,
             row,
             column,
             createdAt: currentMoveAt
         });
+
+        // Store current move's index to use it in group's createdAtMove, removedAtMove fields
+        const currentMoveIndex = game.moves.length - 1;
+
+        const turnPlayersGroupIndexes = [];
+        const opponentsGroupIndexes = [];
+
+        // Check if stone is placed at liberty point of existing groups
+        game.groups.forEach((group, groupIndex) => {
+            const isGroupRemoved = group.removedAtMove > -1;
+
+            if(isGroupRemoved) {
+                return;
+            }
+
+            const isTurnPlayersGroup = group.player === whosTurn;
+            const capturedLibertyIndex = group.liberties.findIndex(
+                liberty => liberty.row === row && liberty.column === column && liberty.removedAtMove === -1
+            );
+
+            if(capturedLibertyIndex > -1) {
+                // Remove the liberty point
+                group.liberties[capturedLibertyIndex].removedAtMove = currentMoveIndex;
+
+                if(isTurnPlayersGroup) {
+                    turnPlayersGroupIndexes.push(groupIndex);
+                } else {
+                    opponentsGroupIndexes.push(groupIndex);
+                }
+            }
+        });
+
+        if(turnPlayersGroupIndexes.length) {
+            if(turnPlayersGroupIndexes.length === 1) {
+                const group = game.groups[turnPlayersGroupIndexes[0]];
+
+                // Add stone to the stones of group
+                group.stones.push({
+                    row,
+                    column,
+                    createdAtMove: currentMoveIndex
+                });
+
+                // Merge added stone's liberties with group's liberties
+                liberties.forEach(libertyToBeAdded => {
+                    if(
+                        !group.liberties.find(
+                            existingLiberty =>
+                                existingLiberty.row === libertyToBeAdded.row
+                                && existingLiberty.column === libertyToBeAdded.column
+                                && existingLiberty.removedAtMove === -1
+                        )
+                    ) {
+                        group.liberties.push({
+                            row: libertyToBeAdded.row,
+                            column: libertyToBeAdded.column,
+                            createdAtMove: currentMoveIndex
+                        });
+                    }
+                });
+            } else {
+                const mergedGroup = {
+                    player: whosTurn,
+                    stones: [{
+                        row,
+                        column,
+                        createdAtMove: currentMoveIndex
+                    }],
+                    liberties: liberties.map(
+                        liberty => ({ ...liberty, createdAtMove: currentMoveIndex })
+                    ),
+                    createdAtMove: currentMoveIndex
+                };
+
+                turnPlayersGroupIndexes
+                    // Sort group indexes in descending way to prevent disordering
+                    // when splicing the game.groups array
+                    // .sort((indexA, indexB) => indexB - indexA)
+                    .forEach(groupIndex => {
+                        const group = game.groups[groupIndex];
+
+                        group.stones.forEach(stoneToBeAdded => {
+                            if(
+                                !mergedGroup.stones.find(
+                                    alreadyExistingStone =>
+                                        alreadyExistingStone.row === stoneToBeAdded.row
+                                        && alreadyExistingStone.column === stoneToBeAdded.column
+                                        && stoneToBeAdded.removedAtMove === -1
+                                )
+                            ) {
+                                mergedGroup.stones.push({
+                                    row: stoneToBeAdded.row,
+                                    column: stoneToBeAdded.column,
+                                    createdAtMove: currentMoveIndex
+                                });
+                            }
+                        });
+
+                        group.liberties.forEach(libertyToBeAdded => {
+                            if(
+                                !mergedGroup.liberties.find(
+                                    alreadyExistingLiberty =>
+                                        alreadyExistingLiberty.row === libertyToBeAdded.row
+                                        && alreadyExistingLiberty.column === libertyToBeAdded.column
+                                        && libertyToBeAdded.removedAtMove === -1
+                                )
+                            ) {
+                                mergedGroup.liberties.push({
+                                    row: libertyToBeAdded.row,
+                                    column: libertyToBeAdded.column,
+                                    createdAtMove: currentMoveIndex
+                                });
+                            }
+                        });
+
+                        group.removedAtMove = currentMoveIndex;
+                    });
+
+                game.groups.push(mergedGroup);
+            }
+        } else {
+            // Create a new group for turn player
+            game.groups.push({
+                player: whosTurn,
+                stones: [{
+                    row,
+                    column,
+                    createdAtMove: currentMoveIndex
+                }],
+                liberties: liberties.map(
+                    liberty => ({ ...liberty, createdAtMove: currentMoveIndex })
+                ),
+                createdAtMove: currentMoveIndex
+            });
+        }
+
+        // If added stone captured liberty points of opponent's groups
+        // Check if opponent's groups have other liberties, if not
+        // Remove them and add number of captured stones to turn player's score
+        // TODO: Captured positions should be added to surrounding group's liberty points
+        if(opponentsGroupIndexes.length) {
+            opponentsGroupIndexes
+                // .sort((indexA, indexB) => indexB - indexA)
+                .forEach(groupIndex => {
+                    const group = game.groups[groupIndex];
+
+                    // If opponent's group has no liberties remove the group and add number of
+                    // stones captured to turn player's score
+                    if(!group.liberties.length) {
+                        const numberOfStonesCaptured = group.stones.length;
+    
+                        group.stones.forEach(stoneCaptured => {
+                            game.board[stoneCaptured.row][stoneCaptured.column] = null;
+                        });
+    
+                        game[whosTurn].score += numberOfStonesCaptured;
+    
+                        // TODO: Group indexes got mixed due to merging of groups recently happend
+                        // Need to fidn another way to make sure indexes are updated after merge
+                        // Or some other way
+                        // game.groups.splice(opponentsGroupIndexes[0], 1);
+                        group.removedAtMove = currentMoveIndex;
+                    }
+                });
+        }
 
         game[whosTurn].timeRemaining = playerNewTimeRemaining;
 
@@ -463,7 +577,12 @@ class GameService {
         return gameDTO;
     }
 
-    #calculateLibertyPointsOfGivenPointForGivenGameBoard(board, row, column) {
+    #calculateLibertyPointsOfGivenPointForGivenGameBoard(board, row, column, whosTurn) {
+        // true for black, false for white stone, null for free position
+        // If position is empty but has no liberties, need to check surrounding stones
+        // If surrounding stones are opponent's then it's a dead position
+        // So don't allow player to put stone there, otherwise allow it
+
         const liberties = [];
 
         // Possible liberty point positions (top, bottom, left, right)
@@ -473,38 +592,68 @@ class GameService {
         const rightColumn = column + 1;
 
         // Calculate liberty points
-        const isTopPositionALibertyPoint = board[topRow][column] === null;
-        const isBottomPositionALibertyPoint = board[bottomRow][column] === null;
-        const isLeftPositionALibertyPoint = board[row][leftColumn] === null;
-        const isRightPositionALibertyPoint = board[row][rightColumn] === null;
+        const topPosition = board[topRow] && board[topRow][column];
+        const bottomPosition = board[bottomRow] && board[bottomRow][column];
+        const leftPosition = board[row] && board[row][leftColumn];
+        const rightPosition = board[row]&& board[row][rightColumn];
 
         // If liberty point is valid, add to liberties array
-        if(isTopPositionALibertyPoint) {
+        if(topPosition === null) {
             liberties.push({
                 row: topRow,
                 column
             });
         }
-        if(isBottomPositionALibertyPoint) {
+        if(bottomPosition === null) {
             liberties.push({
                 row: bottomRow,
                 column
             });
         }
-        if(isLeftPositionALibertyPoint) {
+        if(leftPosition === null) {
             liberties.push({
                 row,
                 column: leftColumn
             });
         }
-        if(isRightPositionALibertyPoint) {
+        if(rightPosition === null) {
             liberties.push({
                 row,
                 column: rightColumn
             });
         }
 
-        return liberties;
+        // Check if position a suicide for turn player
+        if(
+            (
+                whosTurn === 'black'
+                && (
+                    topPosition === false
+                    && bottomPosition === false
+                    && leftPosition === false
+                    && rightPosition === false
+                )
+            )
+            || (
+                whosTurn === 'white'
+                && (
+                    topPosition === true
+                    && bottomPosition === true
+                    && leftPosition === true
+                    && rightPosition === true
+                )
+            )
+        ) {
+            return {
+                liberties,
+                suicide: true
+            };
+        } else {
+            return {
+                liberties,
+                suicide: false
+            }
+        }
     }
 
     isUserInQueue(username) {

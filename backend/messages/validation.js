@@ -82,6 +82,13 @@ const VALIDATION = {
                 column: {
                     'any.required': 'Group stone requires a column index to be assoicated with.',
                     'number.min': 'Group stone\'s associated column index must be minimum 0 and maximum 18.'
+                },
+                createdAtMove: {
+                    'any.required': 'Group stone requires the index of the move to which it was created to be associated.',
+                    'number.min': 'Group stone\'s associated index of the move to which it was created must be minimum 0.'
+                },
+                removedAtMove: {
+                    'number.min': 'Group stone\'s associated index of the move to which it was removed must be minimum -1.'
                 }
             },
             liberties: {
@@ -92,7 +99,21 @@ const VALIDATION = {
                 column: {
                     'any.required': 'Group liberty requires a column index to be assoicated with.',
                     'number.min': 'Group liberty\'s associated column index must be minimum 0 and maximum 18.'
+                },
+                createdAtMove: {
+                    'any.required': 'Group liberty requires the index of the move to which it was created to be associated.',
+                    'number.min': 'Group liberty\'s associated index of the move to which it was created must be minimum 0.'
+                },
+                removedAtMove: {
+                    'number.min': 'Group liberty\'s associated index of the move to which it was removed must be minimum -1.'
                 }
+            },
+            createdAtMove: {
+                'any.required': 'Group requires the index of the move to which it was created to be associated.',
+                'number.min': 'Group\'s associated index of the move to which it was created must be minimum 0.'
+            },
+            removedAtMove: {
+                'number.min': 'Group\'s associated index of the move to which it was removed must be minimum -1.'
             }
         },
         black: {

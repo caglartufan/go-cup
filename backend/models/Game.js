@@ -53,6 +53,7 @@ const gameSchema = new mongoose.Schema({
         }
     }],
     groups: [{
+        _id: false,
         player: {
             type: String,
             required: [true, VALIDATION.game.groups.player['any.required']],
@@ -62,6 +63,7 @@ const gameSchema = new mongoose.Schema({
             }
         },
         stones: [{
+            _id: false,
             row: {
                 type: Number,
                 required: [true, VALIDATION.game.groups.stones.row['any.required']],
@@ -73,9 +75,20 @@ const gameSchema = new mongoose.Schema({
                 required: [true, VALIDATION.game.groups.stones.column['any.required']],
                 min: [0, VALIDATION.game.groups.stones.column['number.min']],
                 max: [18, VALIDATION.game.groups.stones.column['number.min']]
+            },
+            createdAtMove: {
+                type: Number,
+                required: [true, VALIDATION.game.groups.stones.createdAtMove['any.required']],
+                min: [0, VALIDATION.game.groups.stones.createdAtMove['number.min']]
+            },
+            removedAtMove: {
+                type: Number,
+                min: [-1, VALIDATION.game.groups.stones.removedAtMove['number.min']],
+                default: -1
             }
         }],
         liberties: [{
+            _id: false,
             row: {
                 type: Number,
                 required: [true, VALIDATION.game.groups.liberties.row['any.required']],
@@ -87,8 +100,28 @@ const gameSchema = new mongoose.Schema({
                 required: [true, VALIDATION.game.groups.liberties.column['any.required']],
                 min: [0, VALIDATION.game.groups.liberties.column['number.min']],
                 max: [18, VALIDATION.game.groups.liberties.column['number.min']]
+            },
+            createdAtMove: {
+                type: Number,
+                required: [true, VALIDATION.game.groups.liberties.createdAtMove['any.required']],
+                min: [0, VALIDATION.game.groups.liberties.createdAtMove['number.min']]
+            },
+            removedAtMove: {
+                type: Number,
+                min: [-1, VALIDATION.game.groups.liberties.removedAtMove['number.min']],
+                default: -1
             }
-        }]
+        }],
+        createdAtMove: {
+            type: Number,
+            required: [true, VALIDATION.game.groups.createdAtMove['any.required']],
+            min: [0, VALIDATION.game.groups.createdAtMove['number.min']]
+        },
+        removedAtMove: {
+            type: Number,
+            min: [-1, VALIDATION.game.groups.removedAtMove['number.min']],
+            default: -1
+        }
     }],
     black: {
         user: {
