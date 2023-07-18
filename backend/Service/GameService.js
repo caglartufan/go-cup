@@ -468,18 +468,16 @@ class GameService {
                     stones: [{
                         row,
                         column,
-                        createdAtMove: currentMoveIndex
+                        createdAtMove: currentMoveIndex,
+                        removedAtMove: -1
                     }],
                     liberties: liberties.map(
-                        liberty => ({ ...liberty, createdAtMove: currentMoveIndex })
+                        liberty => ({ ...liberty, createdAtMove: currentMoveIndex, removedAtMove: -1 })
                     ),
                     createdAtMove: currentMoveIndex
                 };
 
                 turnPlayersGroupIndexes
-                    // Sort group indexes in descending way to prevent disordering
-                    // when splicing the game.groups array
-                    // .sort((indexA, indexB) => indexB - indexA)
                     .forEach(groupIndex => {
                         const group = game.groups[groupIndex];
 
@@ -489,12 +487,11 @@ class GameService {
                                     alreadyExistingStone =>
                                         alreadyExistingStone.row === stoneToBeAdded.row
                                         && alreadyExistingStone.column === stoneToBeAdded.column
-                                        && stoneToBeAdded.removedAtMove === -1
-                                )
+                                        && alreadyExistingStone.removedAtMove === -1
+                                ) && stoneToBeAdded.removedAtMove === -1
                             ) {
                                 mergedGroup.stones.push({
-                                    row: stoneToBeAdded.row,
-                                    column: stoneToBeAdded.column,
+                                    ...stoneToBeAdded,
                                     createdAtMove: currentMoveIndex
                                 });
                             }
@@ -506,12 +503,11 @@ class GameService {
                                     alreadyExistingLiberty =>
                                         alreadyExistingLiberty.row === libertyToBeAdded.row
                                         && alreadyExistingLiberty.column === libertyToBeAdded.column
-                                        && libertyToBeAdded.removedAtMove === -1
-                                )
+                                        && alreadyExistingLiberty.removedAtMove === -1
+                                ) && libertyToBeAdded.removedAtMove === -1
                             ) {
                                 mergedGroup.liberties.push({
-                                    row: libertyToBeAdded.row,
-                                    column: libertyToBeAdded.column,
+                                    ...libertyToBeAdded,
                                     createdAtMove: currentMoveIndex
                                 });
                             }
@@ -548,13 +544,23 @@ class GameService {
                 .forEach(groupIndex => {
                     const group = game.groups[groupIndex];
 
-                    // If opponent's group has no liberties remove the group and add number of
+                    // Find active liberties of group (the ones that are not removed yet)
+                    const activeLibertiesOfGroup = group.liberties.filter(
+                        liberty => liberty.removedAtMove === -1
+                    );
+
+                    // If opponent's group has no active liberties remove the group and add number of
                     // stones captured to turn player's score
-                    if(!group.liberties.length) {
-                        const numberOfStonesCaptured = group.stones.length;
+                    if(!activeLibertiesOfGroup.length) {
+                        let numberOfStonesCaptured = 0;
     
                         group.stones.forEach(stoneCaptured => {
+                            if(stoneCaptured.removedAtMove !== -1) {
+                                return;
+                            }
+
                             game.board[stoneCaptured.row][stoneCaptured.column] = null;
+                            numberOfStonesCaptured++;
                         });
     
                         game[whosTurn].score += numberOfStonesCaptured;
