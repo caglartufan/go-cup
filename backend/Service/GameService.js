@@ -543,7 +543,6 @@ class GameService {
         // If added stone captured liberty points of opponent's groups
         // Check if opponent's groups have other liberties, if not
         // Remove them and add number of captured stones to turn player's score
-        // TODO: Captured positions should be added to surrounding group's liberty points
         if(opponentsGroupIndexes.length) {
             opponentsGroupIndexes
                 // .sort((indexA, indexB) => indexB - indexA)
@@ -625,11 +624,7 @@ class GameService {
                         });
     
                         game[whosTurn].score += numberOfStonesCaptured;
-    
-                        // TODO: Group indexes got mixed due to merging of groups recently happend
-                        // Need to fidn another way to make sure indexes are updated after merge
-                        // Or some other way
-                        // game.groups.splice(opponentsGroupIndexes[0], 1);
+
                         group.removedAtMove = currentMoveIndex;
                     }
                 });
@@ -687,76 +682,6 @@ class GameService {
         );
 
         return { liberties, suicide };
-        // const topRow = row - 1;
-        // const bottomRow = row + 1;
-        // const leftColumn = column - 1;
-        // const rightColumn = column + 1;
-
-        // // Calculate liberty points
-        // const topPosition = board[topRow] && board[topRow][column];
-        // const bottomPosition = board[bottomRow] && board[bottomRow][column];
-        // const leftPosition = board[row] && board[row][leftColumn];
-        // const rightPosition = board[row]&& board[row][rightColumn];
-
-        // // If liberty point is valid, add to liberties array
-        // if(topPosition === null) {
-        //     liberties.push({
-        //         row: topRow,
-        //         column
-        //     });
-        // }
-        // if(bottomPosition === null) {
-        //     liberties.push({
-        //         row: bottomRow,
-        //         column
-        //     });
-        // }
-        // // Undefinde olma durumu (sınır dışı) için düzenle
-        // // Kodu temize çek
-        // if(leftPosition === null) {
-        //     liberties.push({
-        //         row,
-        //         column: leftColumn
-        //     });
-        // }
-        // if(rightPosition === null) {
-        //     liberties.push({
-        //         row,
-        //         column: rightColumn
-        //     });
-        // }
-
-        // Check if position a suicide for turn player
-        if(
-            (
-                whosTurn === 'black'
-                && (
-                    topPosition === false
-                    && bottomPosition === false
-                    && leftPosition === false
-                    && rightPosition === false
-                )
-            )
-            || (
-                whosTurn === 'white'
-                && (
-                    topPosition === true
-                    && bottomPosition === true
-                    && leftPosition === true
-                    && rightPosition === true
-                )
-            )
-        ) {
-            return {
-                liberties,
-                suicide: true
-            };
-        } else {
-            return {
-                liberties,
-                suicide: false
-            }
-        }
     }
 
     isUserInQueue(username) {
