@@ -388,11 +388,14 @@ class GameService {
 
         // If position where stone is being added has no liberties and is surrounded
         // by opponent's stones (suicide) then do nothing
+        // TODO: If the point where the stone wants to be added is opponent's any group's last
+        // liberty point, then this shouldnt be counted as suicide since it is a recapture move.
+        // So, need to check first if stone added removes any opponent groups... @@@
         if(!liberties.length && suicide) {
             return;
         }
 
-        // Add stone to the poisiton (true for block, false for white stone)
+        // Add stone to the poisiton (true for black, false for white stone)
         game.board[row][column] = isBlackPlayer; // true or false
 
         // Accept the stone added and add move
@@ -456,9 +459,9 @@ class GameService {
                         )
                     ) {
                         group.liberties.push({
-                            row: libertyToBeAdded.row,
-                            column: libertyToBeAdded.column,
-                            createdAtMove: currentMoveIndex
+                            ...libertyToBeAdded,
+                            createdAtMove: currentMoveIndex,
+                            removedAtMove: -1
                         });
                     }
                 });
@@ -474,7 +477,8 @@ class GameService {
                     liberties: liberties.map(
                         liberty => ({ ...liberty, createdAtMove: currentMoveIndex, removedAtMove: -1 })
                     ),
-                    createdAtMove: currentMoveIndex
+                    createdAtMove: currentMoveIndex,
+                    removedAtMove: -1
                 };
 
                 turnPlayersGroupIndexes
@@ -525,12 +529,14 @@ class GameService {
                 stones: [{
                     row,
                     column,
-                    createdAtMove: currentMoveIndex
+                    createdAtMove: currentMoveIndex,
+                    removedAtMove: -1
                 }],
                 liberties: liberties.map(
-                    liberty => ({ ...liberty, createdAtMove: currentMoveIndex })
+                    liberty => ({ ...liberty, createdAtMove: currentMoveIndex, removedAtMove: -1 })
                 ),
-                createdAtMove: currentMoveIndex
+                createdAtMove: currentMoveIndex,
+                removedAtMove: -1
             });
         }
 
@@ -554,13 +560,68 @@ class GameService {
                     if(!activeLibertiesOfGroup.length) {
                         let numberOfStonesCaptured = 0;
     
-                        group.stones.forEach(stoneCaptured => {
-                            if(stoneCaptured.removedAtMove !== -1) {
+                        group.stones.forEach(capturedStone => {
+                            if(capturedStone.removedAtMove > -1) {
                                 return;
                             }
 
-                            game.board[stoneCaptured.row][stoneCaptured.column] = null;
+                            game.board[capturedStone.row][capturedStone.column] = null;
+
                             numberOfStonesCaptured++;
+
+                            // Turn players groups that are surrounding opponent's captured stone
+                            const turnPlayersSurroundingGroupIndexes = [];
+
+                            // Captured stone's neighboring (capturing) stones
+                            const neighboringStonePositions = {
+                                top: { row: capturedStone.row - 1, column: capturedStone.column },
+                                bottom: { row: capturedStone.row + 1, column: capturedStone.column },
+                                left: { row: capturedStone.row, column: capturedStone.column - 1 },
+                                right: { row: capturedStone.row, column: capturedStone.column + 1 }
+                            };
+
+                            // Find turn player's stones that are surrounding captured stone
+                            game.groups.forEach((group, groupIndex) => {
+                                const isGroupRemoved = group.removedAtMove > -1;
+                                const isTurnPlayersGroup = group.player === whosTurn;
+                    
+                                if(isGroupRemoved || !isTurnPlayersGroup) {
+                                    return;
+                                }
+
+                                const doesGroupContainAnyNeighboringStones = group.stones.some(
+                                    stone => {
+                                        if(stone.removedAtMove > -1) {
+                                            return false;
+                                        }
+
+                                        // Check if stone's positions are equal to one of neighboring
+                                        // stones' positions. If so, then the group is 
+                                        return Object.values(neighboringStonePositions).some(
+                                            neighboringStonePosition =>
+                                                stone.row === neighboringStonePosition.row
+                                                && stone.column === neighboringStonePosition.column
+                                        );
+                                    }
+                                );
+
+                                if(doesGroupContainAnyNeighboringStones && turnPlayersSurroundingGroupIndexes.indexOf(groupIndex) === -1) {
+                                    turnPlayersSurroundingGroupIndexes.push(groupIndex);
+                                }
+                            });
+
+                            // Add captured stone's positions as a new liberty to turn player's
+                            // surrounding (capturing) groups
+                            turnPlayersSurroundingGroupIndexes.forEach(groupIndex => {
+                                const group = game.groups[groupIndex];
+
+                                group.liberties.push({
+                                    row: capturedStone.row,
+                                    column: capturedStone.column,
+                                    createdAtMove: currentMoveIndex,
+                                    removedAtMove: -1
+                                });
+                            });
                         });
     
                         game[whosTurn].score += numberOfStonesCaptured;
@@ -590,44 +651,80 @@ class GameService {
         // So don't allow player to put stone there, otherwise allow it
 
         const liberties = [];
+        let suicide = true;
 
         // Possible liberty point positions (top, bottom, left, right)
-        const topRow = row - 1;
-        const bottomRow = row + 1;
-        const leftColumn = column - 1;
-        const rightColumn = column + 1;
+        const libertyPointPositions = {
+            top: { row: row - 1, column: column },
+            bottom: { row: row + 1, column: column },
+            left: { row: row, column: column - 1 },
+            right: { row: row, column: column + 1 }
+        };
 
-        // Calculate liberty points
-        const topPosition = board[topRow] && board[topRow][column];
-        const bottomPosition = board[bottomRow] && board[bottomRow][column];
-        const leftPosition = board[row] && board[row][leftColumn];
-        const rightPosition = board[row]&& board[row][rightColumn];
+        Object.values(libertyPointPositions).forEach(
+            libertyPointPosition => {
+                const boardValue = board[libertyPointPosition.row] && board[libertyPointPosition.row][libertyPointPosition.column];
 
-        // If liberty point is valid, add to liberties array
-        if(topPosition === null) {
-            liberties.push({
-                row: topRow,
-                column
-            });
-        }
-        if(bottomPosition === null) {
-            liberties.push({
-                row: bottomRow,
-                column
-            });
-        }
-        if(leftPosition === null) {
-            liberties.push({
-                row,
-                column: leftColumn
-            });
-        }
-        if(rightPosition === null) {
-            liberties.push({
-                row,
-                column: rightColumn
-            });
-        }
+                // If position is not null (empty), then it is not a liberty point
+                if(boardValue !== null) {
+                    if(
+                        (whosTurn === 'black' && boardValue === true)
+                        || (whosTurn === 'white' && boardValue === false)
+                    ) {
+                        suicide = false;
+                    }
+
+                    return;
+                }
+
+                suicide = false;
+
+                liberties.push({
+                    row: libertyPointPosition.row,
+                    column: libertyPointPosition.column
+                });
+            }
+        );
+
+        return { liberties, suicide };
+        // const topRow = row - 1;
+        // const bottomRow = row + 1;
+        // const leftColumn = column - 1;
+        // const rightColumn = column + 1;
+
+        // // Calculate liberty points
+        // const topPosition = board[topRow] && board[topRow][column];
+        // const bottomPosition = board[bottomRow] && board[bottomRow][column];
+        // const leftPosition = board[row] && board[row][leftColumn];
+        // const rightPosition = board[row]&& board[row][rightColumn];
+
+        // // If liberty point is valid, add to liberties array
+        // if(topPosition === null) {
+        //     liberties.push({
+        //         row: topRow,
+        //         column
+        //     });
+        // }
+        // if(bottomPosition === null) {
+        //     liberties.push({
+        //         row: bottomRow,
+        //         column
+        //     });
+        // }
+        // // Undefinde olma durumu (sınır dışı) için düzenle
+        // // Kodu temize çek
+        // if(leftPosition === null) {
+        //     liberties.push({
+        //         row,
+        //         column: leftColumn
+        //     });
+        // }
+        // if(rightPosition === null) {
+        //     liberties.push({
+        //         row,
+        //         column: rightColumn
+        //     });
+        // }
 
         // Check if position a suicide for turn player
         if(
