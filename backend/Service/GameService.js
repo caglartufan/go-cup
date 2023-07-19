@@ -383,15 +383,52 @@ class GameService {
             return;
         }
 
-        // Calculate the liberty points of added stone
+        // Calculate the liberty points of added stone and check if it's a suicide move
         const { liberties, suicide } = this.#calculateLibertyPointsOfGivenPointForGivenGameBoard(game.board, row, column, whosTurn);
+
+        // Check if stone added captures any of opponent's groups
+        const isCapturingAnyOfOpponentsGroups = game.groups.some(group => {
+            const isOpponentsGroup = group.player !== whosTurn;
+
+            if(!isOpponentsGroup) {
+                return false;
+            }
+
+            const libertiesOfGroup = group.liberties.filter(
+                liberty => liberty.removedAtMove === -1
+            );
+
+            if(libertiesOfGroup.length !== 1) {
+                return false;
+            }
+
+            
+            const isAddedStoneLastLibertyPointOfGroup = libertiesOfGroup[0].row === row && libertiesOfGroup[0].column === column;
+            
+            const stonesOfGroup = group.stones.filter(
+                stone => stone.removedAtMove === -1
+            );
+
+            // Check if removed group (or stone) is producing a ko
+            if(stonesOfGroup.length === 1 && isAddedStoneLastLibertyPointOfGroup && !liberties.length) {
+                game.kos.push({
+                    row: stonesOfGroup[0].row,
+                    column: stonesOfGroup[1].row,
+                    allowed: false,
+                    createdAtMove: currentMoveIndex,
+                    removedAtMove
+                })
+            }
+
+            return isAddedStoneLastLibertyPointOfGroup;
+        });
 
         // If position where stone is being added has no liberties and is surrounded
         // by opponent's stones (suicide) then do nothing
         // TODO: If the point where the stone wants to be added is opponent's any group's last
         // liberty point, then this shouldnt be counted as suicide since it is a recapture move.
         // So, need to check first if stone added removes any opponent groups... @@@
-        if(!liberties.length && suicide) {
+        if(!liberties.length && suicide && !isCapturingAnyOfOpponentsGroups) {
             return;
         }
 
