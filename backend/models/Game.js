@@ -123,6 +123,29 @@ const gameSchema = new mongoose.Schema({
             default: -1
         }
     }],
+    kos: {
+        row: {
+            type: Number,
+            required: [true, VALIDATION.game.kos.row['any.required']],
+            min: [0, VALIDATION.game.kos.row['number.min']],
+            max: [18, VALIDATION.game.kos.row['number.min']]
+        },
+        column: {
+            type: Number,
+            required: [true, VALIDATION.game.kos.column['any.required']],
+            min: [0, VALIDATION.game.kos.column['number.min']],
+            max: [18, VALIDATION.game.kos.column['number.min']]
+        },
+        allowed: {
+            type: Boolean,
+            default: false
+        },
+        createdAtMove: {
+            type: Number,
+            required: [true, VALIDATION.game.kos.createdAtMove['any.required']],
+            min: [0, VALIDATION.game.kos.createdAtMove['number.min']]
+        }
+    },
     black: {
         user: {
             type: mongoose.Types.ObjectId,

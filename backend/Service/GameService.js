@@ -413,10 +413,9 @@ class GameService {
             if(stonesOfGroup.length === 1 && isAddedStoneLastLibertyPointOfGroup && !liberties.length) {
                 game.kos.push({
                     row: stonesOfGroup[0].row,
-                    column: stonesOfGroup[1].row,
+                    column: stonesOfGroup[0].row,
                     allowed: false,
-                    createdAtMove: currentMoveIndex,
-                    removedAtMove
+                    createdAtMove: currentMoveIndex
                 })
             }
 

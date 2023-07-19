@@ -116,6 +116,20 @@ const VALIDATION = {
                 'number.min': 'Group\'s associated index of the move to which it was removed must be minimum -1.'
             }
         },
+        kos: {
+            row: {
+                'any.required': 'Ko requires a row index to be assoicated with.',
+                'number.min': 'Ko\'s associated row index must be minimum 0 and maximum 18.'
+            },
+            column: {
+                'any.required': 'Ko requires a column index to be assoicated with.',
+                'number.min': 'Ko\'s associated column index must be minimum 0 and maximum 18.'
+            },
+            createdAtMove: {
+                'any.required': 'Ko requires the index of the move to which it was created to be associated.',
+                'number.min': 'Ko\'s associated index of the move to which it was created must be minimum 0.'
+            }
+        },
         black: {
             user: {
                 'any.required': 'Black player\'s user id is required!',
