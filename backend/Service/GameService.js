@@ -285,7 +285,7 @@ class GameService {
             const sockets = await this.#io.fetchSockets();
             const playerSockets = sockets.filter(
                 socket => users.findIndex(
-                    user => user.username === socket.data.user.username
+                    user => user.username === socket.data.user?.username
                 ) > -1
             );
     
@@ -379,7 +379,8 @@ class GameService {
         }
 
         // Do nothing if there's already a stone at position where new stone is wanted to be added
-        if(game.board[row][column] !== null) {
+        // TODO: Use this optional chaining for other matrix or array accessing lines
+        if(game.board[row]?.[column] !== null) {
             return;
         }
 
@@ -401,33 +402,31 @@ class GameService {
             if(libertiesOfGroup.length !== 1) {
                 return false;
             }
-
             
             const isAddedStoneLastLibertyPointOfGroup = libertiesOfGroup[0].row === row && libertiesOfGroup[0].column === column;
-            
-            const stonesOfGroup = group.stones.filter(
-                stone => stone.removedAtMove === -1
-            );
-
-            // Check if removed group (or stone) is producing a ko
-            if(stonesOfGroup.length === 1 && isAddedStoneLastLibertyPointOfGroup && !liberties.length) {
-                game.kos.push({
-                    row: stonesOfGroup[0].row,
-                    column: stonesOfGroup[0].row,
-                    allowed: false,
-                    createdAtMove: currentMoveIndex
-                })
-            }
 
             return isAddedStoneLastLibertyPointOfGroup;
         });
 
+        // Find disallowed ko positions for future use (to check if stone added to a position
+        // which was disallowed due to a ko position or to allow disallowed ko positions after
+        // a valid move)
+        const disallowedKoPositions = game.kos.filter(
+            ko => !ko.allowed
+        );
+            
+        // Check if stone is added to a position which was disallowed due to a ko
+        const isNotAllowedDueToKo = disallowedKoPositions.some(
+            ko => ko.row === row && ko.column === column
+        );
+
+        // TODO: Simplify Nested Conditional Checks
+        // GPT: One possible improvement is to split these conditions into separate variables or
+        // functions with descriptive names to make the logic more explicit. This can enhance the
+        // readability and maintainability of the code...
         // If position where stone is being added has no liberties and is surrounded
         // by opponent's stones (suicide) then do nothing
-        // TODO: If the point where the stone wants to be added is opponent's any group's last
-        // liberty point, then this shouldnt be counted as suicide since it is a recapture move.
-        // So, need to check first if stone added removes any opponent groups... @@@
-        if(!liberties.length && suicide && !isCapturingAnyOfOpponentsGroups) {
+        if(!liberties.length && suicide && (!isCapturingAnyOfOpponentsGroups || isNotAllowedDueToKo)) {
             return;
         }
 
@@ -444,6 +443,11 @@ class GameService {
 
         // Store current move's index to use it in group's createdAtMove, removedAtMove fields
         const currentMoveIndex = game.moves.length - 1;
+
+        // Allow the positions that were disallowed due to a ko
+        disallowedKoPositions.forEach(ko => {
+            ko.allowed = true;
+        });
 
         const turnPlayersGroupIndexes = [];
         const opponentsGroupIndexes = [];
@@ -580,90 +584,120 @@ class GameService {
         // Check if opponent's groups have other liberties, if not
         // Remove them and add number of captured stones to turn player's score
         if(opponentsGroupIndexes.length) {
-            opponentsGroupIndexes
-                // .sort((indexA, indexB) => indexB - indexA)
-                .forEach(groupIndex => {
-                    const group = game.groups[groupIndex];
+            // Only and only removed stone
+            let theFirstAndOnlyCapturedStone = null;
 
-                    // Find active liberties of group (the ones that are not removed yet)
-                    const activeLibertiesOfGroup = group.liberties.filter(
-                        liberty => liberty.removedAtMove === -1
-                    );
+            opponentsGroupIndexes.forEach(groupIndex => {
+                const group = game.groups[groupIndex];
 
-                    // If opponent's group has no active liberties remove the group and add number of
-                    // stones captured to turn player's score
-                    if(!activeLibertiesOfGroup.length) {
-                        let numberOfStonesCaptured = 0;
-    
-                        group.stones.forEach(capturedStone => {
-                            if(capturedStone.removedAtMove > -1) {
+                // Find active liberties of group (the ones that are not removed yet)
+                const activeLibertiesOfGroup = group.liberties.filter(
+                    liberty => liberty.removedAtMove === -1
+                );
+
+                // If opponent's group has no active liberties remove the group and add number of
+                // stones captured to turn player's score
+                if(!activeLibertiesOfGroup.length) {
+                    let numberOfCapturedStones = 0;
+
+                    group.stones.forEach(capturedStone => {
+                        if(capturedStone.removedAtMove > -1) {
+                            return;
+                        }
+
+                        game.board[capturedStone.row][capturedStone.column] = null;
+
+                        numberOfCapturedStones++;
+
+                        // If only and only captured stone was set already and just removed
+                        // another stone then previously set value has no possiblity to
+                        // create a ko, so we set it back to null
+                        if(theFirstAndOnlyCapturedStone) {
+                            theFirstAndOnlyCapturedStone = null;
+                        } else {
+                            theFirstAndOnlyCapturedStone = capturedStone;
+                        }
+
+                        // Turn players groups that are surrounding opponent's captured stone
+                        const turnPlayersSurroundingGroupIndexes = [];
+
+                        // Captured stone's neighboring (capturing) stones
+                        const neighboringStonePositions = {
+                            top: { row: capturedStone.row - 1, column: capturedStone.column },
+                            bottom: { row: capturedStone.row + 1, column: capturedStone.column },
+                            left: { row: capturedStone.row, column: capturedStone.column - 1 },
+                            right: { row: capturedStone.row, column: capturedStone.column + 1 }
+                        };
+
+                        // Find turn player's stones that are surrounding captured stone
+                        game.groups.forEach((group, groupIndex) => {
+                            const isGroupRemoved = group.removedAtMove > -1;
+                            const isTurnPlayersGroup = group.player === whosTurn;
+                
+                            if(isGroupRemoved || !isTurnPlayersGroup) {
                                 return;
                             }
 
-                            game.board[capturedStone.row][capturedStone.column] = null;
-
-                            numberOfStonesCaptured++;
-
-                            // Turn players groups that are surrounding opponent's captured stone
-                            const turnPlayersSurroundingGroupIndexes = [];
-
-                            // Captured stone's neighboring (capturing) stones
-                            const neighboringStonePositions = {
-                                top: { row: capturedStone.row - 1, column: capturedStone.column },
-                                bottom: { row: capturedStone.row + 1, column: capturedStone.column },
-                                left: { row: capturedStone.row, column: capturedStone.column - 1 },
-                                right: { row: capturedStone.row, column: capturedStone.column + 1 }
-                            };
-
-                            // Find turn player's stones that are surrounding captured stone
-                            game.groups.forEach((group, groupIndex) => {
-                                const isGroupRemoved = group.removedAtMove > -1;
-                                const isTurnPlayersGroup = group.player === whosTurn;
-                    
-                                if(isGroupRemoved || !isTurnPlayersGroup) {
-                                    return;
-                                }
-
-                                const doesGroupContainAnyNeighboringStones = group.stones.some(
-                                    stone => {
-                                        if(stone.removedAtMove > -1) {
-                                            return false;
-                                        }
-
-                                        // Check if stone's positions are equal to one of neighboring
-                                        // stones' positions. If so, then the group is 
-                                        return Object.values(neighboringStonePositions).some(
-                                            neighboringStonePosition =>
-                                                stone.row === neighboringStonePosition.row
-                                                && stone.column === neighboringStonePosition.column
-                                        );
+                            const doesGroupContainAnyNeighboringStones = group.stones.some(
+                                stone => {
+                                    if(stone.removedAtMove > -1) {
+                                        return false;
                                     }
-                                );
 
-                                if(doesGroupContainAnyNeighboringStones && turnPlayersSurroundingGroupIndexes.indexOf(groupIndex) === -1) {
-                                    turnPlayersSurroundingGroupIndexes.push(groupIndex);
+                                    // Check if stone's positions are equal to one of neighboring
+                                    // stones' positions. If so, then the group is 
+                                    return Object.values(neighboringStonePositions).some(
+                                        neighboringStonePosition =>
+                                            stone.row === neighboringStonePosition.row
+                                            && stone.column === neighboringStonePosition.column
+                                    );
                                 }
-                            });
+                            );
 
-                            // Add captured stone's positions as a new liberty to turn player's
-                            // surrounding (capturing) groups
-                            turnPlayersSurroundingGroupIndexes.forEach(groupIndex => {
-                                const group = game.groups[groupIndex];
+                            if(doesGroupContainAnyNeighboringStones && turnPlayersSurroundingGroupIndexes.indexOf(groupIndex) === -1) {
+                                turnPlayersSurroundingGroupIndexes.push(groupIndex);
+                            }
+                        });
 
-                                group.liberties.push({
-                                    row: capturedStone.row,
-                                    column: capturedStone.column,
-                                    createdAtMove: currentMoveIndex,
-                                    removedAtMove: -1
-                                });
+                        // Add captured stone's positions as a new liberty to turn player's
+                        // surrounding (capturing) groups
+                        turnPlayersSurroundingGroupIndexes.forEach(groupIndex => {
+                            const group = game.groups[groupIndex];
+
+                            group.liberties.push({
+                                row: capturedStone.row,
+                                column: capturedStone.column,
+                                createdAtMove: currentMoveIndex,
+                                removedAtMove: -1
                             });
                         });
-    
-                        game[whosTurn].score += numberOfStonesCaptured;
+                    });
 
-                        group.removedAtMove = currentMoveIndex;
-                    }
-                });
+                    game[whosTurn].score += numberOfCapturedStones;
+
+                    group.removedAtMove = currentMoveIndex;
+                }
+            });
+
+            // Check if only and only one stone was captured and added stone had no liberties
+            // If so, this move creates a ko
+            if(theFirstAndOnlyCapturedStone && !liberties.length) {
+                const existingKo = game.kos.find(
+                    ko => ko.row === theFirstAndOnlyCapturedStone.row && ko.column === theFirstAndOnlyCapturedStone.column
+                );
+
+                if(existingKo) {
+                    existingKo.allowed = false;
+                    existingKo.createdAtMoves.push(currentMoveIndex);
+                } else {
+                    game.kos.push({
+                        row: theFirstAndOnlyCapturedStone.row,
+                        column: theFirstAndOnlyCapturedStone.column,
+                        allowed: false,
+                        createdAtMoves: [currentMoveIndex]
+                    });
+                }
+            }
         }
 
         game[whosTurn].timeRemaining = playerNewTimeRemaining;

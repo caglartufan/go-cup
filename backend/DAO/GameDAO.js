@@ -264,6 +264,11 @@ class GameDAO {
                                 },
                                 finishedAt: processDate
                             }
+                        },
+                        {
+                            $project: {
+                                whosTurn: 0
+                            }
                         }
                     ]
                 }

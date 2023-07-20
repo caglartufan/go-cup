@@ -123,7 +123,8 @@ const gameSchema = new mongoose.Schema({
             default: -1
         }
     }],
-    kos: {
+    kos: [{
+        _id: false,
         row: {
             type: Number,
             required: [true, VALIDATION.game.kos.row['any.required']],
@@ -140,12 +141,12 @@ const gameSchema = new mongoose.Schema({
             type: Boolean,
             default: false
         },
-        createdAtMove: {
+        createdAtMoves: [{
             type: Number,
-            required: [true, VALIDATION.game.kos.createdAtMove['any.required']],
-            min: [0, VALIDATION.game.kos.createdAtMove['number.min']]
-        }
-    },
+            required: [true, VALIDATION.game.kos.createdAtMoves['any.required']],
+            min: [0, VALIDATION.game.kos.createdAtMoves['number.min']]
+        }]
+    }],
     black: {
         user: {
             type: mongoose.Types.ObjectId,
