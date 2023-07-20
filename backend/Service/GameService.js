@@ -340,36 +340,25 @@ class GameService {
             throw new GameHasAlreadyFinishedOrCancelledError();
         }
 
-        const isBlackPlayer = user.username === game.black.user.username;
-        const isWhitePlayer = user.username === game.white.user.username;
-        const isPlayer = isBlackPlayer || isWhitePlayer;
+        const {
+            isPlayer,
+            lastMove,
+            whosTurn,
+            isPlayersTurn
+        } = this.#findWhosTurnAndCheckIfGivenUserIsPlayerOfGameAndTheirTurn(user, game);
 
         if(!isPlayer) {
             throw new UnauthorizedError();
         }
 
-        let whosTurn = 'black';
-        let lastMove = null;
-        if(game.status !== 'waiting' && game.moves.length) {
-            lastMove = game.moves[game.moves.length - 1];
-            if(lastMove.player === 'black') {
-                whosTurn = 'white';
-            }
-        }
-
-        if(
-            (isBlackPlayer && whosTurn === 'white')
-            || (isWhitePlayer && whosTurn === 'black')
-        ) {
+        if(!isPlayersTurn) {
             throw new NotYourTurnError();
         }
 
         const currentMoveAt = new Date();
-        const lastMoveAt = lastMove ? lastMove.createdAt : null;
-        const timeElapsedSinceLastMoveInSeconds = lastMoveAt ? ((currentMoveAt - lastMoveAt) / 1000) : 0;
-        const playerNewTimeRemaining = game[whosTurn].timeRemaining - timeElapsedSinceLastMoveInSeconds;
+        const turnPlayersCurrentTimeRemaining = this.#calculateTurnPlayersCurrentTimeRemaining(game, currentMoveAt, lastMove);
         
-        if(playerNewTimeRemaining < 0) {
+        if(turnPlayersCurrentTimeRemaining < 0) {
             throw new GameHasAlreadyFinishedOrCancelledError();
         }
 
@@ -379,7 +368,6 @@ class GameService {
         }
 
         // Do nothing if there's already a stone at position where new stone is wanted to be added
-        // TODO: Use this optional chaining for other matrix or array accessing lines
         if(game.board[row]?.[column] !== null) {
             return;
         }
@@ -752,6 +740,37 @@ class GameService {
         );
 
         return { liberties, suicide };
+    }
+
+    #findWhosTurnAndCheckIfGivenUserIsPlayerOfGameAndTheirTurn(user, game) {
+        const isBlackPlayer = user.username === game.black.user.username;
+        const isWhitePlayer = user.username === game.white.user.username;
+        const isPlayer = isBlackPlayer || isWhitePlayer;
+        const lastMove = game.moves.length
+            ? game.moves[game.moves.length - 1]
+            : null;
+
+        let whosTurn = 'black';
+        if(game.status !== 'waiting' && lastMove.player === 'black') {
+            whosTurn = 'white';
+        }
+
+        const isPlayersTurn = (isBlackPlayer && whosTurn === 'white') || (isWhitePlayer && whosTurn === 'black');
+
+        return {
+            isPlayer,
+            lastMove,
+            whosTurn,
+            isPlayersTurn
+        };
+    }
+
+    #calculateTurnPlayersCurrentTimeRemaining(game, currentMoveAt, lastMove) {
+        const lastMoveAt = lastMove ? lastMove.createdAt : null;
+        const timeElapsedSinceLastMoveInSeconds = lastMoveAt ? ((currentMoveAt - lastMoveAt) / 1000) : 0;
+        const turnPlayersNewTimeRemaining = game[whosTurn].timeRemaining - timeElapsedSinceLastMoveInSeconds;
+
+        return turnPlayersNewTimeRemaining;
     }
 
     isUserInQueue(username) {
