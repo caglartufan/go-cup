@@ -345,7 +345,7 @@ class GameService {
             lastMove,
             whosTurn,
             isPlayersTurn
-        } = this.#findWhosTurnAndCheckIfGivenUserIsPlayerOfGameAndTheirTurn(user, game);
+        } = this.#findWhosTurnAndLastMoveAndCheckIfGivenUserIsPlayerOfGameAndTheirTurn(user, game);
 
         if(!isPlayer) {
             throw new UnauthorizedError();
@@ -356,7 +356,7 @@ class GameService {
         }
 
         const currentMoveAt = new Date();
-        const turnPlayersCurrentTimeRemaining = this.#calculateTurnPlayersCurrentTimeRemaining(game, currentMoveAt, lastMove);
+        const turnPlayersCurrentTimeRemaining = this.#calculateTurnPlayersCurrentTimeRemaining(game,whosTurn,  currentMoveAt, lastMove);
         
         if(turnPlayersCurrentTimeRemaining < 0) {
             throw new GameHasAlreadyFinishedOrCancelledError();
@@ -373,16 +373,34 @@ class GameService {
         }
 
         // Calculate the liberty points of added stone and check if it's a suicide move
-        const { liberties, suicide } = this.#calculateLibertyPointsOfGivenPointForGivenGameBoard(game.board, row, column, whosTurn);
+        const { liberties, suicide } = this.#calculateLibertyPointsOfGivenPoint(game, row, column, whosTurn);
+
+        // Find adjecent (neighbouring) groups and separate them as
+        // turn player's groups and opponent's groups
+        const activeGroups = game.groups.filter(
+            group => group.removedAtMove === -1
+        );
+        const turnPlayersGroups = [];
+        const opponentsGroups = [];
+
+        // Check if stone is placed at liberty point of existing groups
+        activeGroups.forEach(group => {
+            const isTurnPlayersGroup = group.player === whosTurn;
+            const isAddedStoneCapturingALibertyOfGroup = group.liberties.some(
+                liberty => liberty.row === row && liberty.column === column && liberty.removedAtMove === -1
+            );
+
+            if(isAddedStoneCapturingALibertyOfGroup) {
+                if(isTurnPlayersGroup) {
+                    turnPlayersGroups.push(group);
+                } else {
+                    opponentsGroups.push(group);
+                }
+            }
+        });
 
         // Check if stone added captures any of opponent's groups
-        const isCapturingAnyOfOpponentsGroups = game.groups.some(group => {
-            const isOpponentsGroup = group.player !== whosTurn;
-
-            if(!isOpponentsGroup) {
-                return false;
-            }
-
+        const isCapturingAnyOfOpponentsGroups = opponentsGroups.some(group => {
             const libertiesOfGroup = group.liberties.filter(
                 liberty => liberty.removedAtMove === -1
             );
@@ -391,7 +409,8 @@ class GameService {
                 return false;
             }
             
-            const isAddedStoneLastLibertyPointOfGroup = libertiesOfGroup[0].row === row && libertiesOfGroup[0].column === column;
+            const lastLibertyPointOfGroup = libertiesOfGroup[0];
+            const isAddedStoneLastLibertyPointOfGroup = lastLibertyPointOfGroup.row === row && lastLibertyPointOfGroup.column === column;
 
             return isAddedStoneLastLibertyPointOfGroup;
         });
@@ -408,18 +427,13 @@ class GameService {
             ko => ko.row === row && ko.column === column
         );
 
-        // TODO: Simplify Nested Conditional Checks
-        // GPT: One possible improvement is to split these conditions into separate variables or
-        // functions with descriptive names to make the logic more explicit. This can enhance the
-        // readability and maintainability of the code...
-        // If position where stone is being added has no liberties and is surrounded
-        // by opponent's stones (suicide) then do nothing
+        // Check if move is allowed
         if(!liberties.length && suicide && (!isCapturingAnyOfOpponentsGroups || isNotAllowedDueToKo)) {
             return;
         }
 
         // Add stone to the poisiton (true for black, false for white stone)
-        game.board[row][column] = isBlackPlayer; // true or false
+        game.board[row][column] = whosTurn === 'black'; // true or false
 
         // Accept the stone added and add move
         game.moves.push({
@@ -429,7 +443,7 @@ class GameService {
             createdAt: currentMoveAt
         });
 
-        // Store current move's index to use it in group's createdAtMove, removedAtMove fields
+        // Store current move's index to use it for createdAtMove, removedAtMove fields
         const currentMoveIndex = game.moves.length - 1;
 
         // Allow the positions that were disallowed due to a ko
@@ -437,43 +451,27 @@ class GameService {
             ko.allowed = true;
         });
 
-        const turnPlayersGroupIndexes = [];
-        const opponentsGroupIndexes = [];
-
-        // Check if stone is placed at liberty point of existing groups
-        game.groups.forEach((group, groupIndex) => {
-            const isGroupRemoved = group.removedAtMove > -1;
-
-            if(isGroupRemoved) {
-                return;
-            }
-
-            const isTurnPlayersGroup = group.player === whosTurn;
-            const capturedLibertyIndex = group.liberties.findIndex(
+        // Remove liberty point of both turn player's and opponent's
+        // groups that was captured by added stone
+        [].concat(turnPlayersGroups, opponentsGroups).forEach(group => {
+            const capturedLiberty = group.liberties.find(
                 liberty => liberty.row === row && liberty.column === column && liberty.removedAtMove === -1
             );
 
-            if(capturedLibertyIndex > -1) {
-                // Remove the liberty point
-                group.liberties[capturedLibertyIndex].removedAtMove = currentMoveIndex;
-
-                if(isTurnPlayersGroup) {
-                    turnPlayersGroupIndexes.push(groupIndex);
-                } else {
-                    opponentsGroupIndexes.push(groupIndex);
-                }
-            }
+            // Remove the liberty point
+            capturedLiberty.removedAtMove = currentMoveIndex;
         });
 
-        if(turnPlayersGroupIndexes.length) {
-            if(turnPlayersGroupIndexes.length === 1) {
-                const group = game.groups[turnPlayersGroupIndexes[0]];
+        if(turnPlayersGroups.length) {
+            if(turnPlayersGroups.length === 1) {
+                const group = turnPlayersGroups[0];
 
                 // Add stone to the stones of group
                 group.stones.push({
                     row,
                     column,
-                    createdAtMove: currentMoveIndex
+                    createdAtMove: currentMoveIndex,
+                    removedAtMove: -1
                 });
 
                 // Merge added stone's liberties with group's liberties
@@ -509,10 +507,8 @@ class GameService {
                     removedAtMove: -1
                 };
 
-                turnPlayersGroupIndexes
-                    .forEach(groupIndex => {
-                        const group = game.groups[groupIndex];
-
+                turnPlayersGroups
+                    .forEach(group => {
                         group.stones.forEach(stoneToBeAdded => {
                             if(
                                 !mergedGroup.stones.find(
@@ -524,7 +520,8 @@ class GameService {
                             ) {
                                 mergedGroup.stones.push({
                                     ...stoneToBeAdded,
-                                    createdAtMove: currentMoveIndex
+                                    createdAtMove: currentMoveIndex,
+                                    removedAtMove: -1
                                 });
                             }
                         });
@@ -540,7 +537,8 @@ class GameService {
                             ) {
                                 mergedGroup.liberties.push({
                                     ...libertyToBeAdded,
-                                    createdAtMove: currentMoveIndex
+                                    createdAtMove: currentMoveIndex,
+                                    removedAtMove: -1
                                 });
                             }
                         });
@@ -571,13 +569,11 @@ class GameService {
         // If added stone captured liberty points of opponent's groups
         // Check if opponent's groups have other liberties, if not
         // Remove them and add number of captured stones to turn player's score
-        if(opponentsGroupIndexes.length) {
+        if(opponentsGroups.length) {
             // Only and only removed stone
             let theFirstAndOnlyCapturedStone = null;
 
-            opponentsGroupIndexes.forEach(groupIndex => {
-                const group = game.groups[groupIndex];
-
+            opponentsGroups.forEach(group => {
                 // Find active liberties of group (the ones that are not removed yet)
                 const activeLibertiesOfGroup = group.liberties.filter(
                     liberty => liberty.removedAtMove === -1
@@ -589,12 +585,17 @@ class GameService {
                     let numberOfCapturedStones = 0;
 
                     group.stones.forEach(capturedStone => {
-                        if(capturedStone.removedAtMove > -1) {
+                        // Check if captured stone is was removed (inactive)
+                        const isCapturedStoneRemoved = capturedStone.removedAtMove > -1;
+                        if(isCapturedStoneRemoved) {
                             return;
                         }
 
+                        // Empty the board position where the removed (captured)
+                        // stone was put
                         game.board[capturedStone.row][capturedStone.column] = null;
 
+                        // Increase the number of stones captured by 1
                         numberOfCapturedStones++;
 
                         // If only and only captured stone was set already and just removed
@@ -607,9 +608,9 @@ class GameService {
                         }
 
                         // Turn players groups that are surrounding opponent's captured stone
-                        const turnPlayersSurroundingGroupIndexes = [];
+                        const turnPlayersSurroundingGroups = [];
 
-                        // Captured stone's neighboring (capturing) stones
+                        // Captured stone's neighboring (capturing) stone positions
                         const neighboringStonePositions = {
                             top: { row: capturedStone.row - 1, column: capturedStone.column },
                             bottom: { row: capturedStone.row + 1, column: capturedStone.column },
@@ -618,7 +619,7 @@ class GameService {
                         };
 
                         // Find turn player's stones that are surrounding captured stone
-                        game.groups.forEach((group, groupIndex) => {
+                        game.groups.forEach(group => {
                             const isGroupRemoved = group.removedAtMove > -1;
                             const isTurnPlayersGroup = group.player === whosTurn;
                 
@@ -642,16 +643,14 @@ class GameService {
                                 }
                             );
 
-                            if(doesGroupContainAnyNeighboringStones && turnPlayersSurroundingGroupIndexes.indexOf(groupIndex) === -1) {
-                                turnPlayersSurroundingGroupIndexes.push(groupIndex);
+                            if(doesGroupContainAnyNeighboringStones && !turnPlayersSurroundingGroups.some(existingGroup => existingGroup === group)) {
+                                turnPlayersSurroundingGroups.push(group);
                             }
                         });
 
                         // Add captured stone's positions as a new liberty to turn player's
                         // surrounding (capturing) groups
-                        turnPlayersSurroundingGroupIndexes.forEach(groupIndex => {
-                            const group = game.groups[groupIndex];
-
+                        turnPlayersSurroundingGroups.forEach(group => {
                             group.liberties.push({
                                 row: capturedStone.row,
                                 column: capturedStone.column,
@@ -688,7 +687,7 @@ class GameService {
             }
         }
 
-        game[whosTurn].timeRemaining = playerNewTimeRemaining;
+        game[whosTurn].timeRemaining = turnPlayersCurrentTimeRemaining;
 
         await game.save();
 
@@ -697,7 +696,7 @@ class GameService {
         return gameDTO;
     }
 
-    #calculateLibertyPointsOfGivenPointForGivenGameBoard(board, row, column, whosTurn) {
+    #calculateLibertyPointsOfGivenPoint(game, row, column, whosTurn) {
         // true for black, false for white stone, null for free position
         // If position is empty but has no liberties, need to check surrounding stones
         // If surrounding stones are opponent's then it's a dead position
@@ -716,7 +715,7 @@ class GameService {
 
         Object.values(libertyPointPositions).forEach(
             libertyPointPosition => {
-                const boardValue = board[libertyPointPosition.row] && board[libertyPointPosition.row][libertyPointPosition.column];
+                const boardValue = game.board[libertyPointPosition.row] && game.board[libertyPointPosition.row][libertyPointPosition.column];
 
                 // If position is not null (empty), then it is not a liberty point
                 if(boardValue !== null) {
@@ -742,7 +741,7 @@ class GameService {
         return { liberties, suicide };
     }
 
-    #findWhosTurnAndCheckIfGivenUserIsPlayerOfGameAndTheirTurn(user, game) {
+    #findWhosTurnAndLastMoveAndCheckIfGivenUserIsPlayerOfGameAndTheirTurn(user, game) {
         const isBlackPlayer = user.username === game.black.user.username;
         const isWhitePlayer = user.username === game.white.user.username;
         const isPlayer = isBlackPlayer || isWhitePlayer;
@@ -755,7 +754,7 @@ class GameService {
             whosTurn = 'white';
         }
 
-        const isPlayersTurn = (isBlackPlayer && whosTurn === 'white') || (isWhitePlayer && whosTurn === 'black');
+        const isPlayersTurn = (isBlackPlayer && whosTurn === 'black') || (isWhitePlayer && whosTurn === 'white');
 
         return {
             isPlayer,
@@ -765,7 +764,7 @@ class GameService {
         };
     }
 
-    #calculateTurnPlayersCurrentTimeRemaining(game, currentMoveAt, lastMove) {
+    #calculateTurnPlayersCurrentTimeRemaining(game, whosTurn, currentMoveAt, lastMove) {
         const lastMoveAt = lastMove ? lastMove.createdAt : null;
         const timeElapsedSinceLastMoveInSeconds = lastMoveAt ? ((currentMoveAt - lastMoveAt) / 1000) : 0;
         const turnPlayersNewTimeRemaining = game[whosTurn].timeRemaining - timeElapsedSinceLastMoveInSeconds;
