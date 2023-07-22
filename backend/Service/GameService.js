@@ -230,7 +230,7 @@ class GameService {
 
         const sockets = await this.#io.in('queue').fetchSockets();
         const playerSockets = sockets.filter(
-            socket => socket.data.user.username === black.username || socket.data.user.username === white.username
+            socket => socket.data.user?.username === black.username || socket.data.user?.username === white.username
         );
 
         playerSockets.forEach(socket => {
@@ -258,9 +258,9 @@ class GameService {
 
             const sockets = await this.#io.fetchSockets();
             const playerSockets = sockets.filter(
-                socket => users.findIndex(
-                    user => user.username === socket.data.user.username
-                ) > -1
+                socket => users.some(
+                    user => user.username === socket.data.user?.username
+                )
             );
     
             playerSockets.forEach(socket => {
@@ -284,9 +284,9 @@ class GameService {
 
             const sockets = await this.#io.fetchSockets();
             const playerSockets = sockets.filter(
-                socket => users.findIndex(
+                socket => users.some(
                     user => user.username === socket.data.user?.username
-                ) > -1
+                )
             );
     
             playerSockets.forEach(socket => {
@@ -307,26 +307,53 @@ class GameService {
 
 		const isPlayer = game.black.user.username === username || game.white.user.username === username;
 
-		if(isPlayer && game.status === 'waiting') {
-            const cancelledBy = game.black.user.username === username ? 'black' : 'white';
-
-			const { latestSystemChatEntry } = await GameDAO.cancelGame(gameId, cancelledBy);
-
-            await UserDAO.nullifyActiveGameOfUsers(game.black.user, game.white.user);
-            
-            const sockets = await this.#io.fetchSockets();
-            const playerSockets = sockets.filter(
-                socket => socket.data.user.username === game.black.user.username || socket.data.user.username === game.white.user.username
-            );
-    
-            playerSockets.forEach(socket => {
-                socket.data.user.activeGame = null;
-            });
-
-            return { cancelledBy, latestSystemChatEntry };
-		} else {
+        if(!isPlayer || game.status !== 'waiting') {
             return false;
         }
+
+        const cancelledBy = game.black.user.username === username ? 'black' : 'white';
+
+        const { latestSystemChatEntry } = await GameDAO.cancelGame(gameId, cancelledBy);
+
+        await UserDAO.nullifyActiveGameOfUsers(game.black.user, game.white.user);
+        
+        const sockets = await this.#io.fetchSockets();
+        const playerSockets = sockets.filter(
+            socket => socket.data.user?.username === game.black.user.username || socket.data.user?.username === game.white.user.username
+        );
+
+        playerSockets.forEach(socket => {
+            socket.data.user.activeGame = null;
+        });
+
+        return { cancelledBy, latestSystemChatEntry };
+    }
+
+    async resignFromGame(gameId, username) {
+        const game = await this.findGameById(gameId);
+
+		const isPlayer = game.black.user.username === username || game.white.user.username === username;
+
+		if(!isPlayer || game.status !== 'started') {
+            return false;
+        }
+
+        const resignedPlayer = game.black.user.username === username ? 'black' : 'white';
+
+        const { latestSystemChatEntry } = await GameDAO.resignFromGame(gameId, resignedPlayer);
+
+        await UserDAO.nullifyActiveGameOfUsers(game.black.user, game.white.user);
+        
+        const sockets = await this.#io.fetchSockets();
+        const playerSockets = sockets.filter(
+            socket => socket.data.user?.username === game.black.user.username || socket.data.user?.username === game.white.user.username
+        );
+
+        playerSockets.forEach(socket => {
+            socket.data.user.activeGame = null;
+        });
+
+        return { resignedPlayer, latestSystemChatEntry };
     }
 
     async addStoneToTheGame(user, gameId, row, column) {
@@ -619,11 +646,10 @@ class GameService {
                         };
 
                         // Find turn player's stones that are surrounding captured stone
-                        game.groups.forEach(group => {
-                            const isGroupRemoved = group.removedAtMove > -1;
+                        activeGroups.forEach(group => {
                             const isTurnPlayersGroup = group.player === whosTurn;
                 
-                            if(isGroupRemoved || !isTurnPlayersGroup) {
+                            if(!isTurnPlayersGroup) {
                                 return;
                             }
 

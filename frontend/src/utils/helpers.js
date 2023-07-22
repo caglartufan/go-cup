@@ -26,3 +26,9 @@ export const formatDateToHoursAndMinutes = date => {
 
     return hours + ':' + minutes;
 };
+
+export const firstLetterToUppercase = word => {
+    let uppercaseFirstLetter = word.charAt(0).toUpperCase();
+
+    return uppercaseFirstLetter + word.slice(1);
+};

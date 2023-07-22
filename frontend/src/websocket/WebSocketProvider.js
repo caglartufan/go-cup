@@ -111,6 +111,17 @@ const WebSocketProvider = props => {
             }
         };
 
+        const onPlayerResignedFromGame = (gameId, resignedPlayer) => {
+            dispatch(toastActions.add({
+                message: `${resignedPlayer} player resigned from the game!`,
+                status: 'warning'
+            }));
+            dispatch(gameActions.updateStatus({ status: resignedPlayer + '_resigned' }));
+            if(activeGameOfUser === gameId) {
+                dispatch(userActions.updateActiveGame({ gameId: null }));
+            }
+        };
+
         const onAddedStone = (status, black, white, board, moves) => {
             dispatch(gameActions.updateGame({
                 status,
@@ -167,6 +178,7 @@ const WebSocketProvider = props => {
         socket.on('userLeftGameRoom', userJoinedOrLeftGameRoomHandler);
         socket.on('gameChatMessage', onGameChatMessage);
         socket.on('gameCancelled', onGameCancelled);
+        socket.on('playerResignedFromGame', onPlayerResignedFromGame);
         socket.on('addedStone', onAddedStone);
         socket.on('gameFinished', onGameFinished);
 
@@ -188,6 +200,7 @@ const WebSocketProvider = props => {
             socket.off('userLeftGameRoom', userJoinedOrLeftGameRoomHandler);
             socket.off('gameChatMessage', onGameChatMessage);
             socket.off('gameCancelled', onGameCancelled);
+            socket.off('playerResignedFromGame', onPlayerResignedFromGame);
             socket.off('addedStone', onAddedStone);
             socket.off('gameFinished', onGameFinished);
 

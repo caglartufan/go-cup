@@ -169,6 +169,18 @@ module.exports = {
 			socket.emit('errorOccured', error.message);
 		}
 	},
+	onResignFromGame: async (io, services, socket, gameId) => {
+		try {
+			const resignedGameResult = await services.gameService.resignFromGame(gameId, socket.data.user.username);
+
+			if(resignedGameResult.resignedPlayer && resignedGameResult.latestSystemChatEntry) {
+				io.in('game-' + gameId).emit('playerResignedFromGame', gameId, resignedGameResult.resignedPlayer);
+				io.in('game-' + gameId).emit('gameChatMessage', resignedGameResult.latestSystemChatEntry);
+			}
+		} catch(error) {
+			socket.emit('errorOccured', error.message);
+		}
+	},
 	onAddStone: async (io, services, socket, gameId, row, column) => {
 		if(gameId !== socket.data.user.activeGame.toString()) {
 			return;

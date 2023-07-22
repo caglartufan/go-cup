@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState, Fragment } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { redirect, useLoaderData, useLocation } from 'react-router-dom';
-import { formatSeconds } from '../utils/helpers';
+import { formatSeconds, firstLetterToUppercase } from '../utils/helpers';
 
 import { store } from '../store/store';
 import { toastActions } from '../store/toastSlice';
@@ -53,6 +53,12 @@ const GameDetailPage = () => {
     const cancelGameHandler = useCallback(() => {
         if(isPlayer && game.status === 'waiting') {
             socket.emit('cancelGame', game._id);
+        }
+    }, [isPlayer, game.status, game._id]);
+
+    const resignHandler = useCallback(() => {
+        if(isPlayer && game.status === 'started') {
+            socket.emit('resignFromGame', game._id);
         }
     }, [isPlayer, game.status, game._id]);
 
@@ -118,6 +124,9 @@ const GameDetailPage = () => {
                         {game.status === 'waiting' && `Waiting for black player to play (${formatSeconds(timer)})`}
                         {game.status === 'cancelled' && 'The game has been cancelled!'}
                         {(game.status === 'cancelled_by_black' || game.status === 'cancelled_by_white') && `The game has been cancelled by ${game.status.replace('cancelled_by_', '')} player!`}
+                        {(game.status === 'black_resigned' || game.status === 'white_resigned') && !isPlayer && `${firstLetterToUppercase(game.status.replace('_resigned', ''))} player resigned from the game!`}
+                        {((game.status === 'black_resigned' && isBlackPlayer) || (game.status === 'white_resigned' && isWhitePlayer)) && `You have resigned from the game!`}
+                        {((game.status === 'black_resigned' && isWhitePlayer) || (game.status === 'white_resigned' && isBlackPlayer)) && `Your opponent have resigned from the game!`}
                         {game.status === 'started' && isPlayer && ((isBlackPlayer && whosTurn === 'black') || (isWhitePlayer && whosTurn === 'white')) && `Your turn to play`}
                         {game.status === 'started' && isPlayer && ((isBlackPlayer && whosTurn === 'white') || (isWhitePlayer && whosTurn === 'black')) && `Your opponent's turn to play`}
                         {game.status === 'started' && !isPlayer && whosTurn === 'black' && `Black player's turn to play`}
@@ -141,7 +150,7 @@ const GameDetailPage = () => {
                         <div className="board-options">
                             {game.status === 'started' && (
                                 <Fragment>
-                                    <Button>
+                                    <Button onClick={resignHandler}>
                                         Resign
                                     </Button>
                                     <Button>
