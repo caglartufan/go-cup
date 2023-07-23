@@ -27,3 +27,7 @@ area {
     outline-width: 2px;
     outline-color: $primary-dark;
 }
+
+body.modal-open {
+    overflow: hidden;
+}

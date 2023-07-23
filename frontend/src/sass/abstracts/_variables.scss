@@ -33,9 +33,11 @@ $box-shadows: (
 );
 
 // Z-INDEXES
-$z-indexes: (
+$z-indices: (
     dropdown: 1000,
-    toast: 1100
+    toast: 1100,
+    modal-backdrop: 1040,
+    modal: 1060
 );
 
 // GRID

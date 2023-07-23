@@ -162,6 +162,12 @@ const gameSchema = new mongoose.Schema({
             type: Number,
             min: 0,
             default: 5 * 60
+        },
+        requestedUndos: {
+            type: Number,
+            min: 0,
+            max: 3,
+            default: 0
         }
     },
     white: {
@@ -179,6 +185,12 @@ const gameSchema = new mongoose.Schema({
             type: Number,
             min: 0,
             default: 5 * 60
+        },
+        requestedUndos: {
+            type: Number,
+            min: 0,
+            max: 3,
+            default: 0
         }
     },
     chat: {
@@ -204,6 +216,14 @@ const gameSchema = new mongoose.Schema({
             message: MESSAGES.models.Game.BEGINNING_OF_THE_CHAT,
             isSystem: true
         }]
+    },
+    undoRequestedBy: {
+        type: String,
+        enum: {
+            values: ['white', 'black'],
+            message: VALIDATION.game.undoRequestedBy['any.only']
+        },
+        default: null
     },
     isPrivate: {
         type: Boolean,
