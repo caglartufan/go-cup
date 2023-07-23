@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const GameDAO = require('../DAO/GameDAO');
 const UserDAO = require('../DAO/UserDAO');
 const UserDTO = require('../DTO/UserDTO');
-const { InvalidDTOError, UserNotFoundError, GameNotFoundError, UnauthorizedError, GameHasAlreadyFinishedOrCancelledError, NotYourTurnError } = require('../utils/ErrorHandler');
+const { InvalidDTOError, UserNotFoundError, GameNotFoundError, UnauthorizedError, GameHasAlreadyFinishedOrCancelledError, NotYourTurnError, YouDontHaveUndoRightsError } = require('../utils/ErrorHandler');
 const GameDTO = require('../DTO/GameDTO');
 
 class GameService {
@@ -224,9 +224,12 @@ class GameService {
 
         console.log(`Starting a game between ${black.username} (black) and ${white.username} (white)!`);
 
-        const [blackUserId, whiteUserId] = await UserDAO.getUserIdsByUsernames(black.username, white.username);
+        const usersWithIdAndUsername = await UserDAO.getUserIdsByUsernames(black.username, white.username);
+
+        black._id = usersWithIdAndUsername.find(user => user.username === black.username)?._id;
+        white._id = usersWithIdAndUsername.find(user => user.username === white.username)?._id;
         
-        const game = await GameDAO.createGame(blackUserId, whiteUserId);
+        const game = await GameDAO.createGame(black._id, white._id);
 
         const sockets = await this.#io.in('queue').fetchSockets();
         const playerSockets = sockets.filter(
@@ -354,6 +357,44 @@ class GameService {
         });
 
         return { resignedPlayer, latestSystemChatEntry };
+    }
+
+    async requestUndo(gameId, username) {
+        const game = await GameDAO.findGameById(gameId);
+
+        if(!game) {
+            throw new GameNotFoundError();
+        }
+
+		const isPlayer = game.black.user.username === username || game.white.user.username === username;
+
+		if(!isPlayer || game.status !== 'started') {
+            return false;
+        }
+
+        const lastMove = game.moves[game.moves.length - 1];
+        const requestedBy = lastMove.player;
+
+        if(game[requestedBy].undoRights === 0) {
+            throw new YouDontHaveUndoRightsError();
+        }
+
+        game.undo.requestedBy = requestedBy;
+        game.undo.requestedAt = new Date();
+        game.undo.requestEndsAt = game.undo.requestedAt.setSeconds(
+            game.undo.requestedAt.getSeconds() + 30
+        );
+
+        game[requestedBy].undoRights--;
+
+        await game.save();
+
+        const gameDTO = GameDTO.withGameObject(game);
+
+        return {
+            requestedBy,
+            game: gameDTO
+        };
     }
 
     async addStoneToTheGame(user, gameId, row, column) {

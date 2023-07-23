@@ -171,14 +171,31 @@ module.exports = {
 	},
 	onResignFromGame: async (io, services, socket, gameId) => {
 		try {
-			const resignedGameResult = await services.gameService.resignFromGame(gameId, socket.data.user.username);
+			const resignedGameResult = await services.gameService.resignFromGame(gameId, socket.data.user?.username);
 
-			if(resignedGameResult.resignedPlayer && resignedGameResult.latestSystemChatEntry) {
-				io.in('game-' + gameId).emit('playerResignedFromGame', gameId, resignedGameResult.resignedPlayer);
-				io.in('game-' + gameId).emit('gameChatMessage', resignedGameResult.latestSystemChatEntry);
+			if(!resignedGameResult.resignedPlayer || !resignedGameResult.latestSystemChatEntry) {
+				return;
 			}
+
+			io.in('game-' + gameId).emit('playerResignedFromGame', gameId, resignedGameResult.resignedPlayer);
+			io.in('game-' + gameId).emit('gameChatMessage', resignedGameResult.latestSystemChatEntry);
 		} catch(error) {
-			socket.emit('errorOccured', error.message);
+			socket.emit('errorOccured', ErrorHandler.handle(error).message);
+		}
+	},
+	onRequestUndo: async (io, services, socket, gameId) => {
+		try {
+			const undoRequestedGameResult = await services.gameService.requestUndo(gameId, socket.data.user?.username);
+
+			if(!undoRequestedGameResult.requestedBy || !undoRequestedGameResult.game) {
+				return;
+			}
+
+			const { requestedBy, game } = undoRequestedGameResult;
+
+			io.in('game-' + gameId).emit('undoRequested', requestedBy, game.black, game.white, game.undo);
+		} catch(error) {
+			socket.emit('errorOccured', ErrorHandler.handle(error).message);
 		}
 	},
 	onAddStone: async (io, services, socket, gameId, row, column) => {

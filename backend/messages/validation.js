@@ -139,6 +139,11 @@ const VALIDATION = {
             user: {
                 'any.required': 'White player\'s user id is required!',
             }
+        },
+        undo: {
+            requestedBy: {
+                'any.only': 'Undo can only be requested by black or white player.'
+            }
         }
     }
 };

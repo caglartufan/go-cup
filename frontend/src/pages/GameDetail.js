@@ -43,11 +43,9 @@ const GameDetailPage = () => {
     }
 
     let whosTurn = 'black';
-    if(game.status !== 'waiting' && game.moves.length) {
-        const lastMove = game.moves[game.moves.length - 1];
-        if(lastMove.player === 'black') {
-            whosTurn = 'white';
-        }
+    const lastMove = game.moves[game.moves.length - 1];
+    if(game.status === 'started' && lastMove?.player === 'black') {
+        whosTurn = 'white';
     }
 
     const cancelGameHandler = useCallback(() => {
@@ -61,6 +59,24 @@ const GameDetailPage = () => {
             socket.emit('resignFromGame', game._id);
         }
     }, [isPlayer, game.status, game._id]);
+
+    const requestUndoHandler = useCallback(() => {
+        const requestedBy = lastMove?.player;
+
+        if(!requestedBy) {
+            return;
+        }
+
+        const isPlayerHaveUndoRights = game[requestedBy].undoRights > 0;
+
+        if(isPlayer && game.status === 'started' && isPlayerHaveUndoRights) {
+            socket.emit('requestUndo', game._id);
+            dispatch(toastActions.add({
+                message: 'Undo requested.',
+                status: 'info'
+            }));
+        }
+    }, [dispatch, game, isPlayer, lastMove?.player]);
 
     // Side effect to initialize timer's value depending on game status
     useEffect(() => {
@@ -156,8 +172,8 @@ const GameDetailPage = () => {
                                     <Button>
                                         Pass
                                     </Button>
-                                    <Button>
-                                        Undo
+                                    <Button onClick={requestUndoHandler} disabled={(whosTurn === 'black' && isBlackPlayer) || (whosTurn === 'white' && isWhitePlayer)}>
+                                        Undo ({game[whosTurn].undoRights})
                                     </Button>
                                 </Fragment>
                             )}

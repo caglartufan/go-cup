@@ -10,6 +10,7 @@ const initialGameState = {
     white: null,
     isPrivate: null,
     chat: [],
+    undo: null,
     startedAt: null,
     finishedAt: null,
     waitingEndsAt: null,
@@ -31,6 +32,7 @@ const gameSlice = createSlice({
             state.white = action.payload.white || state.white;
             state.isPrivate = action.payload.isPrivate || state.isPrivate;
             state.chat = action.payload.chat || state.chat;
+            state.undo = action.payload.undo || state.undo;
             state.startedAt = action.payload.startedAt || state.startedAt;
             state.finishedAt = action.payload.finishedAt || state.finishedAt;
             state.waitingEndsAt = action.payload.waitingEndsAt || state.waitingEndsAt;

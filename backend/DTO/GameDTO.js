@@ -9,13 +9,14 @@ class GameDTO {
     #black;
     #white;
     #chat;
+    #undo;
     #isPrivate;
     #startedAt;
     #finishedAt;
     #waitingEndsAt;
     #createdAt;
 
-    constructor(_id, size, status, board, moves, groups, kos, black, white, chat, isPrivate, startedAt, finishedAt, waitingEndsAt, createdAt) {
+    constructor(_id, size, status, board, moves, groups, kos, black, white, chat, undo, isPrivate, startedAt, finishedAt, waitingEndsAt, createdAt) {
         this.#_id = _id;
         this.#size = size;
         this.#status = status;
@@ -26,6 +27,7 @@ class GameDTO {
         this.#black = black;
         this.#white = white;
         this.#chat = chat;
+        this.#undo = undo;
         this.#isPrivate = isPrivate;
         this.#startedAt = startedAt;
         this.#finishedAt = finishedAt;
@@ -45,6 +47,7 @@ class GameDTO {
             game.black,
             game.white,
             game.chat,
+            game.undo,
             game.isPrivate,
             game.startedAt,
             game.finishedAt,
@@ -65,6 +68,7 @@ class GameDTO {
             black: this.#black,
             white: this.#white,
             chat: this.#chat,
+            undo: this.#undo,
             isPrivate: this.#isPrivate,
             startedAt: this.#startedAt,
             finishedAt: this.#finishedAt,
@@ -111,6 +115,10 @@ class GameDTO {
 
     get chat() {
         return this.#chat;
+    }
+
+    get undo() {
+        return this.#undo;
     }
 
     get isPrivate() {

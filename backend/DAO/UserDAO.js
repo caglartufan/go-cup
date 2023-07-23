@@ -45,7 +45,7 @@ class UserDAO {
             username: {
                 $in: usernames
             }
-        }).distinct('_id');
+        }).select('username');
     }
 
     static async getGamesOfUser(user) {

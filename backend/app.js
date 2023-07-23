@@ -109,6 +109,7 @@ io.on('connection', socket => {
 	socket.on('gameChatMessage', handlers.onGameChatMessage.bind(null, io, services, socket));
 	socket.on('cancelGame', handlers.onCancelGame.bind(null, io, services, socket));
 	socket.on('resignFromGame', handlers.onResignFromGame.bind(null, io, services, socket));
+	socket.on('requestUndo', handlers.onRequestUndo.bind(null, io, services, socket));
 	socket.on('addStone', handlers.onAddStone.bind(null, io, services, socket));
 });
 

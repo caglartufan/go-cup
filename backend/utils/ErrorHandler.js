@@ -146,6 +146,13 @@ class NotYourTurnError extends GameError {
     }
 }
 
+class YouDontHaveUndoRightsError extends GameError {
+    constructor() {
+        super(ERRORS.YOU_DONT_HAVE_UNDO_RIGHTS);
+        this.name = 'YouDontHaveUndoRightsError';
+    }
+}
+
 class ErrorHandler {
     static handle(error) {
         if(error instanceof mongoose.Error.ValidationError) {
@@ -180,5 +187,6 @@ module.exports = {
     InvalidIOError,
     GameHasAlreadyFinishedOrCancelledError,
     NotYourTurnError,
+    YouDontHaveUndoRightsError,
     ErrorHandler
 };

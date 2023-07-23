@@ -12,7 +12,8 @@ const ERRORS = {
     USER_NOT_FOUND: 'Could not find user.',
     GAME_NOT_FOUND: 'Could not find game.',
     GAME_HAS_ALREADY_FINISHED_OR_CANCELLED: 'Game has already finished or cancelled.',
-    NOT_YOUR_TURN: 'Not your turn.'
+    NOT_YOUR_TURN: 'Not your turn.',
+    YOU_DONT_HAVE_UNDO_RIGHTS: 'You don\'t have rights to request undo.'
 };
 
 module.exports = ERRORS;
