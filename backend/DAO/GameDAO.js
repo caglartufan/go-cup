@@ -2,6 +2,7 @@ const { Game } = require('../models/Game');
 const { GameNotFoundError } = require('../utils/ErrorHandler');
 const { firstLetterToUppercase } = require('../utils/helpers');
 const MESSAGES = require('../messages/messages');
+const { game } = require('../messages/validation');
 
 class GameDAO {
     static async getGames() {
@@ -277,6 +278,47 @@ class GameDAO {
         ]);
 
         return { gameIds, users };
+    }
+
+    static async updateGamesThatHaveTimedOutUndoRequestAndReturnGames() {
+        const processDate = new Date();
+
+        const games = await Game
+            .find({
+                status: 'started',
+                'undo.requestEndsAt': {
+                    $lte: processDate
+                }
+            })
+            .select('_id undo');
+
+        const gameIds = games.map(game => game._id);
+        const result = games.map(
+            game => ({ _id: game._id, requestedBy: game.undo.requestedBy })
+        );
+
+        await Game.bulkWrite([
+            {
+                updateMany: {
+                    filter: {
+                        _id: { $in: gameIds }
+                    },
+                    update: [
+                        {
+                            $addFields: {
+                                undo: {
+                                    requestedBy: null,
+                                    requestedAt: null,
+                                    requestEndsAt: null
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+        ])
+
+        return result;
     }
 
     static async cancelGame(gameId, cancelledBy) {

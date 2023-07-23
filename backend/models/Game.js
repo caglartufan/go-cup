@@ -229,6 +229,10 @@ const gameSchema = new mongoose.Schema({
         requestedAt: {
             type: Date,
             default: null
+        },
+        requestEndsAt: {
+            type: Date,
+            default: null
         }
     },
     isPrivate: {

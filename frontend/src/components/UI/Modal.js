@@ -5,18 +5,14 @@ import Card from './Card';
 
 import './Modal.scss';
 import Button from './Button';
-import { useCallback } from 'react';
 
 const Modal = props => {
     const {
         title,
         children: content,
-        buttons
+        buttons,
+        onDismiss
     } = props;
-
-    const dismissHandler = useCallback(() => {
-
-    }, []);
 
     return (
         <>
@@ -26,7 +22,7 @@ const Modal = props => {
                         <h3 className="modal-header__heading">
                             {title}
                         </h3>
-                        <button className="modal__close-button" onClick={dismissHandler}>
+                        <button className="modal__close-button" onClick={onDismiss}>
                             <FontAwesomeIcon icon={faXmark} className="modal__close-button-icon" />
                         </button>
                     </div>
@@ -59,7 +55,7 @@ const Modal = props => {
                                 }
                             )
                             : (
-                                <Button onClick={dismissHandler}>
+                                <Button onClick={onDismiss}>
                                     Dismiss
                                 </Button>
                             )

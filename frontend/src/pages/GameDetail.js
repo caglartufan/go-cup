@@ -14,11 +14,53 @@ import Column from '../layout/Grid/Column';
 import Board from '../components/Games/Board';
 import Button from '../components/UI/Button';
 import PlayerCard from '../components/Games/PlayerCard';
+import Modal from '../components/UI/Modal';
 import Chat from '../components/Games/Chat';
 
 import './GameDetail.scss';
+import { createPortal } from 'react-dom';
 
-let interval;
+let timeout;
+let undoRequestTimeout;
+
+const UndoRequestModal = props => {
+    const {
+        'time-remaining': timeRemaining,
+        'game-id': gameId
+    } = props;
+
+    // TODO: Implement handlers and implmenet server side interval process to reject automatically after
+    // requestEndsAt timeout
+    const rejectHandler = () => {
+        socket.emit('rejectUndoRequest', gameId);
+    };
+
+    const acceptHandler = () => {
+        socket.emit('acceptUndoRequest', gameId);
+    };
+
+    return (
+        <Modal
+            title="Undo request"
+            buttons={[
+                {
+                    text: 'Reject',
+                    color: 'danger',
+                    onClick: rejectHandler
+                },
+                {
+                    text: 'Accept',
+                    color: 'success',
+                    onClick: acceptHandler
+                }
+            ]}
+            onDismiss={rejectHandler}
+        >
+            <p className="mb-2">Your opponent requests an undo. Do you want to accept?</p>
+            <p>Time remaining to accept: {formatSeconds(timeRemaining)}</p>
+        </Modal>
+    );
+};
 
 const GameDetailPage = () => {
     const resData = useLoaderData();
@@ -32,6 +74,7 @@ const GameDetailPage = () => {
     const isWhitePlayer = username && game.white.user.username === username;
     const isPlayer = isBlackPlayer || isWhitePlayer;
     const [timer, setTimer] = useState(null);
+    const [undoRequestTimer, setUndoRequestTimer] = useState(null);
 
     let playerColor;
     if(isBlackPlayer) {
@@ -47,6 +90,8 @@ const GameDetailPage = () => {
     if(game.status === 'started' && lastMove?.player === 'black') {
         whosTurn = 'white';
     }
+
+    const shouldShowUndoRequestModal = game.status === 'started' && isPlayer && game.undo.requestedBy && game.undo.requestedAt && game.undo.requestEndsAt && ((isBlackPlayer && game.undo.requestedBy === 'white') || (isWhitePlayer && game.undo.requestedBy === 'black'));
 
     const cancelGameHandler = useCallback(() => {
         if(isPlayer && game.status === 'waiting') {
@@ -87,35 +132,43 @@ const GameDetailPage = () => {
             setTimer(waitingTimeoutInSeconds);
         }
         if(game.status === 'started') {
-            console.log('restate');
-            let lastMove = null;
-            if(game.moves.length) {
-                lastMove = game.moves[game.moves.length - 1];
-            }
-            const dateTimerStartedAt = new Date();
+            const currentDate = new Date();
             const lastMoveAt = new Date(lastMove ? lastMove.createdAt : game.startedAt);
-            const timeElapsedBetweenInSeconds = (dateTimerStartedAt - lastMoveAt) / 1000;
+            const timeElapsedBetweenInSeconds = (currentDate - lastMoveAt) / 1000;
 
             const timeRemaningOfPlayer = (game[whosTurn].timeRemaining - timeElapsedBetweenInSeconds).toFixed(2);
 
             setTimer(timeRemaningOfPlayer);
+
+            if(game.undo.requestedBy && game.undo.requestedAt && game.undo.requestEndsAt) {
+                const requestEndsAt = new Date(game.undo.requestEndsAt);
+                const undoRequestTimeRemaining = ((requestEndsAt - currentDate) / 1000).toFixed(2);
+
+                setUndoRequestTimer(undoRequestTimeRemaining);
+            }
         }
-    }, [game, whosTurn]);
+    }, [game, lastMove, whosTurn]);
 
     // Side effect to run timer down, if timer value is greater than 0
     useEffect(() => {
         if(timer >= 0) {
             // TODO: Use worker timers instead to prevent suspension of intervals
             // https://www.npmjs.com/package/worker-timers
-            interval = setInterval(() => {
+            timeout = setTimeout(() => {
                 setTimer(prevTimer => prevTimer - 1);
             }, 1000);
-
-            return () => {
-                clearInterval(interval);
-            };
         }
-    }, [timer]);
+        if(undoRequestTimer >= 0) {
+            undoRequestTimeout = setTimeout(() => {
+                setUndoRequestTimer(prevUndoRequestTimer => prevUndoRequestTimer - 1);
+            }, 1000);
+        }
+
+        return () => {
+            clearTimeout(timeout);
+            clearTimeout(undoRequestTimeout);
+        };
+    }, [timer, undoRequestTimer]);
 
     useEffect(() => {
         // When game data is loaded by loader, update gameSlice state
@@ -131,6 +184,12 @@ const GameDetailPage = () => {
             socket.emit('leaveGameRoom', resData.game._id);
         };
     }, [dispatch, location, resData.game]);
+
+    useEffect(() => {
+        if(shouldShowUndoRequestModal) {
+            document.body.classList.add('modal-open');
+        }
+    }, [shouldShowUndoRequestModal]);
 
     return (
         <Container fluid fillVertically>
@@ -172,8 +231,16 @@ const GameDetailPage = () => {
                                     <Button>
                                         Pass
                                     </Button>
-                                    <Button onClick={requestUndoHandler} disabled={(whosTurn === 'black' && isBlackPlayer) || (whosTurn === 'white' && isWhitePlayer)}>
-                                        Undo ({game[whosTurn].undoRights})
+                                    <Button
+                                        onClick={requestUndoHandler}
+                                        disabled={
+                                            (whosTurn === 'black' && isBlackPlayer)
+                                            || (whosTurn === 'white' && isWhitePlayer)
+                                            || game[playerColor].undoRights === 0
+                                            || (game.undo.requestedBy && game.undo.requestedAt && game.undo.requestEndsAt)
+                                        }
+                                    >
+                                        Undo ({game[playerColor].undoRights})
                                     </Button>
                                 </Fragment>
                             )}
@@ -222,6 +289,10 @@ const GameDetailPage = () => {
                     </div>
                 </Column>
             </Row>
+            {shouldShowUndoRequestModal && createPortal(
+                <UndoRequestModal game-id={game._id} time-remaining={undoRequestTimer} />,
+                document.getElementById('modal-container')
+            )}
         </Container>
     );
 };

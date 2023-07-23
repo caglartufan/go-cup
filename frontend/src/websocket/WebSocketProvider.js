@@ -13,10 +13,12 @@ const WebSocketProvider = props => {
     const { navigate } = props;
     const dispatch = useDispatch();
     const viewingGameId = useSelector(state => state.game._id);
-    const whitePlayerUsername = useSelector(state => state.game.white?.user?.username);
     const blackPlayerUsername = useSelector(state => state.game.black?.user?.username);
+    const whitePlayerUsername = useSelector(state => state.game.white?.user?.username);
     const username = useSelector(state => state.user.username);
-    const isPlayer = username && (username === whitePlayerUsername || username === blackPlayerUsername);
+    const isBlackPlayer = username && username === blackPlayerUsername;
+    const isWhitePlayer = username && username === whitePlayerUsername;
+    const isPlayer = username && (isBlackPlayer || isWhitePlayer);
     const activeGameOfUser = useSelector(state => state.user.activeGame);
 
 	useEffect(() => {
@@ -130,6 +132,23 @@ const WebSocketProvider = props => {
             }));
         };
 
+        const onUndoRequestRejected = (requestedBy) => {
+            dispatch(gameActions.updateGame({
+                undo: {
+                    requestedBy: null,
+                    requestedAt: null,
+                    requestEndsAt: null
+                }
+            }));
+
+            if((requestedBy === 'black' && isBlackPlayer) || (requestedBy === 'white' && isWhitePlayer)) {
+                dispatch(toastActions.add({
+                    message: 'Undo request rejected by opponent.',
+                    status: 'danger'
+                }));
+            }
+        };
+
         const onAddedStone = (status, black, white, board, moves) => {
             dispatch(gameActions.updateGame({
                 status,
@@ -188,6 +207,7 @@ const WebSocketProvider = props => {
         socket.on('gameCancelled', onGameCancelled);
         socket.on('playerResignedFromGame', onPlayerResignedFromGame);
         socket.on('undoRequested', onUndoRequested);
+        socket.on('undoRequestRejected', onUndoRequestRejected);
         socket.on('addedStone', onAddedStone);
         socket.on('gameFinished', onGameFinished);
 
@@ -211,6 +231,7 @@ const WebSocketProvider = props => {
             socket.off('gameCancelled', onGameCancelled);
             socket.off('playerResignedFromGame', onPlayerResignedFromGame);
             socket.off('undoRequested', onUndoRequested);
+            socket.off('undoRequestRejected', onUndoRequestRejected);
             socket.off('addedStone', onAddedStone);
             socket.off('gameFinished', onGameFinished);
 

@@ -10,18 +10,15 @@ class GameService {
     #io = null;
     #processing = false;
     #gameProcessInterval = null;
-    #cancelledGamesInterval = null;
-    #playerRanOutOfTimeGamesInterval = null;
+    #generalInterval = null;
 
     constructor(io) {
         this.#io = io;
 
-        this.#cancelledGamesInterval = setInterval(() => {
+        this.#generalInterval = setInterval(() => {
             this.#cancelGamesThatAreTimedOutOnWaitingStatus();
-        }, 1000);
-
-        this.#playerRanOutOfTimeGamesInterval = setInterval(() => {
             this.#finishGamesThatPlayerRanOutOfTime();
+            this.#updateGamesThatHaveTimedOutUndoRequest();
         }, 1000);
     }
 
@@ -254,55 +251,71 @@ class GameService {
     async #cancelGamesThatAreTimedOutOnWaitingStatus() {
         const { gameIds, users } = await GameDAO.cancelGamesThatAreTimedOutOnWaitingStatusAndReturnGameIdsAndUserIds();
         
-        if(gameIds.length && users.length) {
-            const gamesWithLatestSystemChatEntry = await GameDAO.getGamesWithLatestSystemChatEntryByGameIds(gameIds);
-
-            await UserDAO.nullifyActiveGameOfUsers(...users);
-
-            const sockets = await this.#io.fetchSockets();
-            const playerSockets = sockets.filter(
-                socket => users.some(
-                    user => user.username === socket.data.user?.username
-                )
-            );
-    
-            playerSockets.forEach(socket => {
-                socket.data.user.activeGame = null;
-            });
-
-            gamesWithLatestSystemChatEntry.forEach(({ _id: gameId, latestSystemChatEntry }) => {
-                this.#io.in('game-' + gameId).emit('gameChatMessage', latestSystemChatEntry);
-                this.#io.in('game-' + gameId).emit('gameCancelled', gameId);
-            });
+        if(!gameIds.length && !users.length) {
+            return;
         }
+
+        const gamesWithLatestSystemChatEntry = await GameDAO.getGamesWithLatestSystemChatEntryByGameIds(gameIds);
+
+        await UserDAO.nullifyActiveGameOfUsers(...users);
+
+        const sockets = await this.#io.fetchSockets();
+        const playerSockets = sockets.filter(
+            socket => users.some(
+                user => user.username === socket.data.user?.username
+            )
+        );
+
+        playerSockets.forEach(socket => {
+            socket.data.user.activeGame = null;
+        });
+
+        gamesWithLatestSystemChatEntry.forEach(({ _id: gameId, latestSystemChatEntry }) => {
+            this.#io.in('game-' + gameId).emit('gameChatMessage', latestSystemChatEntry);
+            this.#io.in('game-' + gameId).emit('gameCancelled', gameId);
+        });
     }
 
     async #finishGamesThatPlayerRanOutOfTime() {
         const { gameIds, users } = await GameDAO.finishGamesThatPlayerRanOutOfTimeAndReturnGameIdsAndUserIds();
         
-        if(gameIds.length && users.length) {
-            const gamesWithStatusAndLatestSystemChatEntry = await GameDAO.getGamesWithLatestSystemChatEntryByGameIds(gameIds);
-
-            await UserDAO.nullifyActiveGameOfUsers(...users);
-
-            const sockets = await this.#io.fetchSockets();
-            const playerSockets = sockets.filter(
-                socket => users.some(
-                    user => user.username === socket.data.user?.username
-                )
-            );
-    
-            playerSockets.forEach(socket => {
-                socket.data.user.activeGame = null;
-            });
-
-            gamesWithStatusAndLatestSystemChatEntry.forEach(
-                ({ _id: gameId, status, black, white, latestSystemChatEntry }) => {
-                    this.#io.in('game-' + gameId).emit('gameChatMessage', latestSystemChatEntry);
-                    this.#io.in('game-' + gameId).emit('gameFinished', gameId, status, black, white);
-                }
-            );
+        if(!gameIds.length || !users.length) {
+            return;
         }
+
+        const gamesWithStatusAndLatestSystemChatEntry = await GameDAO.getGamesWithLatestSystemChatEntryByGameIds(gameIds);
+
+        await UserDAO.nullifyActiveGameOfUsers(...users);
+
+        const sockets = await this.#io.fetchSockets();
+        const playerSockets = sockets.filter(
+            socket => users.some(
+                user => user.username === socket.data.user?.username
+            )
+        );
+
+        playerSockets.forEach(socket => {
+            socket.data.user.activeGame = null;
+        });
+
+        gamesWithStatusAndLatestSystemChatEntry.forEach(
+            ({ _id: gameId, status, black, white, latestSystemChatEntry }) => {
+                this.#io.in('game-' + gameId).emit('gameChatMessage', latestSystemChatEntry);
+                this.#io.in('game-' + gameId).emit('gameFinished', gameId, status, black, white);
+            }
+        );
+    }
+
+    async #updateGamesThatHaveTimedOutUndoRequest() {
+        const games = await GameDAO.updateGamesThatHaveTimedOutUndoRequestAndReturnGames();
+
+        if(!games.length) {
+            return;
+        }
+
+        games.forEach(({ _id: gameId, requestedBy }) => {
+            this.#io.in('game-' + gameId).emit('undoRequestRejected', requestedBy);
+        });
     }
 
     async cancelGame(gameId, username) {
@@ -366,14 +379,17 @@ class GameService {
             throw new GameNotFoundError();
         }
 
-		const isPlayer = game.black.user.username === username || game.white.user.username === username;
-
-		if(!isPlayer || game.status !== 'started') {
-            return false;
-        }
+        const isBlackPlayer = game.black.user.username === username;
+        const isWhitePlayer = game.white.user.username === username;
+		const isPlayer = isBlackPlayer || isWhitePlayer;
 
         const lastMove = game.moves[game.moves.length - 1];
         const requestedBy = lastMove.player;
+        const isPlayerAbleToRequestUndo = game.status === 'started' && isPlayer && ((requestedBy === 'black' && isBlackPlayer) || (requestedBy === 'white' && isWhitePlayer));
+
+		if(!isPlayerAbleToRequestUndo) {
+            return false;
+        }
 
         if(game[requestedBy].undoRights === 0) {
             throw new YouDontHaveUndoRightsError();
@@ -395,6 +411,70 @@ class GameService {
             requestedBy,
             game: gameDTO
         };
+    }
+
+    async rejectUndoRequest(gameId, username) {
+        const game = await GameDAO.findGameById(gameId);
+
+        if(!game) {
+            throw new GameNotFoundError();
+        }
+
+        if(!game.undo.requestedBy && !game.undo.requestedAt && !game.undo.requestEndsAt) {
+            return false;
+        }
+
+        const isBlackPlayer = game.black.user.username === username;
+        const isWhitePlayer = game.white.user.username === username;
+		const isPlayer = isBlackPlayer || isWhitePlayer;
+
+        const requestedBy = game.undo.requestedBy;
+        const isPlayerAbleToAnswerUndoRequest = game.status === 'started' && isPlayer && ((requestedBy === 'black' && isWhitePlayer) || (requestedBy === 'white' && isBlackPlayer));
+
+		if(!isPlayerAbleToAnswerUndoRequest) {
+            return false;
+        }
+
+        game.undo.requestedBy = null;
+        game.undo.requestedAt = null;
+        game.undo.requestEndsAt = null;
+
+        await game.save();
+        
+        return requestedBy;
+    }
+
+    async acceptUndoRequest(gameId, username) {
+        let game = await GameDAO.findGameById(gameId);
+
+        if(!game) {
+            throw new GameNotFoundError();
+        }
+
+        if(!game.undo.requestedBy && !game.undo.requestedAt && !game.undo.requestEndsAt) {
+            return false;
+        }
+
+        const isBlackPlayer = game.black.user.username === username;
+        const isWhitePlayer = game.white.user.username === username;
+		const isPlayer = isBlackPlayer || isWhitePlayer;
+
+        const requestedBy = game.undo.requestedBy;
+        const isPlayerAbleToAnswerUndoRequest = game.status === 'started' && isPlayer && ((requestedBy === 'black' && isWhitePlayer) || (requestedBy === 'white' && isBlackPlayer));
+
+		if(!isPlayerAbleToAnswerUndoRequest) {
+            return false;
+        }
+
+        game.undo.requestedBy = null;
+        game.undo.requestedAt = null;
+        game.undo.requestEndsAt = null;
+
+        game = this.#undoLastMoveOfGame(game);
+
+        await game.save();
+        
+        return requestedBy;
     }
 
     async addStoneToTheGame(user, gameId, row, column) {
@@ -782,7 +862,7 @@ class GameService {
 
         Object.values(libertyPointPositions).forEach(
             libertyPointPosition => {
-                const boardValue = game.board[libertyPointPosition.row] && game.board[libertyPointPosition.row][libertyPointPosition.column];
+                const boardValue = game.board[libertyPointPosition.row]?.[libertyPointPosition.column];
 
                 // If position is not null (empty), then it is not a liberty point
                 if(boardValue !== null) {
@@ -837,6 +917,17 @@ class GameService {
         const turnPlayersNewTimeRemaining = game[whosTurn].timeRemaining - timeElapsedSinceLastMoveInSeconds;
 
         return turnPlayersNewTimeRemaining;
+    }
+
+    #undoLastMoveOfGame(game) {
+        const lastMoveIndex = game.moves.length - 1;
+        const lastMove = game.moves[lastMoveIndex];
+        const lastMovePlayer = lastMove.player;
+
+        // TODO: Undo last move, update the game with all aspect; board, white, black, groups,
+        // kos etc. and return updated game
+
+        return game;
     }
 
     isUserInQueue(username) {

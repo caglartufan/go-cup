@@ -171,7 +171,7 @@ module.exports = {
 	},
 	onResignFromGame: async (io, services, socket, gameId) => {
 		try {
-			const resignedGameResult = await services.gameService.resignFromGame(gameId, socket.data.user?.username);
+			const resignedGameResult = await services.gameService.resignFromGame(gameId, socket.data.user.username);
 
 			if(!resignedGameResult.resignedPlayer || !resignedGameResult.latestSystemChatEntry) {
 				return;
@@ -185,7 +185,7 @@ module.exports = {
 	},
 	onRequestUndo: async (io, services, socket, gameId) => {
 		try {
-			const undoRequestedGameResult = await services.gameService.requestUndo(gameId, socket.data.user?.username);
+			const undoRequestedGameResult = await services.gameService.requestUndo(gameId, socket.data.user.username);
 
 			if(!undoRequestedGameResult.requestedBy || !undoRequestedGameResult.game) {
 				return;
@@ -194,6 +194,25 @@ module.exports = {
 			const { requestedBy, game } = undoRequestedGameResult;
 
 			io.in('game-' + gameId).emit('undoRequested', requestedBy, game.black, game.white, game.undo);
+		} catch(error) {
+			socket.emit('errorOccured', ErrorHandler.handle(error).message);
+		}
+	},
+	onRejectUndoRequest: async (io, services, socket, gameId) => {
+		try {
+			const requestedBy = await services.gameService.rejectUndoRequest(gameId, socket.data.user.username);
+
+			io.in('game-' + gameId).emit('undoRequestRejected', requestedBy);
+		} catch(error) {
+			socket.emit('errorOccured', ErrorHandler.handle(error).message);
+		}
+	},
+	onAcceptUndoRequest: async (io, services, socket, gameId) => {
+		try {
+			const game = await services.gameService.acceptUndoRequest(gameId, socket.data.user.username);
+
+			// TODO: Handle this event emitted on client side
+			io.in('game-' + gameId).emit('undoRequestAccepted', game);
 		} catch(error) {
 			socket.emit('errorOccured', ErrorHandler.handle(error).message);
 		}

@@ -91,7 +91,7 @@ app.set('io', io);
 io.use(auth.bind(null, services));
 
 io.on('connection', socket => {
-	const disallowedEvents = ['loggedOut', 'play', 'fetchQueueData', 'cancel', 'gameChatMessage', 'cancelGame', 'resignFromGame', 'addStone'];
+	const disallowedEvents = ['loggedOut', 'play', 'fetchQueueData', 'cancel', 'gameChatMessage', 'cancelGame', 'resignFromGame', 'requestUndo', 'rejectUndoRequest', 'acceptUndoRequest', 'addStone'];
 	socket.use(forceAuth(disallowedEvents, socket));
 
 	handlers.onConnection(services, socket);
@@ -110,6 +110,8 @@ io.on('connection', socket => {
 	socket.on('cancelGame', handlers.onCancelGame.bind(null, io, services, socket));
 	socket.on('resignFromGame', handlers.onResignFromGame.bind(null, io, services, socket));
 	socket.on('requestUndo', handlers.onRequestUndo.bind(null, io, services, socket));
+	socket.on('rejectUndoRequest', handlers.onRejectUndoRequest.bind(null, io, services, socket));
+	socket.on('acceptUndoRequest', handlers.onAcceptUndoRequest.bind(null, io, services, socket));
 	socket.on('addStone', handlers.onAddStone.bind(null, io, services, socket));
 });
 
