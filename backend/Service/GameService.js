@@ -927,6 +927,32 @@ class GameService {
         // TODO: Undo last move, update the game with all aspect; board, white, black, groups,
         // kos etc. and return updated game
 
+        // Filter out player's groups that are created at last move
+        game.groups = game.groups.filter(
+            group => {
+                const isPlayersGroup = group.player === lastMovePlayer;
+                const isCreatedAtLastMove = group.createdAtMove === lastMoveIndex;
+
+                return isPlayersGroup && !isCreatedAtLastMove;
+            }
+        );
+
+        // Filter out opponent's groups that are removed at last move
+        // and calculate stones removed at last move to decrement player's
+        // score by the amount of stones
+
+        // Filter stones and liberties of all groups
+        game.groups.forEach(
+            group => {
+                group.stones = group.stones.filter(
+                    stone => stone.createdAtMove !== lastMoveIndex
+                );
+                group.liberties = group.liberties.filter(
+                    liberty => liberty.createdAtMove !== lastMoveIndex
+                );
+            }
+        )
+
         return game;
     }
 
