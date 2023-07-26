@@ -209,10 +209,9 @@ module.exports = {
 	},
 	onAcceptUndoRequest: async (io, services, socket, gameId) => {
 		try {
-			const game = await services.gameService.acceptUndoRequest(gameId, socket.data.user.username);
+			const { requestedBy, game } = await services.gameService.acceptUndoRequest(gameId, socket.data.user.username);
 
-			// TODO: Handle this event emitted on client side
-			io.in('game-' + gameId).emit('undoRequestAccepted', game);
+			io.in('game-' + gameId).emit('undoRequestAccepted', requestedBy, game.status, game.board, game.moves, game.black, game.white);
 		} catch(error) {
 			socket.emit('errorOccured', ErrorHandler.handle(error).message);
 		}

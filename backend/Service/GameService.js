@@ -473,8 +473,10 @@ class GameService {
         game = this.#undoLastMoveOfGame(game);
 
         await game.save();
+
+        const gameDTO = GameDTO.withGameObject(game);
         
-        return requestedBy;
+        return { requestedBy, game: gameDTO };
     }
 
     async addStoneToTheGame(user, gameId, row, column) {
@@ -695,6 +697,9 @@ class GameService {
                     });
 
                 game.groups.push(mergedGroup);
+
+                // Push to active groups array
+                activeGroups.push(game.groups[game.groups.length - 1]);
             }
         } else {
             // Create a new group for turn player
@@ -712,6 +717,9 @@ class GameService {
                 createdAtMove: currentMoveIndex,
                 removedAtMove: -1
             });
+
+            // Push to active groups array
+            activeGroups.push(game.groups[game.groups.length - 1]);
         }
 
         // If added stone captured liberty points of opponent's groups
@@ -742,6 +750,9 @@ class GameService {
                         // Empty the board position where the removed (captured)
                         // stone was put
                         game.board[capturedStone.row][capturedStone.column] = null;
+
+                        // Set removedAtMove of captured stone
+                        capturedStone.removedAtMove = currentMoveIndex;
 
                         // Increase the number of stones captured by 1
                         numberOfCapturedStones++;
@@ -897,7 +908,7 @@ class GameService {
             : null;
 
         let whosTurn = 'black';
-        if(game.status !== 'waiting' && lastMove.player === 'black') {
+        if(game.status !== 'waiting' && lastMove?.player === 'black') {
             whosTurn = 'white';
         }
 
@@ -924,34 +935,97 @@ class GameService {
         const lastMove = game.moves[lastMoveIndex];
         const lastMovePlayer = lastMove.player;
 
-        // TODO: Undo last move, update the game with all aspect; board, white, black, groups,
-        // kos etc. and return updated game
+        // TODO: Undo kos
+        let scoresToBeDecreased = 0;
 
-        // Filter out player's groups that are created at last move
-        game.groups = game.groups.filter(
+        // Remove last move from moves
+        game.moves.splice(lastMoveIndex, 1);
+
+        // If the move was first move of the game, then set the game's status
+        // back to waiting
+        if(!game.moves.length) {
+            game.status = 'waiting';
+        }
+
+        // Empty the board position of last move
+        game.board[lastMove.row][lastMove.column] = null;
+
+        // Store last move player's and opponent's groups
+        const playersGroups = [];
+        const opponentsGroups = [];
+
+        game.groups.forEach(
             group => {
                 const isPlayersGroup = group.player === lastMovePlayer;
                 const isCreatedAtLastMove = group.createdAtMove === lastMoveIndex;
+                const isRemovedAtLastMove = group.removedAtMove === lastMoveIndex;
 
-                return isPlayersGroup && !isCreatedAtLastMove;
+                // Revert group's (player's or opponent's, doesn't matter)
+                // liberties that are removed at last move
+                group.liberties.forEach(
+                    liberty => {
+                        const isLibertyRemovedAtLastMove = liberty.removedAtMove === lastMoveIndex;
+
+                        if(isLibertyRemovedAtLastMove) {
+                            liberty.removedAtMove = -1;
+                        }
+                    }
+                );
+
+                if(isPlayersGroup) {
+                    // If player's group was created at last move simply skip it
+                    // to filter out
+                    if(isCreatedAtLastMove) {
+                        return;
+                    }
+
+                    // Filter out stones and liberties of player's group that are
+                    // created/added at last move
+                    group.stones = group.stones.filter(
+                        stone => stone.createdAtMove !== lastMoveIndex
+                    );
+
+                    group.liberties = group.liberties.filter(
+                        liberty => liberty.createdAtMove !== lastMoveIndex
+                    );
+
+                    // Filter out player's groups that are created at last move
+                    playersGroups.push(group);
+                } else {
+                    // Filter out opponent's groups that are removed at last move
+                    // and calculate stones captured at last move to decrement
+                    // player's score by the amount of stones captured
+                    if(isRemovedAtLastMove) {
+                        let capturedStoneCount = 0;
+                        
+                        group.stones.forEach(
+                            stone => {
+                                const isStoneRemovedAtLastMove = stone.removedAtMove === lastMoveIndex;
+
+                                if(isStoneRemovedAtLastMove) {
+                                    game.board[stone.row][stone.column] = lastMovePlayer !== 'black';
+
+                                    stone.removedAtMove = -1;
+
+                                    capturedStoneCount++;
+                                }
+                            }
+                        );
+                        
+                        scoresToBeDecreased += capturedStoneCount;
+                        
+                        group.removedAtMove = -1;
+                    }
+
+                    opponentsGroups.push(group);
+                }
             }
         );
 
-        // Filter out opponent's groups that are removed at last move
-        // and calculate stones removed at last move to decrement player's
-        // score by the amount of stones
+        // Update groups by merging player's groups and opponent's groups
+        game.groups = [].concat(playersGroups, opponentsGroups);
 
-        // Filter stones and liberties of all groups
-        game.groups.forEach(
-            group => {
-                group.stones = group.stones.filter(
-                    stone => stone.createdAtMove !== lastMoveIndex
-                );
-                group.liberties = group.liberties.filter(
-                    liberty => liberty.createdAtMove !== lastMoveIndex
-                );
-            }
-        )
+        game[lastMovePlayer].score -= scoresToBeDecreased;
 
         return game;
     }

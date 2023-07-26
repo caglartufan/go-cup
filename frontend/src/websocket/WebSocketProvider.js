@@ -149,6 +149,28 @@ const WebSocketProvider = props => {
             }
         };
 
+        const onUndoRequestAccepted = (requestedBy, status, board, moves, black, white) => {
+            dispatch(gameActions.updateGame({
+                status,
+                board,
+                moves,
+                black,
+                white,
+                undo: {
+                    requestedBy: null,
+                    requestedAt: null,
+                    requestEndsAt: null
+                }
+            }));
+
+            if((requestedBy === 'black' && isBlackPlayer) || (requestedBy === 'white' && isWhitePlayer)) {
+                dispatch(toastActions.add({
+                    message: 'Undo request accepted by opponent.',
+                    status: 'success'
+                }));
+            }
+        };
+
         const onAddedStone = (status, black, white, board, moves) => {
             dispatch(gameActions.updateGame({
                 status,
@@ -208,6 +230,7 @@ const WebSocketProvider = props => {
         socket.on('playerResignedFromGame', onPlayerResignedFromGame);
         socket.on('undoRequested', onUndoRequested);
         socket.on('undoRequestRejected', onUndoRequestRejected);
+        socket.on('undoRequestAccepted', onUndoRequestAccepted);
         socket.on('addedStone', onAddedStone);
         socket.on('gameFinished', onGameFinished);
 
@@ -232,13 +255,14 @@ const WebSocketProvider = props => {
             socket.off('playerResignedFromGame', onPlayerResignedFromGame);
             socket.off('undoRequested', onUndoRequested);
             socket.off('undoRequestRejected', onUndoRequestRejected);
+            socket.off('undoRequestAccepted', onUndoRequestAccepted);
             socket.off('addedStone', onAddedStone);
             socket.off('gameFinished', onGameFinished);
 
 			socket.off('errorOccured', onErrorOccured);
 			socket.off('connect_error', onConnectError);
 		};
-    }, [dispatch, navigate, activeGameOfUser, viewingGameId, isPlayer]);
+    }, [dispatch, navigate, activeGameOfUser, viewingGameId, isBlackPlayer, isWhitePlayer, isPlayer]);
 
     return props.children;
 };
