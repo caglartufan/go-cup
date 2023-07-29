@@ -466,11 +466,11 @@ class GameService {
             return false;
         }
 
+        game = this.#undoLastMoveOfGame(game);
+
         game.undo.requestedBy = null;
         game.undo.requestedAt = null;
         game.undo.requestEndsAt = null;
-
-        game = this.#undoLastMoveOfGame(game);
 
         await game.save();
 
@@ -506,7 +506,7 @@ class GameService {
         }
 
         const currentMoveAt = new Date();
-        const turnPlayersCurrentTimeRemaining = this.#calculateTurnPlayersCurrentTimeRemaining(game,whosTurn,  currentMoveAt, lastMove);
+        const turnPlayersCurrentTimeRemaining = this.#calculateTurnPlayersCurrentTimeRemaining(game, whosTurn,  currentMoveAt, lastMove);
         
         if(turnPlayersCurrentTimeRemaining < 0) {
             throw new GameHasAlreadyFinishedOrCancelledError();
@@ -1025,7 +1025,34 @@ class GameService {
         // Update groups by merging player's groups and opponent's groups
         game.groups = [].concat(playersGroups, opponentsGroups);
 
-        game[lastMovePlayer].score -= scoresToBeDecreased;
+        // Update kos that were created at last move or were allowed at last move
+        game.kos.forEach(
+            ko => {
+                const isKoCreatedAtLastMove = !ko.allowed && ko.createdAtMoves.indexOf(lastMoveIndex) > -1;
+                const isKoAllowedAtLastMove = ko.allowed && ko.createdAtMoves.indexOf(lastMoveIndex - 1) > -1;
+
+                if(isKoCreatedAtLastMove) {
+                    const createdAtMoveIndex = ko.createdAtMoves.indexOf(lastMoveIndex);
+    
+                    ko.createdAtMoves.splice(createdAtMoveIndex, 1);
+                }
+
+                if(isKoAllowedAtLastMove) {
+                    ko.allowed = false;
+                }
+            }
+        );
+
+        // Update player's score and time remaining
+        const now = new Date();
+        const moveBeforeLastMove = game.moves[game.moves.length - 1];
+
+        if(moveBeforeLastMove) {
+            const timeElapsedSinceMoveBeforeLastMove = (now - moveBeforeLastMove.createdAt) / 1000;
+    
+            game[lastMovePlayer].timeRemaining += timeElapsedSinceMoveBeforeLastMove;
+            game[lastMovePlayer].score -= scoresToBeDecreased;
+        }
 
         return game;
     }
