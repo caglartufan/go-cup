@@ -216,6 +216,15 @@ module.exports = {
 			socket.emit('errorOccured', ErrorHandler.handle(error).message);
 		}
 	},
+	onPass: async (io, services, socket, gameId) => {
+		try {
+			const game = await services.gameService.pass(gameId, socket.data.user.username);
+
+			io.in('game-' + gameId).emit('passed', game.status, game.moves, game.black, game.white);
+		} catch(error) {
+			socket.emit('errorOccured', ErrorHandler.handle(error).message);
+		}
+	},
 	onAddStone: async (io, services, socket, gameId, row, column) => {
 		if(gameId !== socket.data.user.activeGame.toString()) {
 			return;

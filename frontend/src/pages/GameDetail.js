@@ -123,6 +123,28 @@ const GameDetailPage = () => {
         }
     }, [dispatch, game, isPlayer, lastMove?.player]);
 
+    const passHandler = useCallback(() => {
+        if(isPlayer && whosTurn === playerColor && game.status === 'started') {
+            socket.emit('pass', game._id);
+        }
+    }, [isPlayer, whosTurn, playerColor, game.status, game._id]);
+
+    // TODO: Add cancel finishing functionality
+    // Then add a way to implement functionality to select captured areasa
+    // and stones of opponents and reflect the selections to opponent
+    // Then add a functionality accept finishing state
+    const cancelFinishingHandler = useCallback(() => {
+        if(isPlayer && game.status === 'finishing') {
+            socket.emit('cancelFinishing', game._id);
+        }
+    }, [isPlayer, game.status, game._id]);
+
+    const confirmFinishingHandler = useCallback(() => {
+        if(isPlayer && game.status === 'finishing') {
+            socket.emit('confirmFinishing', game._id);
+        }
+    }, [isPlayer, game.status, game._id]);
+
     // Side effect to initialize timer's value depending on game status
     useEffect(() => {
         if(game.status === 'waiting') {
@@ -206,6 +228,11 @@ const GameDetailPage = () => {
                         {game.status === 'started' && isPlayer && ((isBlackPlayer && whosTurn === 'white') || (isWhitePlayer && whosTurn === 'black')) && `Your opponent's turn to play`}
                         {game.status === 'started' && !isPlayer && whosTurn === 'black' && `Black player's turn to play`}
                         {game.status === 'started' && !isPlayer && whosTurn === 'white' && `White player's turn to play`}
+                        {game.status === 'started' && isPlayer && lastMove?.pass && lastMove?.player === playerColor && `You've passed your turn`}
+                        {game.status === 'started' && isPlayer && lastMove?.pass && lastMove?.player !== playerColor && `Your opponent has passed their turn`}
+                        {game.status === 'started' && !isPlayer && lastMove?.pass && `${firstLetterToUppercase(lastMove?.player)} player has passed their turn`}
+                        {game.status === 'finishing' && isPlayer && `Select the areas you've captured and opponent's stones which are alive but captured.`}
+                        {game.status === 'finishing' && !isPlayer && `Players are finishing the game`}
                         {((game.status === 'black_won' && isPlayer && isBlackPlayer) || (game.status === 'white_won' && isPlayer && isWhitePlayer)) && 'You have won!'}
                         {((game.status === 'black_won' && isPlayer && !isBlackPlayer) || (game.status === 'white_won' && isPlayer && !isWhitePlayer)) && 'You have lost!'}
                         {game.status === 'black_won' && !isPlayer && 'Black player won the game!'}
@@ -223,19 +250,26 @@ const GameDetailPage = () => {
                     />
                     {isPlayer && (
                         <div className="board-options">
+                            {game.status === 'waiting' && (
+                                <Button onClick={cancelGameHandler}>
+                                    Cancel game
+                                </Button>
+                            )}
                             {game.status === 'started' && (
                                 <Fragment>
                                     <Button onClick={resignHandler}>
                                         Resign
                                     </Button>
-                                    <Button>
+                                    <Button
+                                        onClick={passHandler}
+                                        disabled={whosTurn !== playerColor}
+                                    >
                                         Pass
                                     </Button>
                                     <Button
                                         onClick={requestUndoHandler}
                                         disabled={
-                                            (whosTurn === 'black' && isBlackPlayer)
-                                            || (whosTurn === 'white' && isWhitePlayer)
+                                            whosTurn === playerColor
                                             || game[playerColor].undoRights === 0
                                             || (game.undo.requestedBy && game.undo.requestedAt && game.undo.requestEndsAt)
                                         }
@@ -244,12 +278,17 @@ const GameDetailPage = () => {
                                     </Button>
                                 </Fragment>
                             )}
-                            {game.status === 'waiting' && (
-                                <Button onClick={cancelGameHandler}>
-                                    Cancel game
-                                </Button>
+                            {game.status === 'finishing' && (
+                                <Fragment>
+                                    <Button onClick={cancelFinishingHandler}>
+                                        Cancel
+                                    </Button>
+                                    <Button color="success" onClick={confirmFinishingHandler}>
+                                        Confirm
+                                    </Button>
+                                </Fragment>
                             )}
-                            {(game.status.includes('cancelled') || game.status === 'finished') && (
+                            {game.status !== 'waiting' && game.status !== 'started' && game.status !== 'finishing' && (
                                 <Button>
                                     Rematch
                                 </Button>

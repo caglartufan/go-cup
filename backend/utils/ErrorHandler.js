@@ -132,6 +132,13 @@ class GameError extends Error {
     }
 }
 
+class GameHasNotStartedYetError extends GameError {
+    constructor() {
+        super(ERRORS.GAME_HAS_NOT_STARTED_YET);
+        this.name = 'GameHasNotStartedYetError';
+    }
+}
+
 class GameHasAlreadyFinishedOrCancelledError extends GameError {
     constructor() {
         super(ERRORS.GAME_HAS_ALREADY_FINISHED_OR_CANCELLED);
@@ -186,6 +193,7 @@ module.exports = {
     InvalidDTOError,
     InvalidIOError,
     GameHasAlreadyFinishedOrCancelledError,
+    GameHasNotStartedYetError,
     NotYourTurnError,
     YouDontHaveUndoRightsError,
     ErrorHandler

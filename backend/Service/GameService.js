@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const GameDAO = require('../DAO/GameDAO');
 const UserDAO = require('../DAO/UserDAO');
 const UserDTO = require('../DTO/UserDTO');
-const { InvalidDTOError, UserNotFoundError, GameNotFoundError, UnauthorizedError, GameHasAlreadyFinishedOrCancelledError, NotYourTurnError, YouDontHaveUndoRightsError } = require('../utils/ErrorHandler');
+const { InvalidDTOError, UserNotFoundError, GameNotFoundError, UnauthorizedError, GameHasAlreadyFinishedOrCancelledError, NotYourTurnError, YouDontHaveUndoRightsError, GameHasNotStartedYetError } = require('../utils/ErrorHandler');
 const GameDTO = require('../DTO/GameDTO');
 
 class GameService {
@@ -379,11 +379,13 @@ class GameService {
             throw new GameNotFoundError();
         }
 
-        const isBlackPlayer = game.black.user.username === username;
-        const isWhitePlayer = game.white.user.username === username;
-		const isPlayer = isBlackPlayer || isWhitePlayer;
+        const {
+            isBlackPlayer,
+            isWhitePlayer,
+            isPlayer,
+            lastMove,
+        } = this.#findWhosTurnAndLastMoveAndCheckIfGivenUserIsPlayerOfGameAndTheirTurn(username, game);
 
-        const lastMove = game.moves[game.moves.length - 1];
         const requestedBy = lastMove.player;
         const isPlayerAbleToRequestUndo = game.status === 'started' && isPlayer && ((requestedBy === 'black' && isBlackPlayer) || (requestedBy === 'white' && isWhitePlayer));
 
@@ -424,9 +426,11 @@ class GameService {
             return false;
         }
 
-        const isBlackPlayer = game.black.user.username === username;
-        const isWhitePlayer = game.white.user.username === username;
-		const isPlayer = isBlackPlayer || isWhitePlayer;
+        const {
+            isBlackPlayer,
+            isWhitePlayer,
+            isPlayer
+        } = this.#findWhosTurnAndLastMoveAndCheckIfGivenUserIsPlayerOfGameAndTheirTurn(username, game);
 
         const requestedBy = game.undo.requestedBy;
         const isPlayerAbleToAnswerUndoRequest = game.status === 'started' && isPlayer && ((requestedBy === 'black' && isWhitePlayer) || (requestedBy === 'white' && isBlackPlayer));
@@ -455,9 +459,11 @@ class GameService {
             return false;
         }
 
-        const isBlackPlayer = game.black.user.username === username;
-        const isWhitePlayer = game.white.user.username === username;
-		const isPlayer = isBlackPlayer || isWhitePlayer;
+        const {
+            isBlackPlayer,
+            isWhitePlayer,
+            isPlayer
+        } = this.#findWhosTurnAndLastMoveAndCheckIfGivenUserIsPlayerOfGameAndTheirTurn(username, game);
 
         const requestedBy = game.undo.requestedBy;
         const isPlayerAbleToAnswerUndoRequest = game.status === 'started' && isPlayer && ((requestedBy === 'black' && isWhitePlayer) || (requestedBy === 'white' && isBlackPlayer));
@@ -479,6 +485,60 @@ class GameService {
         return { requestedBy, game: gameDTO };
     }
 
+    async pass(gameId, username) {
+        let game = await GameDAO.findGameById(gameId);
+
+        if(!game) {
+            throw new GameNotFoundError();
+        }
+
+        // TODO: Make sure there's this validation on other method like undo etc.
+        if(game.status !== 'started') {
+            throw new GameHasNotStartedYetError();
+        }
+
+        const {
+            isPlayer,
+            isPlayersTurn,
+            lastMove,
+            whosTurn
+        } = this.#findWhosTurnAndLastMoveAndCheckIfGivenUserIsPlayerOfGameAndTheirTurn(username, game);
+
+        // TODO: Make sure there's this validation on other method like undo etc.
+        if(!isPlayer) {
+            throw new UnauthorizedError();
+        }
+
+        // TODO: Make sure there's this validation on other method like undo etc.
+        if(!isPlayersTurn) {
+            throw new NotYourTurnError();
+        }
+
+        const currentMoveAt = new Date();
+        const turnPlayersCurrentTimeRemaining = this.#calculateTurnPlayersCurrentTimeRemaining(game, whosTurn, currentMoveAt, lastMove);
+        
+        if(turnPlayersCurrentTimeRemaining < 0) {
+            throw new GameHasAlreadyFinishedOrCancelledError();
+        }
+
+        game.moves.push({
+            player: whosTurn,
+            pass: true
+        });
+
+        game[whosTurn].timeRemaining = turnPlayersCurrentTimeRemaining;
+
+        if(lastMove.pass) {
+            game.status = 'finishing';
+        }
+
+        await game.save();
+
+        const gameDTO = GameDTO.withGameObject(game);
+        
+        return gameDTO;
+    }
+
     async addStoneToTheGame(user, gameId, row, column) {
         const game = await GameDAO.findGameById(gameId);
 
@@ -495,7 +555,7 @@ class GameService {
             lastMove,
             whosTurn,
             isPlayersTurn
-        } = this.#findWhosTurnAndLastMoveAndCheckIfGivenUserIsPlayerOfGameAndTheirTurn(user, game);
+        } = this.#findWhosTurnAndLastMoveAndCheckIfGivenUserIsPlayerOfGameAndTheirTurn(user.username, game);
 
         if(!isPlayer) {
             throw new UnauthorizedError();
@@ -899,9 +959,9 @@ class GameService {
         return { liberties, suicide };
     }
 
-    #findWhosTurnAndLastMoveAndCheckIfGivenUserIsPlayerOfGameAndTheirTurn(user, game) {
-        const isBlackPlayer = user.username === game.black.user.username;
-        const isWhitePlayer = user.username === game.white.user.username;
+    #findWhosTurnAndLastMoveAndCheckIfGivenUserIsPlayerOfGameAndTheirTurn(username, game) {
+        const isBlackPlayer = username === game.black.user.username;
+        const isWhitePlayer = username === game.white.user.username;
         const isPlayer = isBlackPlayer || isWhitePlayer;
         const lastMove = game.moves.length
             ? game.moves[game.moves.length - 1]
@@ -915,6 +975,8 @@ class GameService {
         const isPlayersTurn = (isBlackPlayer && whosTurn === 'black') || (isWhitePlayer && whosTurn === 'white');
 
         return {
+            isBlackPlayer,
+            isWhitePlayer,
             isPlayer,
             lastMove,
             whosTurn,
@@ -934,8 +996,6 @@ class GameService {
         const lastMoveIndex = game.moves.length - 1;
         const lastMove = game.moves[lastMoveIndex];
         const lastMovePlayer = lastMove.player;
-
-        // TODO: Undo kos
         let scoresToBeDecreased = 0;
 
         // Remove last move from moves
@@ -945,6 +1005,20 @@ class GameService {
         // back to waiting
         if(!game.moves.length) {
             game.status = 'waiting';
+        }
+
+        // Update player's time remaining
+        const now = new Date();
+        const moveBeforeLastMove = game.moves[game.moves.length - 1];
+
+        if(moveBeforeLastMove) {
+            const timeElapsedSinceMoveBeforeLastMove = (now - moveBeforeLastMove.createdAt) / 1000;
+    
+            game[lastMovePlayer].timeRemaining += timeElapsedSinceMoveBeforeLastMove;
+        }
+
+        if(lastMove.pass) {
+            return game;
         }
 
         // Empty the board position of last move
@@ -1043,16 +1117,8 @@ class GameService {
             }
         );
 
-        // Update player's score and time remaining
-        const now = new Date();
-        const moveBeforeLastMove = game.moves[game.moves.length - 1];
-
-        if(moveBeforeLastMove) {
-            const timeElapsedSinceMoveBeforeLastMove = (now - moveBeforeLastMove.createdAt) / 1000;
-    
-            game[lastMovePlayer].timeRemaining += timeElapsedSinceMoveBeforeLastMove;
-            game[lastMovePlayer].score -= scoresToBeDecreased;
-        }
+        // Update player's score
+        game[lastMovePlayer].score -= scoresToBeDecreased;
 
         return game;
     }

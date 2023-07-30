@@ -15,7 +15,7 @@ const gameSchema = new mongoose.Schema({
     status: {
         type: String,
         enum: {
-            values: ['waiting', 'started', 'black_won', 'white_won', 'white_resigned', 'black_resigned', 'cancelled', 'cancelled_by_black', 'cancelled_by_white'],
+            values: ['waiting', 'started', 'finishing', 'black_won', 'white_won', 'white_resigned', 'black_resigned', 'cancelled', 'cancelled_by_black', 'cancelled_by_white'],
             message: VALIDATION.game.status['any.only']
         },
         default: 'waiting'
@@ -35,15 +35,16 @@ const gameSchema = new mongoose.Schema({
                 message: VALIDATION.game.moves.player['any.only']
             }
         },
+        pass: {
+            type: Boolean
+        },
         row: {
             type: Number,
-            required: [true, VALIDATION.game.moves.row['any.required']],
             min: [0, VALIDATION.game.moves.row['number.min']],
             max: [18, VALIDATION.game.moves.row['number.min']]
         },
         column: {
             type: Number,
-            required: [true, VALIDATION.game.moves.column['any.required']],
             min: [0, VALIDATION.game.moves.column['number.min']],
             max: [18, VALIDATION.game.moves.column['number.min']]
         },

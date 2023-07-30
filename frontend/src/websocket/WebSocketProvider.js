@@ -171,6 +171,15 @@ const WebSocketProvider = props => {
             }
         };
 
+        const onPassed = (status, moves, black, white) => {
+            dispatch(gameActions.updateGame({
+                status,
+                moves,
+                black,
+                white
+            }));
+        };
+
         const onAddedStone = (status, black, white, board, moves) => {
             dispatch(gameActions.updateGame({
                 status,
@@ -231,6 +240,7 @@ const WebSocketProvider = props => {
         socket.on('undoRequested', onUndoRequested);
         socket.on('undoRequestRejected', onUndoRequestRejected);
         socket.on('undoRequestAccepted', onUndoRequestAccepted);
+        socket.on('passed', onPassed);
         socket.on('addedStone', onAddedStone);
         socket.on('gameFinished', onGameFinished);
 
@@ -256,6 +266,7 @@ const WebSocketProvider = props => {
             socket.off('undoRequested', onUndoRequested);
             socket.off('undoRequestRejected', onUndoRequestRejected);
             socket.off('undoRequestAccepted', onUndoRequestAccepted);
+            socket.off('passed', onPassed);
             socket.off('addedStone', onAddedStone);
             socket.off('gameFinished', onGameFinished);
 

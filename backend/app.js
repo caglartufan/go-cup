@@ -112,6 +112,7 @@ io.on('connection', socket => {
 	socket.on('requestUndo', handlers.onRequestUndo.bind(null, io, services, socket));
 	socket.on('rejectUndoRequest', handlers.onRejectUndoRequest.bind(null, io, services, socket));
 	socket.on('acceptUndoRequest', handlers.onAcceptUndoRequest.bind(null, io, services, socket));
+	socket.on('pass', handlers.onPass.bind(null, io, services, socket));
 	socket.on('addStone', handlers.onAddStone.bind(null, io, services, socket));
 });
 

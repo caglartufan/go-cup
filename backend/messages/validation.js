@@ -53,7 +53,7 @@ const VALIDATION = {
             'any.only': 'Board size can only be 9x9, 13x13 or 19x19.'
         },
         status: {
-            'any.only': 'Game status can only be waiting, started, black_won, white_won, white_resigned, black_resigned, cancelled, cancelled_by_black or cancelled_by_white.'
+            'any.only': 'Game status can only be waiting, started, finishing, black_won, white_won, white_resigned, black_resigned, cancelled, cancelled_by_black or cancelled_by_white.'
         },
         moves: {
             player: {
@@ -61,11 +61,9 @@ const VALIDATION = {
                 'any.only': 'Move\'s associated player has to be either black or white.'
             },
             row: {
-                'any.required': 'Move requires a row index to be assoicated with.',
                 'number.min': 'Move\'s associated row index must be minimum 0 and maximum 18.'
             },
             column: {
-                'any.required': 'Move requires a column index to be assoicated with.',
                 'number.min': 'Move\'s associated column index must be minimum 0 and maximum 18.'
             },
         },
