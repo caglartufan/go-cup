@@ -224,10 +224,10 @@ const GameDetailPage = () => {
                         {(game.status === 'black_resigned' || game.status === 'white_resigned') && !isPlayer && `${firstLetterToUppercase(game.status.replace('_resigned', ''))} player resigned from the game!`}
                         {((game.status === 'black_resigned' && isBlackPlayer) || (game.status === 'white_resigned' && isWhitePlayer)) && `You have resigned from the game!`}
                         {((game.status === 'black_resigned' && isWhitePlayer) || (game.status === 'white_resigned' && isBlackPlayer)) && `Your opponent have resigned from the game!`}
-                        {game.status === 'started' && isPlayer && ((isBlackPlayer && whosTurn === 'black') || (isWhitePlayer && whosTurn === 'white')) && `Your turn to play`}
-                        {game.status === 'started' && isPlayer && ((isBlackPlayer && whosTurn === 'white') || (isWhitePlayer && whosTurn === 'black')) && `Your opponent's turn to play`}
-                        {game.status === 'started' && !isPlayer && whosTurn === 'black' && `Black player's turn to play`}
-                        {game.status === 'started' && !isPlayer && whosTurn === 'white' && `White player's turn to play`}
+                        {game.status === 'started' && isPlayer && !lastMove?.pass && ((isBlackPlayer && whosTurn === 'black') || (isWhitePlayer && whosTurn === 'white')) && `Your turn to play`}
+                        {game.status === 'started' && isPlayer && !lastMove?.pass && ((isBlackPlayer && whosTurn === 'white') || (isWhitePlayer && whosTurn === 'black')) && `Your opponent's turn to play`}
+                        {game.status === 'started' && !isPlayer && !lastMove?.pass && whosTurn === 'black' && `Black player's turn to play`}
+                        {game.status === 'started' && !isPlayer  && !lastMove?.pass && whosTurn === 'white' && `White player's turn to play`}
                         {game.status === 'started' && isPlayer && lastMove?.pass && lastMove?.player === playerColor && `You've passed your turn`}
                         {game.status === 'started' && isPlayer && lastMove?.pass && lastMove?.player !== playerColor && `Your opponent has passed their turn`}
                         {game.status === 'started' && !isPlayer && lastMove?.pass && `${firstLetterToUppercase(lastMove?.player)} player has passed their turn`}

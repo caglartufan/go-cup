@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const GameDAO = require('../DAO/GameDAO');
 const UserDAO = require('../DAO/UserDAO');
 const UserDTO = require('../DTO/UserDTO');
-const { InvalidDTOError, UserNotFoundError, GameNotFoundError, UnauthorizedError, GameHasAlreadyFinishedOrCancelledError, NotYourTurnError, YouDontHaveUndoRightsError, GameHasNotStartedYetError } = require('../utils/ErrorHandler');
+const { InvalidDTOError, UserNotFoundError, GameNotFoundError, UnauthorizedError, GameHasAlreadyFinishedOrCancelledError, NotYourTurnError, YouDontHaveUndoRightsError, GameHasNotStartedYetError, GameIsNotFinishingError } = require('../utils/ErrorHandler');
 const GameDTO = require('../DTO/GameDTO');
 
 class GameService {
@@ -531,6 +531,42 @@ class GameService {
         if(lastMove.pass) {
             game.status = 'finishing';
         }
+
+        await game.save();
+
+        const gameDTO = GameDTO.withGameObject(game);
+        
+        return gameDTO;
+    }
+
+    async cancelFinishing(gameId, username) {
+        let game = await GameDAO.findGameById(gameId);
+
+        if(!game) {
+            throw new GameNotFoundError();
+        }
+
+        if(game.status !== 'finishing') {
+            throw new GameIsNotFinishingError();
+        }
+
+        const {
+            isPlayer,
+            isPlayersTurn,
+            lastMove,
+            whosTurn
+        } = this.#findWhosTurnAndLastMoveAndCheckIfGivenUserIsPlayerOfGameAndTheirTurn(username, game);
+
+        if(!isPlayer) {
+            throw new UnauthorizedError();
+        }
+
+        game.status = 'started';
+
+        const now = new Date();
+        const timeElapsedSinceLastMoveInSeconds = (now - lastMove.createdAt) / 1000;
+
+        game[whosTurn].timeRemaining += timeElapsedSinceLastMoveInSeconds;
 
         await game.save();
 

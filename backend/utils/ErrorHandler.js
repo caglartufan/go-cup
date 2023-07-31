@@ -146,6 +146,13 @@ class GameHasAlreadyFinishedOrCancelledError extends GameError {
     }
 }
 
+class GameIsNotFinishingError extends GameError {
+    constructor() {
+        super(ERRORS.GAME_IS_NOT_FINISHING);
+        this.name = 'GameIsNotFinishingError';
+    }
+}
+
 class NotYourTurnError extends GameError {
     constructor() {
         super(ERRORS.NOT_YOUR_TURN);
@@ -194,6 +201,7 @@ module.exports = {
     InvalidIOError,
     GameHasAlreadyFinishedOrCancelledError,
     GameHasNotStartedYetError,
+    GameIsNotFinishingError,
     NotYourTurnError,
     YouDontHaveUndoRightsError,
     ErrorHandler

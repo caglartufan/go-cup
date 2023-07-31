@@ -180,6 +180,21 @@ const WebSocketProvider = props => {
             }));
         };
 
+        const onCancelledFinishing = (status, black, white) => {
+            if(isPlayer) {
+                dispatch(toastActions.add({
+                    message: 'Finishing state has been cancelled!',
+                    status: 'info'
+                }));
+            }
+
+            dispatch(gameActions.updateGame({
+                status,
+                black,
+                white
+            }));
+        };
+
         const onAddedStone = (status, black, white, board, moves) => {
             dispatch(gameActions.updateGame({
                 status,
@@ -241,6 +256,7 @@ const WebSocketProvider = props => {
         socket.on('undoRequestRejected', onUndoRequestRejected);
         socket.on('undoRequestAccepted', onUndoRequestAccepted);
         socket.on('passed', onPassed);
+        socket.on('cancelledFinishing', onCancelledFinishing);
         socket.on('addedStone', onAddedStone);
         socket.on('gameFinished', onGameFinished);
 
@@ -267,6 +283,7 @@ const WebSocketProvider = props => {
             socket.off('undoRequestRejected', onUndoRequestRejected);
             socket.off('undoRequestAccepted', onUndoRequestAccepted);
             socket.off('passed', onPassed);
+            socket.off('cancelledFinishing', onCancelledFinishing);
             socket.off('addedStone', onAddedStone);
             socket.off('gameFinished', onGameFinished);
 

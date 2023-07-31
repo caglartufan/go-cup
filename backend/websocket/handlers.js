@@ -225,6 +225,18 @@ module.exports = {
 			socket.emit('errorOccured', ErrorHandler.handle(error).message);
 		}
 	},
+	onCancelFinishing: async (io, services, socket, gameId) => {
+		try {
+			const game = await services.gameService.cancelFinishing(gameId, socket.data.user.username);
+
+			io.in('game-' + gameId).emit('cancelledFinishing', game.status, game.black, game.white);
+		} catch(error) {
+			socket.emit('errorOccured', ErrorHandler.handle(error).message);
+		}
+	},
+	onConfirmFinishing: async (io, services, socket, gameId) => {
+		
+	},
 	onAddStone: async (io, services, socket, gameId, row, column) => {
 		if(gameId !== socket.data.user.activeGame.toString()) {
 			return;
