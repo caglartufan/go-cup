@@ -114,6 +114,22 @@ const VALIDATION = {
                 'number.min': 'Group\'s associated index of the move to which it was removed must be minimum -1.'
             }
         },
+        emptyGroups: {
+            capturedBy: {
+                'any.required': 'Empty group requires a captured by (black, white or null) parameter to be associated with.',
+                'any.only': 'Empty group\'s associated captured by paramater has to be black, white or null.'
+            },
+            positions: {
+                row: {
+                    'any.required': 'Empty groups\'s position requires a row index to be assoicated with.',
+                    'number.min': 'Empty groups\'s position\'s associated row index must be minimum 0 and maximum 18.'
+                },
+                column: {
+                    'any.required': 'Empty groups\'s position requires a column index to be assoicated with.',
+                    'number.min': 'Empty groups\'s position\'s associated column index must be minimum 0 and maximum 18.'
+                },
+            }
+        },
         kos: {
             row: {
                 'any.required': 'Ko requires a row index to be assoicated with.',

@@ -530,6 +530,8 @@ class GameService {
 
         if(lastMove.pass) {
             game.status = 'finishing';
+            game.emptyGroups = this.#findEmptyGroupsAndTheirCapturers(game);
+            console.log(game.emptyGroups);
         }
 
         await game.save();
@@ -1157,6 +1159,60 @@ class GameService {
         game[lastMovePlayer].score -= scoresToBeDecreased;
 
         return game;
+    }
+
+    #findEmptyGroupsAndTheirCapturers(game) {
+        const emptyGroups = [];
+
+        this.#findEmptyNeighboringPositionsForPosition(0, 0, game, emptyGroups, null);
+
+        return emptyGroups;
+    }
+
+    #findEmptyNeighboringPositionsForPosition(x, y, game, emptyGroups, parentEmptyGroup) {
+        const position = game.board[y][x];
+        const isPositionEmpty = position === null;
+        
+        if(isPositionEmpty) {
+            if(parentEmptyGroup) {
+                parentEmptyGroup.positions.push({
+                    row: y,
+                    column: x
+                });
+            } else {
+                emptyGroups.push({
+                    positions: [{
+                        row: y,
+                        column: x
+                    }]
+                });
+                parentEmptyGroup = emptyGroups[emptyGroups.length - 1];
+            }
+        } else {
+            if(parentEmptyGroup.capturedBy === undefined) {
+                if(position) {
+                    parentEmptyGroup.capturedBy = 'black';
+                } else {
+                    parentEmptyGroup.capturedBy = 'white';
+                }
+            } else {
+                if(
+                    (position && parentEmptyGroup.capturedBy === 'white')
+                    || (!position && parentEmptyGroup.capturedBy === 'black')
+                ) {
+                    parentEmptyGroup.capturedBy = null;
+                }
+            }
+            parentEmptyGroup = null;
+        }
+
+        if(x + 1 < game.size) {
+            this.#findEmptyNeighboringPositionsForPosition(x + 1, y, game, emptyGroups, parentEmptyGroup);
+        } else if(y + 1 < game.size) {
+            this.#findEmptyNeighboringPositionsForPosition(0, y + 1, game, emptyGroups, parentEmptyGroup);
+        } else {
+            return;
+        }
     }
 
     isUserInQueue(username) {

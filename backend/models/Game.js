@@ -124,6 +124,32 @@ const gameSchema = new mongoose.Schema({
             default: -1
         }
     }],
+    emptyGroups: [{
+        _id: false,
+        capturedBy: {
+            type: String,
+            required: [true, VALIDATION.game.emptyGroups.capturedBy['any.required']],
+            enum: {
+                values: ['black', 'white', null],
+                message: VALIDATION.game.emptyGroups.capturedBy['any.only']
+            }
+        },
+        positions: [{
+            _id: false,
+            row: {
+                type: Number,
+                required: [true, VALIDATION.game.emptyGroups.positions.row['any.required']],
+                min: [0, VALIDATION.game.emptyGroups.positions.row['number.min']],
+                max: [18, VALIDATION.game.emptyGroups.positions.row['number.min']]
+            },
+            column: {
+                type: Number,
+                required: [true, VALIDATION.game.emptyGroups.positions.column['any.required']],
+                min: [0, VALIDATION.game.emptyGroups.positions.column['number.min']],
+                max: [18, VALIDATION.game.emptyGroups.positions.column['number.min']]
+            },
+        }]
+    }],
     kos: [{
         _id: false,
         row: {

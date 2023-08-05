@@ -220,7 +220,7 @@ module.exports = {
 		try {
 			const game = await services.gameService.pass(gameId, socket.data.user.username);
 
-			io.in('game-' + gameId).emit('passed', game.status, game.moves, game.black, game.white);
+			io.in('game-' + gameId).emit('passed', game.status, game.moves, game.emptyGroups, game.black, game.white);
 		} catch(error) {
 			socket.emit('errorOccured', ErrorHandler.handle(error).message);
 		}

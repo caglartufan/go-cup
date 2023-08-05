@@ -5,6 +5,7 @@ class GameDTO {
     #board;
     #moves;
     #groups;
+    #emptyGroups;
     #kos;
     #black;
     #white;
@@ -16,13 +17,14 @@ class GameDTO {
     #waitingEndsAt;
     #createdAt;
 
-    constructor(_id, size, status, board, moves, groups, kos, black, white, chat, undo, isPrivate, startedAt, finishedAt, waitingEndsAt, createdAt) {
+    constructor(_id, size, status, board, moves, groups, emptyGroups, kos, black, white, chat, undo, isPrivate, startedAt, finishedAt, waitingEndsAt, createdAt) {
         this.#_id = _id;
         this.#size = size;
         this.#status = status;
         this.#board = board;
         this.#moves = moves;
         this.#groups = groups;
+        this.#emptyGroups = emptyGroups;
         this.#kos = kos;
         this.#black = black;
         this.#white = white;
@@ -43,6 +45,7 @@ class GameDTO {
             game.board,
             game.moves,
             game.groups,
+            game.emptyGroups,
             game.kos,
             game.black,
             game.white,
@@ -64,6 +67,7 @@ class GameDTO {
             board: this.#board,
             moves: this.#moves,
             groups: this.#groups,
+            emptyGroups: this.#emptyGroups,
             kos: this.#kos,
             black: this.#black,
             white: this.#white,
@@ -99,6 +103,10 @@ class GameDTO {
 
     get groups() {
         return this.#groups;
+    }
+
+    get emptyGroups() {
+        return this.#emptyGroups;
     }
 
     get kos() {
