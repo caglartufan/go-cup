@@ -1164,131 +1164,61 @@ class GameService {
     #findEmptyGroupsAndTheirCapturers(game) {
         const emptyGroups = [];
 
+        const modifiedBoard = game.board.map(
+            row => row.map(
+                position => ({
+                    value: position,
+                    isScanned: false
+                })
+            )
+        );
+
         // Traverse each position on the board (up to 361 for 19x19 board)
-        game.board.forEach((row, rowIndex) => {
+        modifiedBoard.forEach((row, rowIndex) => {
             row.forEach((position, columnIndex) => {
-                const isPositionEmpty = position === null;
+                const isPositionEmpty = position.value === null;
+                const isPositionScanned = position.isScanned;
                 
-                // Check if position is empty
-                if(isPositionEmpty) {
-                    // Find top and left positions
-                    const top = game.board[rowIndex - 1]?.[columnIndex];
-                    const left = game.board[rowIndex][columnIndex - 1];
-                    const isTopPositionEmpty = top === null;
-                    const isLeftPositionEmpty = left === null;
-
-                    let emptyGroup = {
-                        positions: [{
-                            row: rowIndex,
-                            column: columnIndex
-                        }]
-                    };
-
-                    if(isTopPositionEmpty) {
-                        const topPositionsParentEmptyGroup = emptyGroups.find(
-                            emptyGroup => emptyGroup.positions.some(
-                                emptyGroupPosition => emptyGroupPosition.row === rowIndex - 1 && emptyGroupPosition.column === columnIndex
-                            )
-                        );
-
-                        if(topPositionsParentEmptyGroup) {
-                            topPositionsParentEmptyGroup.positions.push({
-                                row: rowIndex,
-                                column: columnIndex
-                            });
-    
-                            emptyGroup = topPositionsParentEmptyGroup;
-                        }
-                    }
-                    
-                    if(isLeftPositionEmpty) {
-                        const leftPositionsParentEmptyGroupIndex = emptyGroups.findIndex(
-                            emptyGroup => emptyGroup.positions.some(
-                                emptyGroupPosition => emptyGroupPosition.row === rowIndex && emptyGroupPosition.column === columnIndex - 1
-                            )
-                        );
-
-                        if(leftPositionsParentEmptyGroupIndex > -1) {
-                            const leftPositionsParentEmptyGroup = emptyGroups[leftPositionsParentEmptyGroupIndex];
-                            
-                            emptyGroup.positions = emptyGroup.positions.concat(leftPositionsParentEmptyGroup.positions);
-                            
-                            emptyGroups.splice(leftPositionsParentEmptyGroupIndex);
-                        }
-                    }
-
-                    emptyGroups.push(emptyGroup);
+                // Check if position is empty and not scanned
+                if(!isPositionEmpty || isPositionScanned) {
+                    return;
                 }
+
+                this.#findEmptyNeighboringPositionsForPosition(
+                    columnIndex, rowIndex, modifiedBoard, emptyGroups, null
+                );
             });
         });
-
-        // this.#findEmptyNeighboringPositionsForPosition(0, 0, game, emptyGroups, null);
 
         console.log(emptyGroups);
 
         return emptyGroups;
     }
 
-    #findEmptyNeighboringPositionsForPosition(x, y, game, emptyGroups, parentEmptyGroup) {
-        const position = game.board[y][x];
-        const isPositionEmpty = position === null;
-        
-        if(isPositionEmpty) {
-            if(parentEmptyGroup) {
-                parentEmptyGroup.positions.push({
+    #findEmptyNeighboringPositionsForPosition(x, y, modifiedBoard, emptyGroups, parentEmptyGroup) {
+        modifiedBoard[y][x].isScanned = true;
+
+        if(parentEmptyGroup) {
+
+        } else {
+            const top = modifiedBoard[y - 1]?.[x];
+            const bottom = modifiedBoard[y + 1]?.[x];
+            const left = modifiedBoard[y][x - 1];
+            const right = modifiedBoard[y][x + 1];
+
+            let captured
+            if(top.value === true) {
+
+            }
+
+            emptyGroups.push({
+                positions: [{
                     row: y,
                     column: x
-                });
-            } else {
-                const topPosition = game.board[y - 1]?.[x];
-                const isTopPositionEmpty = topPosition === null;
+                }]
+            });
 
-                if(isTopPositionEmpty) {
-                    const topPositionsParentEmptyGroup = emptyGroups.find(
-                        emptyGroup => emptyGroup.positions.some(
-                            position => position.row === y - 1 && position.column === x
-                        )
-                    );
-
-                    topPositionsParentEmptyGroup.positions.push({
-                        row: y,
-                        column: x
-                    });
-                    parentEmptyGroup = topPositionsParentEmptyGroup;
-                } else {
-                    emptyGroups.push({
-                        positions: [{
-                            row: y,
-                            column: x
-                        }]
-                    });
-                    parentEmptyGroup = emptyGroups[emptyGroups.length - 1];
-                }
-            }
-        } else {
-            if(parentEmptyGroup.capturedBy === undefined) {
-                if(position) {
-                    parentEmptyGroup.capturedBy = 'black';
-                } else {
-                    parentEmptyGroup.capturedBy = 'white';
-                }
-            } else {
-                if(
-                    (position && parentEmptyGroup.capturedBy === 'white')
-                    || (!position && parentEmptyGroup.capturedBy === 'black')
-                ) {
-                    parentEmptyGroup.capturedBy = null;
-                }
-            }
-            parentEmptyGroup = null;
-        }
-
-        if(x + 1 < game.size) {
-            this.#findEmptyNeighboringPositionsForPosition(x + 1, y, game, emptyGroups, parentEmptyGroup);
-        } else if(y + 1 < game.size) {
-            this.#findEmptyNeighboringPositionsForPosition(0, y + 1, game, emptyGroups, parentEmptyGroup);
-        } else {
-            return;
+            parentEmptyGroup = emptyGroups[emptyGroups.length - 1];
         }
     }
 
