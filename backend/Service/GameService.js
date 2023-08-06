@@ -530,8 +530,22 @@ class GameService {
 
         if(lastMove.pass) {
             game.status = 'finishing';
+
+            game.groups.forEach(group => {
+                const isGroupRemoved = group.removedAtMove !== -1;
+
+                if(isGroupRemoved) {
+                    return;
+                }
+
+                const libertiesOfGroup = group.liberties.filter(
+                    liberty => liberty.removedAtMove === -1
+                );
+
+                group.isDead = libertiesOfGroup.length < 2;
+            });
+
             game.emptyGroups = this.#findEmptyGroupsAndTheirCapturers(game);
-            console.log(game.emptyGroups);
         }
 
         await game.save();
@@ -663,6 +677,25 @@ class GameService {
             return isAddedStoneLastLibertyPointOfGroup;
         });
 
+        // Check if stone added kills  any of turn player's groups
+        // (by placing a stone which will occupy last liberty point
+        // of a turn player's group)
+        const isKillingAnyOfTurnPlayersGroups = turnPlayersGroups.some(group => {
+            const libertiesOfGroup = group.liberties.filter(
+                liberty => liberty.removedAtMove === -1
+            );
+
+            if(libertiesOfGroup.length !== 1) {
+                return;
+            }
+
+            const lastLibertyPointOfGroup = libertiesOfGroup[0];
+            console.log(lastLibertyPointOfGroup);
+            const isAddedStoneLastLibertyPointOfGroup = lastLibertyPointOfGroup.row === row && lastLibertyPointOfGroup.column === column;
+
+            return isAddedStoneLastLibertyPointOfGroup;
+        });
+
         // Find disallowed ko positions for future use (to check if stone added to a position
         // which was disallowed due to a ko position or to allow disallowed ko positions after
         // a valid move)
@@ -676,7 +709,7 @@ class GameService {
         );
 
         // Check if move is allowed
-        if(!liberties.length && suicide && (!isCapturingAnyOfOpponentsGroups || isNotAllowedDueToKo)) {
+        if(!liberties.length && (suicide || isKillingAnyOfTurnPlayersGroups) && (!isCapturingAnyOfOpponentsGroups || isNotAllowedDueToKo)) {
             return;
         }
 
@@ -985,8 +1018,6 @@ class GameService {
                     return;
                 }
 
-                suicide = false;
-
                 liberties.push({
                     row: libertyPointPosition.row,
                     column: libertyPointPosition.column
@@ -1185,7 +1216,7 @@ class GameService {
                 }
 
                 this.#findEmptyNeighboringPositionsForPosition(
-                    columnIndex, rowIndex, modifiedBoard, emptyGroups, null
+                    rowIndex, columnIndex, modifiedBoard, emptyGroups, null
                 );
             });
         });
@@ -1195,31 +1226,99 @@ class GameService {
         return emptyGroups;
     }
 
-    #findEmptyNeighboringPositionsForPosition(x, y, modifiedBoard, emptyGroups, parentEmptyGroup) {
-        modifiedBoard[y][x].isScanned = true;
+    #findEmptyNeighboringPositionsForPosition(row, column, modifiedBoard, emptyGroups, parentEmptyGroup) {
+        modifiedBoard[row][column].isScanned = true;
+
+        const neighboringPositions = {
+            top: {
+                row: row - 1,
+                column
+            },
+            bottom: {
+                row: row + 1,
+                column
+            },
+            left: {
+                row,
+                column: column - 1
+            },
+            right: {
+                row,
+                column: column + 1
+            }
+        };
+
+        let capturedBy = undefined;
+
+        Object.values(neighboringPositions).forEach(
+            neighboringPosition => {
+                const positionValue = modifiedBoard[neighboringPosition.row]?.[neighboringPosition.column]?.value;
+                const isNeighboringPositionBlackStone = positionValue === true;
+                const isNeighboringPositionWhiteStone = positionValue === false;
+
+                if(capturedBy !== null && (isNeighboringPositionBlackStone || isNeighboringPositionWhiteStone)) {
+                    if(
+                        (capturedBy === 'black' && isNeighboringPositionWhiteStone)
+                        || (capturedBy === 'white' && isNeighboringPositionBlackStone)
+                    ) {
+                        capturedBy = null;
+                    } else if(capturedBy === undefined) {
+                        if(isNeighboringPositionBlackStone) {
+                            capturedBy = 'black';
+                        } else if(isNeighboringPositionWhiteStone) {
+                            capturedBy = 'white';
+                        }
+                    }
+                }
+            }
+        );
 
         if(parentEmptyGroup) {
+            parentEmptyGroup.positions.push({
+                row,
+                column
+            });
 
-        } else {
-            const top = modifiedBoard[y - 1]?.[x];
-            const bottom = modifiedBoard[y + 1]?.[x];
-            const left = modifiedBoard[y][x - 1];
-            const right = modifiedBoard[y][x + 1];
-
-            let captured
-            if(top.value === true) {
-
+            if(parentEmptyGroup.capturedBy !== null && capturedBy !== undefined) {
+                if(
+                    (parentEmptyGroup.capturedBy === 'black' && capturedBy === 'white')
+                    || (parentEmptyGroup.capturedBy === 'white' && capturedBy === 'black')
+                ) {
+                    parentEmptyGroup.capturedBy = null;
+                } else if(parentEmptyGroup.capturedBy === undefined) {
+                    parentEmptyGroup.capturedBy = capturedBy;
+                }
             }
-
+        } else {
             emptyGroups.push({
                 positions: [{
-                    row: y,
-                    column: x
-                }]
+                    row,
+                    column
+                }],
+                capturedBy
             });
 
             parentEmptyGroup = emptyGroups[emptyGroups.length - 1];
         }
+
+        Object.values(neighboringPositions).forEach(
+            neighboringPosition => {
+                const positionObject = modifiedBoard[neighboringPosition.row]?.[neighboringPosition.column];
+                const isNeighboringPositionEmpty = positionObject?.value === null;
+                const isNeighboringPositionScanned = positionObject?.isScanned;
+
+                if(isNeighboringPositionEmpty && !isNeighboringPositionScanned) {
+                    console.log(`Called for row ${neighboringPosition.row} and column ${neighboringPosition.column}`);
+                    this.#findEmptyNeighboringPositionsForPosition(
+                        neighboringPosition.row,
+                        neighboringPosition.column,
+                        modifiedBoard,
+                        emptyGroups,
+                        parentEmptyGroup
+                    );
+                }
+            }
+        );
     }
 
     isUserInQueue(username) {

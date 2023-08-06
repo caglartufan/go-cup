@@ -113,6 +113,10 @@ const gameSchema = new mongoose.Schema({
                 default: -1
             }
         }],
+        isDead: {
+            type: Boolean,
+            default: false
+        },
         createdAtMove: {
             type: Number,
             required: [true, VALIDATION.game.groups.createdAtMove['any.required']],
@@ -128,11 +132,13 @@ const gameSchema = new mongoose.Schema({
         _id: false,
         capturedBy: {
             type: String,
-            required: [true, VALIDATION.game.emptyGroups.capturedBy['any.required']],
-            enum: {
-                values: ['black', 'white', null],
+            validate: {
+                validator: function(value) {
+                    return value === 'black' || value === 'white' || value === null;
+                },
                 message: VALIDATION.game.emptyGroups.capturedBy['any.only']
-            }
+            },
+            default: null
         },
         positions: [{
             _id: false,
@@ -247,8 +253,10 @@ const gameSchema = new mongoose.Schema({
     undo: {
         requestedBy: {
             type: String,
-            enum: {
-                values: ['white', 'black', null],
+            validate: {
+                validator: function(value) {
+                    return value === 'black' || value === 'white' || value === null;
+                },
                 message: VALIDATION.game.undo.requestedBy['any.only']
             },
             default: null

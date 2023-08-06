@@ -116,7 +116,6 @@ const VALIDATION = {
         },
         emptyGroups: {
             capturedBy: {
-                'any.required': 'Empty group requires a captured by (black, white or null) parameter to be associated with.',
                 'any.only': 'Empty group\'s associated captured by paramater has to be black, white or null.'
             },
             positions: {

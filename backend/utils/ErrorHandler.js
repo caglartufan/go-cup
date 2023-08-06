@@ -170,6 +170,7 @@ class YouDontHaveUndoRightsError extends GameError {
 class ErrorHandler {
     static handle(error) {
         if(error instanceof mongoose.Error.ValidationError) {
+            console.log(error);
             return UserValidationError.fromMongooseError(error);
         } else if(error instanceof jwt.TokenExpiredError) {
             return new ExpiredJWTError();
