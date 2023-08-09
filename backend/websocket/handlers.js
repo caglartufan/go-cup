@@ -235,7 +235,31 @@ module.exports = {
 		}
 	},
 	onConfirmFinishing: async (io, services, socket, gameId) => {
-		
+		try {
+			const {
+				game,
+				whoConfirmed,
+				winner,
+				latestSystemChatEntry
+			} = await services.gameService.confirmFinishing(gameId, socket.data.user.username);
+
+			io.in('game-' + gameId).emit('confirmedFinishing', game.status, game.black, game.white, whoConfirmed);
+
+			if(latestSystemChatEntry) {
+				io.in('game-' + gameId).emit('gameChatMessage', latestSystemChatEntry);
+			}
+		} catch(error) {
+			socket.emit('errorOccured', ErrorHandler.handle(error).message);
+		}
+	},
+	onNegateGroupOrEmptyGroup: async (io, services, socket, gameId, row, column) => {
+		try {
+			const game = await services.gameService.negateGroupOrEmptyGroup(gameId, row, column, socket.data.user.username);
+
+			io.in('game-' + gameId).emit('negatedGroupOrEmptyGroup', game.black, game.white, game.groups, game.emptyGroups);
+		} catch(error) {
+			socket.emit('errorOccured', ErrorHandler.handle(error).message);
+		}
 	},
 	onAddStone: async (io, services, socket, gameId, row, column) => {
 		if(gameId !== socket.data.user.activeGame.toString()) {

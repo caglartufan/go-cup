@@ -15,7 +15,8 @@ const ERRORS = {
     GAME_HAS_NOT_STARTED_YET: 'Game has not started yet.',
     GAME_IS_NOT_FINISHING: 'GAme is not finishing.',
     NOT_YOUR_TURN: 'Not your turn.',
-    YOU_DONT_HAVE_UNDO_RIGHTS: 'You don\'t have rights to request undo.'
+    YOU_DONT_HAVE_UNDO_RIGHTS: 'You don\'t have rights to request undo.',
+    YOU_CAN_NOT_SELECT_NEUTRAL_GROUPS: 'You can\'t select neutral groups.'
 };
 
 module.exports = ERRORS;

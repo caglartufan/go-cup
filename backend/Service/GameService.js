@@ -2,8 +2,9 @@ const mongoose = require('mongoose');
 const GameDAO = require('../DAO/GameDAO');
 const UserDAO = require('../DAO/UserDAO');
 const UserDTO = require('../DTO/UserDTO');
-const { InvalidDTOError, UserNotFoundError, GameNotFoundError, UnauthorizedError, GameHasAlreadyFinishedOrCancelledError, NotYourTurnError, YouDontHaveUndoRightsError, GameHasNotStartedYetError, GameIsNotFinishingError } = require('../utils/ErrorHandler');
+const { InvalidDTOError, UserNotFoundError, GameNotFoundError, UnauthorizedError, GameHasAlreadyFinishedOrCancelledError, NotYourTurnError, YouDontHaveUndoRightsError, GameHasNotStartedYetError, GameIsNotFinishingError, YouCanNotSelectNeutralGroupsError } = require('../utils/ErrorHandler');
 const GameDTO = require('../DTO/GameDTO');
+const MESSAGES = require('../messages/messages');
 
 class GameService {
     queue = [];
@@ -531,6 +532,12 @@ class GameService {
         if(lastMove.pass) {
             game.status = 'finishing';
 
+            // Update oldScore fields of players for backup when finishing state is cancelled
+            game.black.oldScore = game.black.score;
+            game.white.oldScore = game.white.score;
+
+            // Decide if groups are dead or not. If the groups is dead then add amount of active stones
+            // to opponent player's score
             game.groups.forEach(group => {
                 const isGroupRemoved = group.removedAtMove !== -1;
 
@@ -543,9 +550,30 @@ class GameService {
                 );
 
                 group.isDead = libertiesOfGroup.length < 2;
+
+                if(!group.isDead) {
+                    return;
+                }
+
+                const groupsOpponentPlayer = group.player === 'black' ? 'white' : 'black';
+                const activeStonesCount = group.stones.filter(
+                    stone => stone.removedAtMove === -1
+                ).length;
+
+                game[groupsOpponentPlayer].score += activeStonesCount;
             });
 
+            // Find empty groups
             game.emptyGroups = this.#findEmptyGroupsAndTheirCapturers(game);
+
+            // Add amount of captured positions to capturer player's score
+            game.emptyGroups.forEach(
+                emptyGroup => {
+                    if(emptyGroup.capturedBy) {
+                        game[emptyGroup.capturedBy].score += emptyGroup.positions.length;
+                    }
+                }
+            );
         }
 
         await game.save();
@@ -568,7 +596,6 @@ class GameService {
 
         const {
             isPlayer,
-            isPlayersTurn,
             lastMove,
             whosTurn
         } = this.#findWhosTurnAndLastMoveAndCheckIfGivenUserIsPlayerOfGameAndTheirTurn(username, game);
@@ -579,10 +606,134 @@ class GameService {
 
         game.status = 'started';
 
+        game.black.score = game.black.oldScore;
+        game.white.score = game.white.oldScore;
+
+        game.black.confirmed = false;
+        game.white.confirmed = false;
+
         const now = new Date();
         const timeElapsedSinceLastMoveInSeconds = (now - lastMove.createdAt) / 1000;
 
         game[whosTurn].timeRemaining += timeElapsedSinceLastMoveInSeconds;
+
+        await game.save();
+
+        const gameDTO = GameDTO.withGameObject(game);
+        
+        return gameDTO;
+    }
+
+    async confirmFinishing(gameId, username) {
+        let game = await GameDAO.findGameById(gameId);
+
+        if(!game) {
+            throw new GameNotFoundError();
+        }
+
+        if(game.status !== 'finishing') {
+            throw new GameIsNotFinishingError();
+        }
+
+        const {
+            isPlayer,
+            isBlackPlayer
+        } = this.#findWhosTurnAndLastMoveAndCheckIfGivenUserIsPlayerOfGameAndTheirTurn(username, game);
+
+        if(!isPlayer) {
+            throw new UnauthorizedError();
+        }
+
+        let whoConfirmed;
+        if(isBlackPlayer) {
+            game.black.confirmed = true;
+            whoConfirmed = 'black';
+        } else {
+            game.white.confirmed = true;
+            whoConfirmed = 'white';
+        }
+
+        let result = null;
+
+        if(game.black.confirmed && game.white.confirmed) {
+            result = await this.#calculateGameResultFinishTheGameAndUpdateUsers(game);
+            game = result.game;
+
+            game.black.user.elo = result.blackUpdatedElo;
+            game.white.user.elo = result.whiteUpdatedElo;
+        }
+
+        await game.save();
+
+        const gameDTO = GameDTO.withGameObject(game);
+        
+        return {
+            game: gameDTO,
+            whoConfirmed,
+            winner: result?.winner,
+            latestSystemChatEntry: result?.latestSystemChatEntry
+        };
+    }
+
+    async negateGroupOrEmptyGroup(gameId, row, column, username) {
+        let game = await GameDAO.findGameById(gameId);
+
+        if(!game) {
+            throw new GameNotFoundError();
+        }
+
+        if(game.status !== 'finishing') {
+            throw new GameIsNotFinishingError();
+        }
+
+        const {
+            isPlayer
+        } = this.#findWhosTurnAndLastMoveAndCheckIfGivenUserIsPlayerOfGameAndTheirTurn(username, game);
+
+        if(!isPlayer) {
+            throw new UnauthorizedError();
+        }
+
+        const positionValue = game.board[row]?.[column];
+
+        if(positionValue === null) {
+            const emptyGroupToNegate = game.emptyGroups.find(
+                emptyGroup => emptyGroup.capturedBy && emptyGroup.positions.some(position => position.row === row && position.column === column)
+            );
+
+            if(!emptyGroupToNegate) {
+                throw new YouCanNotSelectNeutralGroupsError();
+            }
+
+            const emptyGroupsOpponentPlayer = emptyGroupToNegate.capturedBy === 'black' ? 'white' : 'black';
+            const capturedPositionsCount = emptyGroupToNegate.positions.length;
+
+            game[emptyGroupToNegate.capturedBy].score -= capturedPositionsCount;
+            game[emptyGroupsOpponentPlayer].score += capturedPositionsCount;
+
+            emptyGroupToNegate.capturedBy = emptyGroupsOpponentPlayer;
+        } else {
+            const groupToNegateDeadStatus = game.groups.find(
+                group => group.removedAtMove === -1 && group.stones.some(stone => stone.removedAtMove === -1 && stone.row === row && stone.column === column)
+            );
+
+            if(!groupToNegateDeadStatus) {
+                return;
+            }
+
+            const groupsOpponentPlayer = groupToNegateDeadStatus.player === 'black' ? 'white' : 'black';
+            const activeStonesCount = groupToNegateDeadStatus.stones.filter(
+                stone => stone.removedAtMove === -1
+            ).length;
+
+            if(groupToNegateDeadStatus.isDead) {
+                game[groupsOpponentPlayer].score -= activeStonesCount;
+            } else {
+                game[groupsOpponentPlayer].score += activeStonesCount;
+            }
+
+            groupToNegateDeadStatus.isDead = !groupToNegateDeadStatus.isDead;
+        }
 
         await game.save();
 
@@ -717,17 +868,33 @@ class GameService {
             };
 
             for(const neighbor of Object.values(neighboursOfLastLibertyPoint)) {
-                const neighborStone = game.board[neighbor.row]?.[neighbor.column];
+                const neighborStoneValue = game.board[neighbor.row]?.[neighbor.column];
 
                 if(
-                    (whosTurn === 'black' && neighborStone === true)
-                    || (whosTurn === 'white' && neighborStone === false)
+                    (whosTurn === 'black' && neighborStoneValue === true)
+                    || (whosTurn === 'white' && neighborStoneValue === false)
                 ) {
-                    
+                    const neighborGroup = turnPlayersGroups.find(
+                        neighborGroup => neighborGroup.stones.some(
+                            neighborStone => neighborStone.removedAtMove === -1 && neighborStone.row === neighbor.row && neighborStone.column === neighbor.column
+                        )
+                    );
+
+                    if(!neighborGroup) {
+                        continue;
+                    }
+
+                    const neighborGroupsActiveLibertyPointsCount = neighborGroup.liberties.filter(
+                        liberty => liberty.removedAtMove === -1
+                    ).length;
+
+                    if(neighborGroupsActiveLibertyPointsCount > 1) {
+                        return false;
+                    }
                 }
             }
 
-            return isAddedStoneLastLibertyPointOfGroup;
+            return true;
         });
 
         // Find disallowed ko positions for future use (to check if stone added to a position
@@ -1353,6 +1520,67 @@ class GameService {
                 }
             }
         );
+    }
+
+    async #calculateGameResultFinishTheGameAndUpdateUsers(game) {
+        const winner = game.black.score > game.white.score ? 'black' : 'white';
+        const userWinner = await UserDAO.findByUsername(game[winner].user.username);
+        const loser = winner === 'black' ? 'white' : 'black';
+        const userLoser = await UserDAO.findByUsername(game[loser].user.username);
+        const eloDifference = Math.abs(game.black.user.elo - game.white.user.elo);
+
+        game.status = winner + '_won';
+
+        game.chat.push({
+            isSystem: true,
+            message: winner === 'black'
+                ? MESSAGES.DAO.GameDAO.BLACK_WON
+                : MESSAGES.DAO.GameDAO.WHITE_WON
+        });
+
+        if(eloDifference >= 0 && eloDifference < 25) {
+            userWinner.elo += 25;
+            userLoser.elo -= 25;
+        } else if(eloDifference >= 25 && eloDifference < 50) {
+
+        } else if(eloDifference >= 50 && eloDifference < 100) {
+            
+        } else if(eloDifference >= 100 && eloDifference < 150) {
+
+        } else if(eloDifference >= 150 && eloDifference < 250) {
+            
+        } else {
+
+        }
+
+        // Update players' user models
+        userWinner.activeGame = null;
+        userLoser.activeGame = null;
+
+        await userWinner.save();
+        await userLoser.save();
+
+        // Update players' connected socket data
+        const sockets = await this.#io.fetchSockets();
+        sockets.forEach(
+            socket => {
+                const socketUsername = socket.data.user.username;
+                if(socketUsername === game.black.user.username) {
+                    socket.data.user.elo = game.black.elo;
+                }
+                if(socketUsername === game.white.user.username) {
+                    socket.data.user.elo = game.white.elo;
+                }
+            }
+        );
+
+        return {
+            game,
+            blackUpdatedElo: winner === 'black' ? userWinner.elo : userLoser.elo,
+            whiteUpdatedElo: winner === 'white' ? userWinner.elo : userLoser.elo,
+            winner,
+            latestSystemChatEntry: game.chat[game.chat.length - 1]
+        };
     }
 
     isUserInQueue(username) {

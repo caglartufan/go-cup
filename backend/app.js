@@ -91,7 +91,7 @@ app.set('io', io);
 io.use(auth.bind(null, services));
 
 io.on('connection', socket => {
-	const disallowedEvents = ['loggedOut', 'play', 'fetchQueueData', 'cancel', 'gameChatMessage', 'cancelGame', 'resignFromGame', 'requestUndo', 'rejectUndoRequest', 'acceptUndoRequest', 'pass', 'cancelFinishing', 'confirmFinishing', 'addStone'];
+	const disallowedEvents = ['loggedOut', 'play', 'fetchQueueData', 'cancel', 'gameChatMessage', 'cancelGame', 'resignFromGame', 'requestUndo', 'rejectUndoRequest', 'acceptUndoRequest', 'pass', 'cancelFinishing', 'confirmFinishing', 'negateGroupOrEmptyGroup', 'addStone'];
 	socket.use(forceAuth(disallowedEvents, socket));
 
 	handlers.onConnection(services, socket);
@@ -115,6 +115,7 @@ io.on('connection', socket => {
 	socket.on('pass', handlers.onPass.bind(null, io, services, socket));
 	socket.on('cancelFinishing', handlers.onCancelFinishing.bind(null, io, services, socket));
 	socket.on('confirmFinishing', handlers.onConfirmFinishing.bind(null, io, services, socket));
+	socket.on('negateGroupOrEmptyGroup', handlers.onNegateGroupOrEmptyGroup.bind(null, io, services, socket));
 	socket.on('addStone', handlers.onAddStone.bind(null, io, services, socket));
 });
 

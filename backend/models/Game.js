@@ -191,6 +191,11 @@ const gameSchema = new mongoose.Schema({
             min: 0,
             default: 0
         },
+        oldScore: {
+            type: Number,
+            min: 0,
+            default: 0
+        },
         timeRemaining: {
             type: Number,
             min: 0,
@@ -201,6 +206,10 @@ const gameSchema = new mongoose.Schema({
             min: 0,
             max: 3,
             default: 3
+        },
+        confirmed: {
+            type: Boolean,
+            default: false
         }
     },
     white: {
@@ -214,6 +223,11 @@ const gameSchema = new mongoose.Schema({
             min: 0,
             default: .5
         },
+        oldScore: {
+            type: Number,
+            min: 0,
+            default: 0
+        },
         timeRemaining: {
             type: Number,
             min: 0,
@@ -224,6 +238,10 @@ const gameSchema = new mongoose.Schema({
             min: 0,
             max: 3,
             default: 3
+        },
+        confirmed: {
+            type: Boolean,
+            default: false
         }
     },
     chat: {

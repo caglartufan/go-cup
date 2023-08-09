@@ -167,6 +167,13 @@ class YouDontHaveUndoRightsError extends GameError {
     }
 }
 
+class YouCanNotSelectNeutralGroupsError extends GameError {
+    constructor() {
+        super(ERRORS.YOU_CAN_NOT_SELECT_NEUTRAL_GROUPS);
+        this.name = 'YouCanNotSelectNeutralGroupsError';
+    }
+}
+
 class ErrorHandler {
     static handle(error) {
         if(error instanceof mongoose.Error.ValidationError) {
@@ -205,5 +212,6 @@ module.exports = {
     GameIsNotFinishingError,
     NotYourTurnError,
     YouDontHaveUndoRightsError,
+    YouCanNotSelectNeutralGroupsError,
     ErrorHandler
 };
