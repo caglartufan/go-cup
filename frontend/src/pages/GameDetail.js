@@ -240,9 +240,11 @@ const GameDetailPage = () => {
                     </h2>
                     <Board
                         game-id={game._id}
+                        status={game.status}
                         size={game.size}
                         state={game.board}
-                        status={game.status}
+                        groups={game.groups}
+                        empty-groups={game.emptyGroups}
                         is-player={isPlayer}
                         player-color={playerColor}
                         className="mb-4"

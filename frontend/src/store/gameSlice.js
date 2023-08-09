@@ -6,6 +6,7 @@ const initialGameState = {
     status: null,
     board: null,
     moves: [],
+    groups: [],
     emptyGroups: [],
     black: null,
     white: null,
@@ -29,6 +30,7 @@ const gameSlice = createSlice({
             state.status = action.payload.status || state.status;
             state.board = action.payload.board || state.board;
             state.moves = action.payload.moves || state.moves;
+            state.groups = action.payload.groups || state.groups;
             state.emptyGroups = action.payload.emptyGroups || state.emptyGroups;
             state.black = action.payload.black || state.black;
             state.white = action.payload.white || state.white;

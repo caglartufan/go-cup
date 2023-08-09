@@ -171,10 +171,11 @@ const WebSocketProvider = props => {
             }
         };
 
-        const onPassed = (status, moves, emptyGroups, black, white) => {
+        const onPassed = (status, moves, groups, emptyGroups, black, white) => {
             dispatch(gameActions.updateGame({
                 status,
                 moves,
+                groups,
                 emptyGroups,
                 black,
                 white

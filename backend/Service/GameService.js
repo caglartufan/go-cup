@@ -690,8 +690,42 @@ class GameService {
             }
 
             const lastLibertyPointOfGroup = libertiesOfGroup[0];
-            console.log(lastLibertyPointOfGroup);
+
             const isAddedStoneLastLibertyPointOfGroup = lastLibertyPointOfGroup.row === row && lastLibertyPointOfGroup.column === column;
+
+            if(!isAddedStoneLastLibertyPointOfGroup) {
+                return false;
+            }
+
+            const neighboursOfLastLibertyPoint = {
+                top: {
+                    row: row - 1,
+                    column
+                },
+                bottom: {
+                    row: row + 1,
+                    column
+                },
+                left: {
+                    row,
+                    column: column - 1
+                },
+                right: {
+                    row,
+                    column: column + 1
+                }
+            };
+
+            for(const neighbor of Object.values(neighboursOfLastLibertyPoint)) {
+                const neighborStone = game.board[neighbor.row]?.[neighbor.column];
+
+                if(
+                    (whosTurn === 'black' && neighborStone === true)
+                    || (whosTurn === 'white' && neighborStone === false)
+                ) {
+                    
+                }
+            }
 
             return isAddedStoneLastLibertyPointOfGroup;
         });

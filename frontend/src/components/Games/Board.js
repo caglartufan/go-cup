@@ -3,12 +3,26 @@ import { useCallback, useEffect, useRef } from 'react';
 import './Board.scss';
 import { socket } from '../../websocket';
 
+const drawStone = (centerX, centerY, radius, color, ctx, isDead = false) => {
+    ctx.beginPath();
+    ctx.moveTo(centerX, centerY);
+    ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+    if(isDead) {
+        ctx.fillStyle = color === '#fff' ? 'rgba(255, 255, 255, .6)' : 'rgba(0, 0, 0, .6)';
+    } else {
+        ctx.fillStyle = color;
+    }
+    ctx.fill();
+};
+
 const Board = props => {
     const {
         'game-id': gameId,
+        status,
         size,
         state,
-        status,
+        groups,
+        'empty-groups': emptyGroups,
         dynamicHeight,
         className: customClassName,
         'is-player': isPlayer,
@@ -103,20 +117,71 @@ const Board = props => {
         ctx.fill();
 
         // Draw stones
-        state.forEach((row, rowIndex) => {
-            row.forEach((stone, columnIndex) => {
-                if(stone !== null) {
-                    ctx.beginPath();
-                    const centerX = gridPadding + Math.floor(columnIndex * gridOffset);
-                    const centerY = gridPadding + Math.floor(rowIndex * gridOffset);
-                    ctx.moveTo(centerX, centerY);
-                    ctx.arc(centerX, centerY, clientWidth / (size * 2.75), 0, 2 * Math.PI);
-                    ctx.fillStyle = stone ? '#000' : '#fff';
-                    ctx.fill();
+        if(status === 'finishing') {
+            groups.forEach(group => {
+                const isGroupRemoved = group.removedAtMove !== -1;
+
+                if(isGroupRemoved) {
+                    return;
                 }
+
+                const activeStones = group.stones.filter(
+                    stone => stone.removedAtMove === -1
+                );
+
+                activeStones.forEach(stone => {
+                    // TODO: If group isDead add a center dot on stones
+                    drawStone(
+                        gridPadding + Math.floor(stone.column * gridOffset),
+                        gridPadding + Math.floor(stone.row * gridOffset),
+                        clientWidth / (size * 2.75),
+                        group.player === 'black' ? '#000' : '#fff',
+                        ctx,
+                        group.isDead
+                    );
+                });
+            })
+        } else {
+            state.forEach((row, rowIndex) => {
+                row.forEach((stone, columnIndex) => {
+                    if(stone !== null) {
+                        drawStone(
+                            gridPadding + Math.floor(columnIndex * gridOffset),
+                            gridPadding + Math.floor(rowIndex * gridOffset),
+                            clientWidth / (size * 2.75),
+                            stone ? '#000' : '#fff',
+                            ctx
+                        );
+                    }
+                });
             });
-        });
-    }, [size, state]);
+        }
+
+        // If game is at "finishing" status, then draw the lines respresenting
+        // empty groups captured by players
+        if(status === 'finishing') {
+            emptyGroups.forEach(emptyGroup => {
+                const { capturedBy, positions } = emptyGroup;
+                const isNotCapturedByAPlayer = capturedBy === null;
+
+                if(isNotCapturedByAPlayer) {
+                    return;
+                }
+
+                positions.forEach(position => {
+                    const { row, column } = position;
+                    ctx.beginPath();
+                    const centerX = gridPadding + Math.floor(column * gridOffset);
+                    const centerY = gridPadding + Math.floor(row * gridOffset);
+                    const sideLength = gridOffset / 4;
+                    ctx.moveTo(centerX, centerY);
+                    ctx.fillStyle = capturedBy === 'black' ? '#000' : '#fff';
+                    ctx.fillRect(centerX - (sideLength / 2), centerY - (sideLength / 2), sideLength, sideLength);
+                    ctx.fill();
+                });
+            });
+        }
+    }, [status, size, state, groups, emptyGroups]);
     
     const clickHandler = ({ clientX, clientY }) => {
         const { clientWidth, clientHeight } = board.current;
