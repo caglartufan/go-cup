@@ -1,8 +1,6 @@
 const { Game } = require('../models/Game');
 const { GameNotFoundError } = require('../utils/ErrorHandler');
-const { firstLetterToUppercase } = require('../utils/helpers');
 const MESSAGES = require('../messages/messages');
-const { game } = require('../messages/validation');
 
 class GameDAO {
     static async getGames() {

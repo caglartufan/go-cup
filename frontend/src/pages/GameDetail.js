@@ -29,8 +29,6 @@ const UndoRequestModal = props => {
         'game-id': gameId
     } = props;
 
-    // TODO: Implement handlers and implmenet server side interval process to reject automatically after
-    // requestEndsAt timeout
     const rejectHandler = () => {
         socket.emit('rejectUndoRequest', gameId);
     };
@@ -62,6 +60,96 @@ const UndoRequestModal = props => {
     );
 };
 
+const getStatusMessage = (status, timer, isBlackPlayer, isWhitePlayer, isPlayer, playerColor, lastMove, whosTurn) => {
+    if(status === 'waiting') {
+        return `Waiting for black player to play (${formatSeconds(timer)})`;
+    }
+
+    if(status === 'cancelled') {
+        return `The game has been cancelled!`;
+    }
+
+    if(status.includes('cancelled_by_')) {
+        return `The game has been cancelled by ${status.replace('cancelled_by_', '')} player!`;
+    }
+
+    if(status === 'black_resigned' && isPlayer) {
+        if(isBlackPlayer) {
+            return `You have resigned from the game!`;
+        } else {
+            return `Your opponent have resigned from the game!`;
+        }
+    }
+
+    if(status === 'white_resigned' && isPlayer) {
+        if(isWhitePlayer) {
+            return `You have resigned from the game!`;
+        } else {
+            return `Your opponent have resigned from the game!`;
+        }
+    }
+
+    if(status.includes('_resigned') && !isPlayer) {
+        return `${firstLetterToUppercase(status.replace('_resigned', ''))} player resigned from the game!`;
+    }
+
+    if(status === 'started' && isPlayer && !lastMove?.pass) {
+        if((isBlackPlayer && whosTurn === 'black') || (isWhitePlayer && whosTurn === 'white')) {
+            return `Your turn to play`;
+        } else {
+            return `Your opponent's turn to play`;
+        }
+    }
+
+    if(status === 'started' && !isPlayer && !lastMove?.pass) {
+        if(whosTurn === 'black') {
+            return `Black player's turn to play`;
+        } else {
+            return `White player's turn to play`;
+        }
+    }
+    
+    if(status === 'started' && isPlayer && lastMove?.pass) {
+        if(lastMove?.player === playerColor) {
+            return `You've passed your turn`;
+        } else {
+            return `Your opponent has passed their turn`;
+        }
+    }
+
+    if(status === 'started' && !isPlayer && lastMove?.pass) {
+        return `${firstLetterToUppercase(lastMove?.player)} player has passed their turn`;
+    }
+
+    if(status === 'finishing') {
+        if(isPlayer) {
+            return `Select areas and stones you've captured`;
+        } else {
+            return  `Players are finishing the game`;
+        }
+    }
+
+    if(status === 'black_won' && isPlayer) {
+        if(isBlackPlayer) {
+            return `You have won!`;
+        } else {
+            return `You have lost!`;
+        }
+    }
+
+    if(status === 'white_won' && isPlayer) {
+        if(isWhitePlayer) {
+            return `You have won!`;
+        } else {
+            return `You have lost!`;
+        }
+    }
+
+    if(status.includes('_won') && !isPlayer) {
+        return `${firstLetterToUppercase(status.replace('_won', ''))} player won the game!`;
+    }
+}
+
 const GameDetailPage = () => {
     const resData = useLoaderData();
     const dispatch = useDispatch();
@@ -91,7 +179,16 @@ const GameDetailPage = () => {
         whosTurn = 'white';
     }
 
-    const shouldShowUndoRequestModal = game.status === 'started' && isPlayer && game.undo.requestedBy && game.undo.requestedAt && game.undo.requestEndsAt && ((isBlackPlayer && game.undo.requestedBy === 'white') || (isWhitePlayer && game.undo.requestedBy === 'black'));
+    const shouldShowUndoRequestModal =
+        game.status === 'started'
+        && isPlayer
+        && game.undo.requestedBy
+        && game.undo.requestedAt
+        && game.undo.requestEndsAt
+        && (
+            (isBlackPlayer && game.undo.requestedBy === 'white')
+            || (isWhitePlayer && game.undo.requestedBy === 'black')
+        );
 
     const cancelGameHandler = useCallback(() => {
         if(isPlayer && game.status === 'waiting') {
@@ -129,10 +226,6 @@ const GameDetailPage = () => {
         }
     }, [isPlayer, whosTurn, playerColor, game.status, game._id]);
 
-    // TODO: Add cancel finishing functionality
-    // Then add a way to implement functionality to select captured areasa
-    // and stones of opponents and reflect the selections to opponent
-    // Then add a functionality accept finishing state
     const cancelFinishingHandler = useCallback(() => {
         if(isPlayer && game.status === 'finishing') {
             socket.emit('cancelFinishing', game._id);
@@ -218,25 +311,7 @@ const GameDetailPage = () => {
             <Row columns={2} className="h-100">
                 <Column size={7} style={{ height: isPlayer && !game.status.includes('_won') ? 'calc(100% - 7.3rem)' : 'calc(100% - 3.25rem)' }}>
                     <h2 className="board-heading">
-                        {game.status === 'waiting' && `Waiting for black player to play (${formatSeconds(timer)})`}
-                        {game.status === 'cancelled' && 'The game has been cancelled!'}
-                        {(game.status === 'cancelled_by_black' || game.status === 'cancelled_by_white') && `The game has been cancelled by ${game.status.replace('cancelled_by_', '')} player!`}
-                        {(game.status === 'black_resigned' || game.status === 'white_resigned') && !isPlayer && `${firstLetterToUppercase(game.status.replace('_resigned', ''))} player resigned from the game!`}
-                        {((game.status === 'black_resigned' && isBlackPlayer) || (game.status === 'white_resigned' && isWhitePlayer)) && `You have resigned from the game!`}
-                        {((game.status === 'black_resigned' && isWhitePlayer) || (game.status === 'white_resigned' && isBlackPlayer)) && `Your opponent have resigned from the game!`}
-                        {game.status === 'started' && isPlayer && !lastMove?.pass && ((isBlackPlayer && whosTurn === 'black') || (isWhitePlayer && whosTurn === 'white')) && `Your turn to play`}
-                        {game.status === 'started' && isPlayer && !lastMove?.pass && ((isBlackPlayer && whosTurn === 'white') || (isWhitePlayer && whosTurn === 'black')) && `Your opponent's turn to play`}
-                        {game.status === 'started' && !isPlayer && !lastMove?.pass && whosTurn === 'black' && `Black player's turn to play`}
-                        {game.status === 'started' && !isPlayer  && !lastMove?.pass && whosTurn === 'white' && `White player's turn to play`}
-                        {game.status === 'started' && isPlayer && lastMove?.pass && lastMove?.player === playerColor && `You've passed your turn`}
-                        {game.status === 'started' && isPlayer && lastMove?.pass && lastMove?.player !== playerColor && `Your opponent has passed their turn`}
-                        {game.status === 'started' && !isPlayer && lastMove?.pass && `${firstLetterToUppercase(lastMove?.player)} player has passed their turn`}
-                        {game.status === 'finishing' && isPlayer && `Select areas and stones you've captured`}
-                        {game.status === 'finishing' && !isPlayer && `Players are finishing the game`}
-                        {((game.status === 'black_won' && isPlayer && isBlackPlayer) || (game.status === 'white_won' && isPlayer && isWhitePlayer)) && 'You have won!'}
-                        {((game.status === 'black_won' && isPlayer && !isBlackPlayer) || (game.status === 'white_won' && isPlayer && !isWhitePlayer)) && 'You have lost!'}
-                        {game.status === 'black_won' && !isPlayer && 'Black player won the game!'}
-                        {game.status === 'white_won' && !isPlayer && 'White player won the game!'}
+                        {getStatusMessage(game.staus, timer, isBlackPlayer, isWhitePlayer, isPlayer, playerColor, lastMove, whosTurn)}
                     </h2>
                     <Board
                         game-id={game._id}

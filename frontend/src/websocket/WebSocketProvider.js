@@ -90,7 +90,6 @@ const WebSocketProvider = props => {
         };
 
         const userJoinedOrLeftGameRoomHandler = (socketName, roomSocketsCount) => {
-            // TODO: Update online viewers count in gameState and show on UI
             dispatch(gameActions.updateViewersCount({
                 viewersCount: roomSocketsCount
             }));
