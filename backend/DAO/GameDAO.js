@@ -340,25 +340,6 @@ class GameDAO {
         return { _id: game._id, latestSystemChatEntry: game.chat.filter(chatEntry => chatEntry.isSystem === true).pop() }
     }
 
-    static async resignFromGame(gameId, resignedPlayer) {
-        const game = await this.findGameById(gameId);
-
-        if(!game) {
-            throw new GameNotFoundError();
-        }
-
-        game.status = resignedPlayer + '_resigned';
-        game.chat.push({
-            message: MESSAGES.DAO.GameDAO.PLAYER_RESIGNED_FROM_GAME.replace('#{RESIGNED_PLAYER}', firstLetterToUppercase(resignedPlayer)),
-            isSystem: true
-        });
-        game.finishedAt = new Date();
-
-        await game.save();
-
-        return { _id: game._id, latestSystemChatEntry: game.chat.filter(chatEntry => chatEntry.isSystem === true).pop() }
-    }
-
     static async getGamesWithLatestSystemChatEntryByGameIds(gameIds) {
         return await Game.aggregate([
             {

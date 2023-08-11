@@ -12,6 +12,9 @@ class GameService {
     #processing = false;
     #gameProcessInterval = null;
     #generalInterval = null;
+    #K = 50; // ELO rating change sensitivity (50% win rate game => +25 and -25)
+    #MIN_ELO_DIFFERENCE = 25;
+    #MIN_WAITING_TIME = 60 * 1000; // 1 second
 
     constructor(io) {
         this.#io = io;
@@ -110,108 +113,126 @@ class GameService {
     }
 
     #startProcessingQueue() {
-        this.#gameProcessInterval = setInterval(() => {
-            console.log('processing queue...');
-            // Current date when this loop of process has started
-            const processDate = new Date();
-            // An array to hold players who will be playing match (matched) in from of [[player1, player2], [player3, player4], ...]
-            const matchedPlayers = [];
-            
-            // Sort queue by "since" property (the date when user joined in queue) in ascending order
-            this.queue.sort(
-                (queueObjA, queueObjB) => queueObjA.since - queueObjB.since
-            );
-
-            for(const queueObject of this.queue) {
-                const userElo = queueObject.user.elo;
-                const userTimeElapsed = processDate - queueObject.since;
-                // Concatenate players in matchedPlayers array. This will produce an array which has all the matched users in form [player1, player2, player3, player4, ...]
-                const concatenatedMatchedPlayers = matchedPlayers.reduce((prev, curr) => prev.concat(curr), []);
-
-                // Skip if user has already been matched with another player
-                if(concatenatedMatchedPlayers.find(matchedPlayer => matchedPlayer.username === queueObject.user.username)) {
-                    break;
-                }
-
-                for(const comparedQueueObject of this.queue) {
-                    // Skip if user and compared user are same
-                    if(queueObject.user.username === comparedQueueObject.user.username) {
-                        break;
-                    }
-
-                    // Skip if compared user has already been matched with another player
-                    if(concatenatedMatchedPlayers.find(matchedPlayer => matchedPlayer.username === comparedQueueObject.user.username)) {
-                        break;
-                    }
-
-                    const comparedUserElo = comparedQueueObject.user.elo;
-                    const comparedUserTimeElapsed = processDate - comparedQueueObject.since;
-                    const eloDifference = Math.abs(userElo - comparedUserElo);
-                    
-                    if(
-                        (eloDifference >= 0 && eloDifference < 25)
-                        || ((eloDifference >= 25 && eloDifference < 50)
-                           && (userTimeElapsed > (60 * 1000) && comparedUserTimeElapsed > (60 * 1000)))
-                        || ((eloDifference >= 50 && eloDifference < 100)
-                           && (userTimeElapsed > (2 * 60 * 1000) && comparedUserTimeElapsed > (2 * 60 * 1000)))
-                        || ((eloDifference >= 100 && eloDifference < 150)
-                           && (userTimeElapsed > (3 * 60 * 1000) && comparedUserTimeElapsed > (3 * 60 * 1000)))
-                        || ((eloDifference >= 150 && eloDifference < 250)
-                           && (userTimeElapsed > (4 * 60 * 1000) && comparedUserTimeElapsed > (4 * 60 * 1000)))
-                        || ((eloDifference >= 250)
-                           && (userTimeElapsed > (5 * 60 * 1000) && comparedUserTimeElapsed > (5 * 60 * 1000)))
-                    ) {
-                        // If both user and compared user fit into the conditions above add them together into matchedPlayers array
-                        matchedPlayers.push([
-                            queueObject.user,
-                            comparedQueueObject.user
-                        ]);
-                    } else {
-                        // If not skip
-                        break;
-                    }
-                }
-            }
-
-            // Directly match players who are matched
-            if(matchedPlayers.length > 0) {
-                matchedPlayers.forEach(players => {
-                    const firstPlayer = players[0];
-                    const secondPlayer = players[1];
-                    const colorsAssociatedWithPlayers = {
-                        black: null,
-                        white: null
-                    };
-        
-                    // Player with less elo starts as black
-                    if(firstPlayer.elo < secondPlayer.elo) {
-                        colorsAssociatedWithPlayers.black = firstPlayer;
-                        colorsAssociatedWithPlayers.white = secondPlayer;
-                    } else if(firstPlayer.elo > secondPlayer.elo) {
-                        colorsAssociatedWithPlayers.black = secondPlayer;
-                        colorsAssociatedWithPlayers.white = firstPlayer;
-                    // If both players have same elo, then randomly (50% chance) decide who will play as black or white
-                    } else {
-                        if(Math.random() < .5) {
-                            colorsAssociatedWithPlayers.black = firstPlayer;
-                            colorsAssociatedWithPlayers.white = secondPlayer;
-                        } else {
-                            colorsAssociatedWithPlayers.black = secondPlayer;
-                            colorsAssociatedWithPlayers.white = firstPlayer;
-                        }
-                    }
-    
-                    // Start a new game between those players with colors assigned
-                    this.#startGame(colorsAssociatedWithPlayers);
-                });
-            }
-        }, 1000);
+        this.#gameProcessInterval = setInterval(this.#processQueue, 1000);
         this.#processing = true;
     }
 
     #stopProcessingQueue() {
         clearInterval(this.#gameProcessInterval);
         this.#processing = false;
+    }
+
+    #processQueue() {
+        console.log('processing queue...');
+        // Current date when this loop of process has started
+        const processDate = new Date();
+        // An array to hold players who will be playing match (matched) in from of [[player1, player2], [player3, player4], ...]
+        const matchedPlayers = [];
+        
+        // Sort queue by "since" property (the date when user joined in queue) in ascending order
+        this.queue.sort(
+            (queueObjA, queueObjB) => queueObjA.since - queueObjB.since
+        );
+
+        for(const queueObject of this.queue) {
+            const userElo = queueObject.user.elo;
+            const userTimeElapsed = processDate - queueObject.since;
+            // Concatenate players in matchedPlayers array. This will produce an array which has all the matched users in form [player1, player2, player3, player4, ...]
+            const concatenatedMatchedPlayers = matchedPlayers.reduce((prev, curr) => prev.concat(curr), []);
+
+            // Skip if user has already been matched with another player
+            if(concatenatedMatchedPlayers.find(matchedPlayer => matchedPlayer.username === queueObject.user.username)) {
+                return;
+            }
+
+            for(const comparedQueueObject of this.queue) {
+                // Skip if user and compared user are same
+                if(queueObject.user.username === comparedQueueObject.user.username) {
+                    return;
+                }
+
+                // Skip if compared user has already been matched with another player
+                if(concatenatedMatchedPlayers.find(matchedPlayer => matchedPlayer.username === comparedQueueObject.user.username)) {
+                    return;
+                }
+
+                const comparedUserElo = comparedQueueObject.user.elo;
+                const comparedUserTimeElapsed = processDate - comparedQueueObject.since;
+                const eloDifference = Math.abs(userElo - comparedUserElo);
+                
+                if(this.#isMatchConditionMet(eloDifference, userTimeElapsed, comparedUserTimeElapsed)) {
+                    // If both user and compared user fit into the conditions above add them together into matchedPlayers array
+                    matchedPlayers.push([
+                        queueObject.user,
+                        comparedQueueObject.user
+                    ]);
+                } else {
+                    // If not skip
+                    break;
+                }
+            }
+        }
+
+        // Directly match players who are matched
+        if(matchedPlayers.length > 0) {
+            matchedPlayers.forEach(players => {
+                const firstPlayer = players[0];
+                const secondPlayer = players[1];
+                const colorsAssociatedWithPlayers = {
+                    black: null,
+                    white: null
+                };
+    
+                // Player with less elo starts as black
+                if(firstPlayer.elo < secondPlayer.elo) {
+                    colorsAssociatedWithPlayers.black = firstPlayer;
+                    colorsAssociatedWithPlayers.white = secondPlayer;
+                } else if(firstPlayer.elo > secondPlayer.elo) {
+                    colorsAssociatedWithPlayers.black = secondPlayer;
+                    colorsAssociatedWithPlayers.white = firstPlayer;
+                // If both players have same elo, then randomly (50% chance) decide who will play as black or white
+                } else {
+                    if(Math.random() < .5) {
+                        colorsAssociatedWithPlayers.black = firstPlayer;
+                        colorsAssociatedWithPlayers.white = secondPlayer;
+                    } else {
+                        colorsAssociatedWithPlayers.black = secondPlayer;
+                        colorsAssociatedWithPlayers.white = firstPlayer;
+                    }
+                }
+
+                // Start a new game between those players with colors assigned
+                this.#startGame(colorsAssociatedWithPlayers);
+            });
+        }
+    }
+
+    #isMatchConditionMet(eloDifference, userTimeElapsed, comparedUserTimeElapsed) {
+        if(eloDifference < (1 * this.#MIN_ELO_DIFFERENCE)) {
+            return true;
+        }
+        
+        if(eloDifference < (2 * this.#MIN_ELO_DIFFERENCE) && userTimeElapsed > (1 * this.#MIN_WAITING_TIME) && comparedUserTimeElapsed > (1 * this.#MIN_WAITING_TIME)) {
+            return true;
+        }
+
+        if(eloDifference < (4 * this.#MIN_ELO_DIFFERENCE) && userTimeElapsed > (2 * this.#MIN_WAITING_TIME) && comparedUserTimeElapsed > (2 * this.#MIN_WAITING_TIME)) {
+            return true;
+        }
+
+        if(eloDifference < (6 * this.#MIN_ELO_DIFFERENCE) && userTimeElapsed > (3 * this.#MIN_WAITING_TIME) && comparedUserTimeElapsed > (3 * this.#MIN_WAITING_TIME)) {
+            return true;
+        }
+
+        if(eloDifference < (10 * this.#MIN_ELO_DIFFERENCE) && userTimeElapsed > (4 * this.#MIN_WAITING_TIME) && comparedUserTimeElapsed > (4 * this.#MIN_WAITING_TIME)) {
+            return true;
+        }
+
+        if(eloDifference >= (10 * this.#MIN_ELO_DIFFERENCE) && userTimeElapsed > (5 * this.#MIN_WAITING_TIME) && comparedUserTimeElapsed > (5 * this.#MIN_WAITING_TIME)) {
+            return true;
+        }
+
+        return false;
     }
 
     async #startGame(colorsAssociatedWithPlayers) {
@@ -347,9 +368,19 @@ class GameService {
     }
 
     async resignFromGame(gameId, username) {
-        const game = await this.findGameById(gameId);
+        let game = await GameDAO.findGameById(gameId);
 
-		const isPlayer = game.black.user.username === username || game.white.user.username === username;
+        if(!game) {
+            throw new GameNotFoundError();
+        }
+
+        if(game.status !== 'finishing') {
+            throw new GameIsNotFinishingError();
+        }
+        
+        const {
+            isPlayer
+        } = this.#findWhosTurnAndLastMoveAndCheckIfGivenUserIsPlayerOfGameAndTheirTurn(username, game);
 
 		if(!isPlayer || game.status !== 'started') {
             return false;
@@ -357,7 +388,17 @@ class GameService {
 
         const resignedPlayer = game.black.user.username === username ? 'black' : 'white';
 
-        const { latestSystemChatEntry } = await GameDAO.resignFromGame(gameId, resignedPlayer);
+        // Update game status@@@
+        game.status = resignedPlayer + '_resigned';
+
+        game.chat.push({
+            message: MESSAGES.DAO.GameDAO.PLAYER_RESIGNED_FROM_GAME.replace('#{RESIGNED_PLAYER}', firstLetterToUppercase(resignedPlayer)),
+            isSystem: true
+        });
+
+        game.finishedAt = new Date();
+
+        await game.save();
 
         await UserDAO.nullifyActiveGameOfUsers(game.black.user, game.white.user);
         
@@ -1524,13 +1565,14 @@ class GameService {
 
     async #calculateGameResultFinishTheGameAndUpdateUsers(game) {
         const winner = game.black.score > game.white.score ? 'black' : 'white';
-        const userWinner = await UserDAO.findByUsername(game[winner].user.username);
         const loser = winner === 'black' ? 'white' : 'black';
+        const userWinner = await UserDAO.findByUsername(game[winner].user.username);
         const userLoser = await UserDAO.findByUsername(game[loser].user.username);
-        const eloDifference = Math.abs(game.black.user.elo - game.white.user.elo);
 
+        // Update game status
         game.status = winner + '_won';
 
+        // Add a system message to the game chat which announces the winner
         game.chat.push({
             isSystem: true,
             message: winner === 'black'
@@ -1538,23 +1580,19 @@ class GameService {
                 : MESSAGES.DAO.GameDAO.WHITE_WON
         });
 
-        if(eloDifference >= 0 && eloDifference < 25) {
-            userWinner.elo += 25;
-            userLoser.elo -= 25;
-        } else if(eloDifference >= 25 && eloDifference < 50) {
+        // Calculate new elo of players
+        const { newBlackElo, newWhiteElo } = this.#calculateNewEloOfPlayers(
+            game.black.user.elo,
+            game.white.user.elo,
+            winner
+        );
+        
 
-        } else if(eloDifference >= 50 && eloDifference < 100) {
-            
-        } else if(eloDifference >= 100 && eloDifference < 150) {
-
-        } else if(eloDifference >= 150 && eloDifference < 250) {
-            
-        } else {
-
-        }
-
-        // Update players' user models
+        // Update and save players' user models
+        userWinner.elo = winner === 'black' ? newBlackElo : newWhiteElo;
         userWinner.activeGame = null;
+        
+        userWinner.elo = winner === 'white' ? newWhiteElo : newBlackElo;
         userLoser.activeGame = null;
 
         await userWinner.save();
@@ -1576,11 +1614,27 @@ class GameService {
 
         return {
             game,
-            blackUpdatedElo: winner === 'black' ? userWinner.elo : userLoser.elo,
-            whiteUpdatedElo: winner === 'white' ? userWinner.elo : userLoser.elo,
+            blackUpdatedElo: newBlackElo,
+            whiteUpdatedElo: newWhiteElo,
             winner,
             latestSystemChatEntry: game.chat[game.chat.length - 1]
         };
+    }
+
+    #calculateWinProbabilityOfBlackPlayer(blackElo, whiteElo) {
+        return 1 / (1 + Math.pow(10, (blackElo - whiteElo) / 400));
+    }
+
+    #calculateNewEloOfPlayers(blackElo, whiteElo, winner) {
+        const winProbabilityOfBlackPlayer = this.#calculateWinProbabilityOfBlackPlayer(
+            blackElo,
+            whiteElo
+        );
+        const winProbabilityOfWhitePlayer = 1 - winProbabilityOfBlackPlayer;
+        const newBlackElo = blackElo + (this.#K * ((winner === 'black' ? 1 : 0) - winProbabilityOfBlackPlayer));
+        const newWhiteElo = whiteElo + (this.#K * ((wimnner === 'white' ? 1 : 0) - winProbabilityOfWhitePlayer));
+
+        return { newBlackElo, newWhiteElo };
     }
 
     isUserInQueue(username) {
