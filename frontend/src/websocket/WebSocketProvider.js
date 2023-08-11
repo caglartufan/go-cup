@@ -107,20 +107,32 @@ const WebSocketProvider = props => {
                     : 'The game has been cancelled!',
                 status: 'warning'
             }));
-            dispatch(gameActions.updateStatus({ status: cancelledBy ? ('cancelled_by_' + cancelledBy) : 'cancelled' }));
+            dispatch(gameActions.updateStatus({
+                status: cancelledBy ? ('cancelled_by_' + cancelledBy) : 'cancelled'
+            }));
             if(activeGameOfUser === gameId) {
                 dispatch(userActions.updateActiveGame({ gameId: null }));
             }
         };
 
-        const onPlayerResignedFromGame = (gameId, resignedPlayer) => {
+        const onPlayerResignedFromGame = (gameId, resignedPlayer, black, white) => {
             dispatch(toastActions.add({
                 message: `${resignedPlayer} player resigned from the game!`,
                 status: 'warning'
             }));
-            dispatch(gameActions.updateStatus({ status: resignedPlayer + '_resigned' }));
-            if(activeGameOfUser === gameId) {
-                dispatch(userActions.updateActiveGame({ gameId: null }));
+            dispatch(gameActions.updateGame({
+                status: resignedPlayer + '_resigned',
+                black,
+                white
+            }));
+
+            if(isPlayer) {
+                dispatch(userActions.update({
+                    elo: isBlackPlayer ? black.user.elo : white.user.elo
+                }));
+                dispatch(userActions.updateActiveGame({
+                    activeGame: null
+                }));
             }
         };
 
@@ -225,7 +237,9 @@ const WebSocketProvider = props => {
                 }
 
                 dispatch(userActions.update({
-                    elo: isBlackPlayer ? black.user.elo : white.user.elo,
+                    elo: isBlackPlayer ? black.user.elo : white.user.elo
+                }));
+                dispatch(userActions.updateActiveGame({
                     activeGame: null
                 }));
             }

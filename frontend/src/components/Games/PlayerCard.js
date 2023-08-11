@@ -35,7 +35,7 @@ const PlayerCard = props => {
             <div className="player-card__meta">
                 {/* TODO: Add a button to report user (afk, inappropriate language etc.) */}
                 <Link to={'/users/' + username} className="player-card__name">
-                    {username} ({elo})
+                    {username} ({Math.floor(elo)})
                 </Link>
                 <span className="player-card__score">
                     {score} points

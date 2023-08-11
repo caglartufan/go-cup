@@ -3,6 +3,7 @@ const GameDAO = require('../DAO/GameDAO');
 const UserDAO = require('../DAO/UserDAO');
 const UserDTO = require('../DTO/UserDTO');
 const { InvalidDTOError, UserNotFoundError, GameNotFoundError, UnauthorizedError, GameHasAlreadyFinishedOrCancelledError, NotYourTurnError, YouDontHaveUndoRightsError, GameHasNotStartedYetError, GameIsNotFinishingError, YouCanNotSelectNeutralGroupsError } = require('../utils/ErrorHandler');
+const { firstLetterToUppercase } = require('../utils/helpers');
 const GameDTO = require('../DTO/GameDTO');
 const MESSAGES = require('../messages/messages');
 
@@ -14,7 +15,7 @@ class GameService {
     #generalInterval = null;
     #K = 50; // ELO rating change sensitivity (50% win rate game => +25 and -25)
     #MIN_ELO_DIFFERENCE = 25;
-    #MIN_WAITING_TIME = 60 * 1000; // 1 second
+    #MIN_WAITING_TIME = 0; // 1 second
 
     constructor(io) {
         this.#io = io;
@@ -113,7 +114,7 @@ class GameService {
     }
 
     #startProcessingQueue() {
-        this.#gameProcessInterval = setInterval(this.#processQueue, 1000);
+        this.#gameProcessInterval = setInterval(this.#processQueue.bind(this), 1000);
         this.#processing = true;
     }
 
@@ -142,19 +143,20 @@ class GameService {
 
             // Skip if user has already been matched with another player
             if(concatenatedMatchedPlayers.find(matchedPlayer => matchedPlayer.username === queueObject.user.username)) {
-                return;
+                continue;
             }
 
             for(const comparedQueueObject of this.queue) {
                 // Skip if user and compared user are same
                 if(queueObject.user.username === comparedQueueObject.user.username) {
-                    return;
+                    continue;
                 }
 
                 // Skip if compared user has already been matched with another player
                 if(concatenatedMatchedPlayers.find(matchedPlayer => matchedPlayer.username === comparedQueueObject.user.username)) {
-                    return;
+                    continue;
                 }
+
 
                 const comparedUserElo = comparedQueueObject.user.elo;
                 const comparedUserTimeElapsed = processDate - comparedQueueObject.since;
@@ -168,7 +170,7 @@ class GameService {
                     ]);
                 } else {
                     // If not skip
-                    break;
+                    continue;
                 }
             }
         }
@@ -208,6 +210,7 @@ class GameService {
     }
 
     #isMatchConditionMet(eloDifference, userTimeElapsed, comparedUserTimeElapsed) {
+        console.log(eloDifference, userTimeElapsed, comparedUserTimeElapsed);
         if(eloDifference < (1 * this.#MIN_ELO_DIFFERENCE)) {
             return true;
         }
@@ -374,8 +377,8 @@ class GameService {
             throw new GameNotFoundError();
         }
 
-        if(game.status !== 'finishing') {
-            throw new GameIsNotFinishingError();
+        if(game.status !== 'started') {
+            throw new GameHasNotStartedYetError();
         }
         
         const {
@@ -387,31 +390,73 @@ class GameService {
         }
 
         const resignedPlayer = game.black.user.username === username ? 'black' : 'white';
+        const blackPlayer = await UserDAO.findByUsername(game.black.user.username);
+        const whitePlayer = await UserDAO.findByUsername(game.white.user.username);
 
-        // Update game status@@@
+        const { newBlackElo, newWhiteElo } =  this.#calculateNewEloOfPlayers(
+            blackPlayer.elo,
+            whitePlayer.elo,
+            resignedPlayer === 'black' ? 'white' : 'black'
+        );
+
+        // Update game status
         game.status = resignedPlayer + '_resigned';
 
+        // Update game players' elo fields
+        game.black.user.elo = newBlackElo;
+        game.white.user.elo = newWhiteElo;
+
+        // Add a new system chat entry which announces the resignation
         game.chat.push({
             message: MESSAGES.DAO.GameDAO.PLAYER_RESIGNED_FROM_GAME.replace('#{RESIGNED_PLAYER}', firstLetterToUppercase(resignedPlayer)),
             isSystem: true
         });
 
+        // Update game's finishedAt field
         game.finishedAt = new Date();
 
+        // Save the game
         await game.save();
 
-        await UserDAO.nullifyActiveGameOfUsers(game.black.user, game.white.user);
+        // Update and save players' user models
+        blackPlayer.elo = newBlackElo;
+        blackPlayer.activeGame = null;
         
+        whitePlayer.elo = newWhiteElo;
+        whitePlayer.activeGame = null;
+
+        await blackPlayer.save();
+        await whitePlayer.save();
+
+        // Update players' connected socket data
         const sockets = await this.#io.fetchSockets();
-        const playerSockets = sockets.filter(
-            socket => socket.data.user?.username === game.black.user.username || socket.data.user?.username === game.white.user.username
+        sockets.forEach(
+            socket => {
+                const socketUsername = socket.data.user?.username;
+                const isBlackPlayer = socketUsername === game.black.user.username;
+                const isWhitePlayer = socketUsername === game.white.user.username;
+                const isPlayer = isBlackPlayer || isWhitePlayer;
+
+                if(isPlayer) {
+                    if(isBlackPlayer) {
+                        socket.data.user.elo = newBlackElo;
+                    }
+                    if(isWhitePlayer) {
+                        socket.data.user.elo = newWhiteElo;
+                    }
+
+                    socket.data.user.activeGame = null;
+                }
+            }
         );
 
-        playerSockets.forEach(socket => {
-            socket.data.user.activeGame = null;
-        });
+        const gameDTO = GameDTO.withGameObject(game);
 
-        return { resignedPlayer, latestSystemChatEntry };
+        return {
+            game: gameDTO,
+            resignedPlayer,
+            latestSystemChatEntry: game.chat[game.chat.length - 1]
+        };
     }
 
     async requestUndo(gameId, username) {
@@ -1580,13 +1625,15 @@ class GameService {
                 : MESSAGES.DAO.GameDAO.WHITE_WON
         });
 
+        // Update game's finishedAt field
+        game.finishedAt = new Date();
+
         // Calculate new elo of players
         const { newBlackElo, newWhiteElo } = this.#calculateNewEloOfPlayers(
             game.black.user.elo,
             game.white.user.elo,
             winner
         );
-        
 
         // Update and save players' user models
         userWinner.elo = winner === 'black' ? newBlackElo : newWhiteElo;
@@ -1603,11 +1650,19 @@ class GameService {
         sockets.forEach(
             socket => {
                 const socketUsername = socket.data.user.username;
-                if(socketUsername === game.black.user.username) {
-                    socket.data.user.elo = game.black.elo;
-                }
-                if(socketUsername === game.white.user.username) {
-                    socket.data.user.elo = game.white.elo;
+                const isBlackPlayer = socketUsername === game.black.user.username;
+                const isWhitePlayer = socketUsername === game.white.user.username;
+                const isPlayer = isBlackPlayer || isWhitePlayer;
+
+                if(isPlayer) {
+                    if(isBlackPlayer) {
+                        socket.data.user.elo = newBlackElo;
+                    }
+                    if(isWhitePlayer) {
+                        socket.data.user.elo = newWhiteElo;
+                    }
+
+                    socket.data.user.activeGame = null;
                 }
             }
         );
@@ -1632,7 +1687,7 @@ class GameService {
         );
         const winProbabilityOfWhitePlayer = 1 - winProbabilityOfBlackPlayer;
         const newBlackElo = blackElo + (this.#K * ((winner === 'black' ? 1 : 0) - winProbabilityOfBlackPlayer));
-        const newWhiteElo = whiteElo + (this.#K * ((wimnner === 'white' ? 1 : 0) - winProbabilityOfWhitePlayer));
+        const newWhiteElo = whiteElo + (this.#K * ((winner === 'white' ? 1 : 0) - winProbabilityOfWhitePlayer));
 
         return { newBlackElo, newWhiteElo };
     }

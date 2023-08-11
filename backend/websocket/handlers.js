@@ -173,11 +173,11 @@ module.exports = {
 		try {
 			const resignedGameResult = await services.gameService.resignFromGame(gameId, socket.data.user.username);
 
-			if(!resignedGameResult.resignedPlayer || !resignedGameResult.latestSystemChatEntry) {
+			if(!resignedGameResult.game || !resignedGameResult.resignedPlayer || !resignedGameResult.latestSystemChatEntry) {
 				return;
 			}
 
-			io.in('game-' + gameId).emit('playerResignedFromGame', gameId, resignedGameResult.resignedPlayer);
+			io.in('game-' + gameId).emit('playerResignedFromGame', gameId, resignedGameResult.resignedPlayer, resignedGameResult.game.black, resignedGameResult.game.white);
 			io.in('game-' + gameId).emit('gameChatMessage', resignedGameResult.latestSystemChatEntry);
 		} catch(error) {
 			socket.emit('errorOccured', ErrorHandler.handle(error).message);
