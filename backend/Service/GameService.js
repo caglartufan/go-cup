@@ -15,7 +15,7 @@ class GameService {
     #generalInterval = null;
     #K = 50; // ELO rating change sensitivity (50% win rate game => +25 and -25)
     #MIN_ELO_DIFFERENCE = 25;
-    #MIN_WAITING_TIME = 0; // 1 second
+    #MIN_WAITING_TIME = 60 * 1000; // 1 second
 
     constructor(io) {
         this.#io = io;
@@ -210,7 +210,6 @@ class GameService {
     }
 
     #isMatchConditionMet(eloDifference, userTimeElapsed, comparedUserTimeElapsed) {
-        console.log(eloDifference, userTimeElapsed, comparedUserTimeElapsed);
         if(eloDifference < (1 * this.#MIN_ELO_DIFFERENCE)) {
             return true;
         }
@@ -1677,7 +1676,7 @@ class GameService {
     }
 
     #calculateWinProbabilityOfBlackPlayer(blackElo, whiteElo) {
-        return 1 / (1 + Math.pow(10, (blackElo - whiteElo) / 400));
+        return 1 / (1 + Math.pow(10, (whiteElo - blackElo) / 400));
     }
 
     #calculateNewEloOfPlayers(blackElo, whiteElo, winner) {
