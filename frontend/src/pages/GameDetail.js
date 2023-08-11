@@ -216,7 +216,7 @@ const GameDetailPage = () => {
     return (
         <Container fluid fillVertically>
             <Row columns={2} className="h-100">
-                <Column size={7} style={{ height: isPlayer ? 'calc(100% - 7.3rem)' : 'calc(100% - 3.25rem)' }}>
+                <Column size={7} style={{ height: isPlayer && !game.status.includes('_won') ? 'calc(100% - 7.3rem)' : 'calc(100% - 3.25rem)' }}>
                     <h2 className="board-heading">
                         {game.status === 'waiting' && `Waiting for black player to play (${formatSeconds(timer)})`}
                         {game.status === 'cancelled' && 'The game has been cancelled!'}
@@ -294,11 +294,6 @@ const GameDetailPage = () => {
                                         Confirm
                                     </Button>
                                 </Fragment>
-                            )}
-                            {game.status !== 'waiting' && game.status !== 'started' && game.status !== 'finishing' && (
-                                <Button>
-                                    Rematch
-                                </Button>
                             )}
                         </div>
                     )}
