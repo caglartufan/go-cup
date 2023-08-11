@@ -19,36 +19,16 @@ const userSlice = createSlice({
     initialState: initialUserState,
     reducers: {
         update: (state, action) => {
-            if(action.payload.username) {
-                state.username = action.payload.username;
-            }
-            if(action.payload.avatar) {
-                state.avatar = action.payload.avatar;
-            }
-            if(action.payload.firstname) {
-                state.firstname = action.payload.firstname;
-            }
-            if(action.payload.lastname) {
-                state.lastname = action.payload.lastname;
-            }
-            if(action.payload.email) {
-                state.email = action.payload.email;
-            }
-            if(action.payload.country) {
-                state.country = action.payload.country;
-            }
-            if(action.payload.games) {
-                state.games = action.payload.games;
-            }
-            if(action.payload.activeGame) {
-                state.activeGame = action.payload.activeGame;
-            }
-            if(action.payload.elo) {
-                state.elo = action.payload.elo;
-            }
-            if(action.payload.createdAt) {
-                state.createdAt = action.payload.createdAt;
-            }
+            state.username = action.payload.username || state.username;
+            state.avatar = action.payload.avatar || state.avatar;
+            state.firstname = action.payload.firstname || state.firstname;
+            state.lastname = action.payload.lastname || state.lastname;
+            state.email = action.payload.email || state.email;
+            state.country = action.payload.country || state.country;
+            state.games = action.payload.games || state.games;
+            state.activeGame = action.payload.activeGame || state.activeGame;
+            state.elo = action.payload.elo || state.elo;
+            state.createdAt = action.payload.createdAt || state.createdAt;
         },
         updateActiveGame: (state, action) => {
             const activeGameId = action.payload.gameId;

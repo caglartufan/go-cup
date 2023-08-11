@@ -231,7 +231,7 @@ const GameDetailPage = () => {
                         {game.status === 'started' && isPlayer && lastMove?.pass && lastMove?.player === playerColor && `You've passed your turn`}
                         {game.status === 'started' && isPlayer && lastMove?.pass && lastMove?.player !== playerColor && `Your opponent has passed their turn`}
                         {game.status === 'started' && !isPlayer && lastMove?.pass && `${firstLetterToUppercase(lastMove?.player)} player has passed their turn`}
-                        {game.status === 'finishing' && isPlayer && `Select the areas you've captured and opponent's stones which are alive but captured.`}
+                        {game.status === 'finishing' && isPlayer && `Select areas and stones you've captured`}
                         {game.status === 'finishing' && !isPlayer && `Players are finishing the game`}
                         {((game.status === 'black_won' && isPlayer && isBlackPlayer) || (game.status === 'white_won' && isPlayer && isWhitePlayer)) && 'You have won!'}
                         {((game.status === 'black_won' && isPlayer && !isBlackPlayer) || (game.status === 'white_won' && isPlayer && !isWhitePlayer)) && 'You have lost!'}
@@ -285,7 +285,12 @@ const GameDetailPage = () => {
                                     <Button onClick={cancelFinishingHandler}>
                                         Cancel
                                     </Button>
-                                    <Button color="success" onClick={confirmFinishingHandler}>
+                                    {/* TODO: Disabled button color attribute depended background-color dynamically */}
+                                    <Button
+                                        color="success"
+                                        onClick={confirmFinishingHandler}
+                                        disabled={game[playerColor].confirmed}
+                                    >
                                         Confirm
                                     </Button>
                                 </Fragment>

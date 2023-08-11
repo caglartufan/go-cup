@@ -117,7 +117,7 @@ const Board = props => {
         ctx.fill();
 
         // Draw stones
-        if(status === 'finishing') {
+        if(isPlayer && status === 'finishing') {
             groups.forEach(group => {
                 const isGroupRemoved = group.removedAtMove !== -1;
 
@@ -130,7 +130,6 @@ const Board = props => {
                 );
 
                 activeStones.forEach(stone => {
-                    // TODO: If group isDead add a center dot on stones
                     drawStone(
                         gridPadding + Math.floor(stone.column * gridOffset),
                         gridPadding + Math.floor(stone.row * gridOffset),
@@ -140,26 +139,10 @@ const Board = props => {
                         group.isDead
                     );
                 });
-            })
-        } else {
-            state.forEach((row, rowIndex) => {
-                row.forEach((stone, columnIndex) => {
-                    if(stone !== null) {
-                        drawStone(
-                            gridPadding + Math.floor(columnIndex * gridOffset),
-                            gridPadding + Math.floor(rowIndex * gridOffset),
-                            clientWidth / (size * 2.75),
-                            stone ? '#000' : '#fff',
-                            ctx
-                        );
-                    }
-                });
             });
-        }
 
-        // If game is at "finishing" status, then draw the lines respresenting
-        // empty groups captured by players
-        if(status === 'finishing') {
+            // If game is at "finishing" status, then draw the small squares respresenting
+            // empty groups captured by players
             emptyGroups.forEach(emptyGroup => {
                 const { capturedBy, positions } = emptyGroup;
                 const isNotCapturedByAPlayer = capturedBy === null;
@@ -180,8 +163,22 @@ const Board = props => {
                     ctx.fill();
                 });
             });
+        } else {
+            state.forEach((row, rowIndex) => {
+                row.forEach((stone, columnIndex) => {
+                    if(stone !== null) {
+                        drawStone(
+                            gridPadding + Math.floor(columnIndex * gridOffset),
+                            gridPadding + Math.floor(rowIndex * gridOffset),
+                            clientWidth / (size * 2.75),
+                            stone ? '#000' : '#fff',
+                            ctx
+                        );
+                    }
+                });
+            });
         }
-    }, [status, size, state, groups, emptyGroups]);
+    }, [status, size, state, groups, emptyGroups, isPlayer]);
     
     const clickHandler = ({ clientX, clientY }) => {
         const { clientWidth, clientHeight } = board.current;
@@ -201,10 +198,11 @@ const Board = props => {
         const row = Math.round((coordinates.y - gridPadding) / gridOffset);
         const column = Math.round((coordinates.x - gridPadding) / gridOffset);
 
-        if(state[row][column] === null) {
-            if((status === 'waiting' || status === 'started') && isPlayer) {
-                socket.emit('addStone', gameId, row, column);
-            }
+        if((status === 'waiting' || status === 'started') && isPlayer && state[row][column] === null) {
+            socket.emit('addStone', gameId, row, column);
+        }
+        if(status === 'finishing' && isPlayer) {
+            socket.emit('negateGroupOrEmptyGroup', gameId, row, column);
         }
     };
 

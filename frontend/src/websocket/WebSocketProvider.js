@@ -197,6 +197,55 @@ const WebSocketProvider = props => {
             }));
         };
 
+        const onConfirmedFinishing = (status, black, white, whoConfirmed) => {
+            if(
+                (isBlackPlayer && whoConfirmed === 'white')
+                || (isWhitePlayer && whoConfirmed === 'black')
+            ) {
+                dispatch(toastActions.add({
+                    message: 'Your opponent has confirmed game\'s finishing state!',
+                    status: 'info'
+                }));
+            }
+
+            if(isPlayer && status.includes('_won')) {
+                if(
+                    (status === 'black_won' && isBlackPlayer)
+                    || (status === 'white_won' && isWhitePlayer)
+                ) {
+                    dispatch(toastActions.add({
+                        message: 'Congratulations, you have won!',
+                        status: 'success'
+                    }));
+                } else {
+                    dispatch(toastActions.add({
+                        message: 'Congratulations, you have completed a game!',
+                        status: 'success'
+                    }));
+                }
+
+                dispatch(userActions.update({
+                    elo: isBlackPlayer ? black.user.elo : white.user.elo,
+                    activeGame: null
+                }));
+            }
+
+            dispatch(gameActions.updateGame({
+                status,
+                black,
+                white
+            }));
+        };
+
+        const onNegatedGroupOrEmptyGroup = (black, white, groups, emptyGroups) => {
+            dispatch(gameActions.updateGame({
+                black,
+                white,
+                groups,
+                emptyGroups
+            }));
+        };
+
         const onAddedStone = (status, black, white, board, moves) => {
             dispatch(gameActions.updateGame({
                 status,
@@ -259,6 +308,8 @@ const WebSocketProvider = props => {
         socket.on('undoRequestAccepted', onUndoRequestAccepted);
         socket.on('passed', onPassed);
         socket.on('cancelledFinishing', onCancelledFinishing);
+        socket.on('confirmedFinishing', onConfirmedFinishing);
+        socket.on('negatedGroupOrEmptyGroup', onNegatedGroupOrEmptyGroup);
         socket.on('addedStone', onAddedStone);
         socket.on('gameFinished', onGameFinished);
 
@@ -286,6 +337,8 @@ const WebSocketProvider = props => {
             socket.off('undoRequestAccepted', onUndoRequestAccepted);
             socket.off('passed', onPassed);
             socket.off('cancelledFinishing', onCancelledFinishing);
+            socket.off('confirmedFinishing', onConfirmedFinishing);
+            socket.off('negatedGroupOrEmptyGroup', onNegatedGroupOrEmptyGroup);
             socket.off('addedStone', onAddedStone);
             socket.off('gameFinished', onGameFinished);
 
