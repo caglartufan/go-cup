@@ -311,7 +311,7 @@ const GameDetailPage = () => {
             <Row columns={2} className="h-100">
                 <Column size={7} style={{ height: isPlayer && !game.status.includes('_won') ? 'calc(100% - 7.3rem)' : 'calc(100% - 3.25rem)' }}>
                     <h2 className="board-heading">
-                        {getStatusMessage(game.staus, timer, isBlackPlayer, isWhitePlayer, isPlayer, playerColor, lastMove, whosTurn)}
+                        {getStatusMessage(game.status, timer, isBlackPlayer, isWhitePlayer, isPlayer, playerColor, lastMove, whosTurn)}
                     </h2>
                     <Board
                         game-id={game._id}

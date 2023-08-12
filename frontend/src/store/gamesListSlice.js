@@ -2,7 +2,9 @@ import { createSlice } from '@reduxjs/toolkit';
 
 const initialGamesListState = {
     total: 0,
-    games: []
+    games: [],
+    page: 1,
+    totalPages: 0
 };
 
 const gamesListSlice = createSlice({
@@ -12,6 +14,7 @@ const gamesListSlice = createSlice({
         load: (state, action) => {
             state.total = action.payload.total;
             state.games = action.payload.games;
+            state.totalPages = action.payload.totalPages;
         }
     }
 });

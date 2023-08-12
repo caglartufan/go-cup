@@ -27,12 +27,12 @@ class GameService {
         }, 1000);
     }
 
-    async getGames() {
-        const games = await GameDAO.getGames();
+    async getGames(page, sizeFilter, eloRangeFilter, startedAtOrder) {
+        const { total, games } = await GameDAO.getGames(page, sizeFilter, eloRangeFilter, startedAtOrder);
 
         const gameDTOs = games.map(game => GameDTO.withGameObject(game));
 
-        return gameDTOs;
+        return { total, gameDTOs };
     }
 
     async findGameById(gameId) {

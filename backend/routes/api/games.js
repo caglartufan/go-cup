@@ -3,15 +3,22 @@ const router = express.Router();
 const { ErrorHandler } = require('../../utils/ErrorHandler');
 
 router.get('/', async function(req, res) {
-    // TODO: Add pagination, filter and search with UI
-    const gameDTOs = await req.app.get('services').gameService.getGames();
+    const {
+        page,
+        size: sizeFilter,
+        'elo-range': eloRangeFilter,
+        'started-at-order': startedAtOrder
+    } = req.query;
+
+    const { total, gameDTOs } = await req.app.get('services').gameService.getGames(page, sizeFilter, eloRangeFilter, startedAtOrder);
 
     const serializedGameDTOs = gameDTOs.map(gameDTO => gameDTO.toObject());
 
     return res.json({
         ok: true,
-        total: gameDTOs.length,
-        games: serializedGameDTOs
+        total: total,
+        games: serializedGameDTOs,
+        totalPages: Math.ceil(total / 6)
     });
 });
 

@@ -9,7 +9,7 @@ import HomePage, { loader as homeLoader } from './pages/Home';
 import LoginPage, { action as loginAction } from './pages/Login';
 import SignupPage, { action as signupAction } from './pages/Signup';
 import LeaderbordPage from './pages/Leaderboard';
-import GamesPage from './pages/Games';
+import GamesPage, { loader as gamesLoader } from './pages/Games';
 import GameDetailPage, { loader as gameDetailLoader } from './pages/GameDetail';
 import ProfilePage from './pages/Profile';
 
@@ -31,7 +31,8 @@ const router = createBrowserRouter([
 				children: [
 					{
 						index: true,
-						element: <GamesPage />
+						element: <GamesPage />,
+						loader: gamesLoader
 					},
 					{
 						id: 'GameDetailPage',

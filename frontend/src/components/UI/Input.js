@@ -10,6 +10,8 @@ const Input = (props) => {
         actions: formActions,
         name: input,
         onValidate,
+        options,
+        defaultValue,
         ...inputProps
     } = props;
     const {
@@ -17,7 +19,7 @@ const Input = (props) => {
         isInputTouched
     } = useSelector(state => state[formName].inputs[input]);
 
-    const [isValid, message] = typeof onValidate === 'function' ? onValidate(value) : [true, null];
+    const [isValid, message] = typeof onValidate === 'function' ? onValidate(value || defaultValue || '') : [true, null];
     const isInputValid = isValid || !isInputTouched;
 
     useEffect(() => {
@@ -43,6 +45,26 @@ const Input = (props) => {
         dispatch(formActions.updateIsInputTouched({ input, isInputTouched: true }));
     }
 
+    if(props.type === 'select') {
+        return (
+            <select
+                name={input}
+                {...inputProps}
+                className={className}
+                value={value || defaultValue}
+                onChange={inputChangeHandler}
+                onBlur={inputBlurHandler}
+            >
+                {options.map(
+                    option => (
+                        <option value={option.value} key={option.value}>
+                            {option.text}
+                        </option>
+                    )
+                )}
+            </select>
+        );
+    }
     return (
         <input
             name={input}

@@ -3,12 +3,35 @@ const { GameNotFoundError } = require('../utils/ErrorHandler');
 const MESSAGES = require('../messages/messages');
 
 class GameDAO {
-    static async getGames() {
+    static async getGames(page, sizeFilter, eloRangeFilter, startedAtOrder) {
         // TODO: Filter unnecessary data requested such as chat, waitingEndsAt etc.
-        return await Game
+        // @@@ create dynamic aggregate https://stackoverflow.com/questions/51443746/mongoose-how-to-filter-on-populate-field
+        const query = {};
+
+        if(sizeFilter && sizeFilter !== 'all-sizes') {
+            query.size = sizeFilter;
+        }
+
+        if(eloRangeFilter && eloRangeFilter !== 'all-elos') {
+            const eloRangeBoundaries = eloRangeFilter
+                .split('-')
+                .map(eloRangeBoundary => parseInt(eloRangeBoundary));
+
+            query.
+        }
+
+        const total = await Game
             .find({ isPrivate: false })
+            .count();
+
+        const games = await Game
+            .find({ isPrivate: false })
+            .limit(6)
+            .select('_id size status black white board createdAt startedAt')
             .populate('black.user', '-_id username elo')
             .populate('white.user', '-_id username elo');
+
+        return { total, games };
     }
 
     static async findGameById(gameId) {
