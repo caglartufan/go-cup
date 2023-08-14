@@ -4,11 +4,14 @@ const MESSAGES = require('../messages/messages');
 
 class GameDAO {
     static async getGames(page = 1, sizeFilter = 'all-sizes', eloRangeFilter = 'all-elos', startedAtOrder = 'desc') {
-        // TODO: Filter unnecessary data requested such as chat, waitingEndsAt etc.
-        // @@@ create dynamic aggregate https://stackoverflow.com/questions/51443746/mongoose-how-to-filter-on-populate-field
         const aggregation = [
             {
                 $match: {
+                    $or: [
+                        { status: 'waiting' },
+                        { status: 'started' },
+                        { status: 'finishing' }
+                    ],
                     isPrivate: false
                 }
             },

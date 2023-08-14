@@ -1685,8 +1685,8 @@ class GameService {
             whiteElo
         );
         const winProbabilityOfWhitePlayer = 1 - winProbabilityOfBlackPlayer;
-        const newBlackElo = blackElo + (this.#K * ((winner === 'black' ? 1 : 0) - winProbabilityOfBlackPlayer));
-        const newWhiteElo = whiteElo + (this.#K * ((winner === 'white' ? 1 : 0) - winProbabilityOfWhitePlayer));
+        const newBlackElo = Math.round(blackElo + (this.#K * ((winner === 'black' ? 1 : 0) - winProbabilityOfBlackPlayer)));
+        const newWhiteElo = Math.round(whiteElo + (this.#K * ((winner === 'white' ? 1 : 0) - winProbabilityOfWhitePlayer)));
 
         return { newBlackElo, newWhiteElo };
     }

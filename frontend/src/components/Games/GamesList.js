@@ -11,6 +11,7 @@ import FormGroup from '../UI/FormGroup';
 import GamesListItem from './GamesListItem';
 import { gamesListFormActions } from '../../store/gamesListFormSlice';
 import { gamesListActions } from '../../store/gamesListSlice';
+import Pagination from '../UI/Pagination';
 
 const GamesListFilterForm = forwardRef((props, ref) => {
     const formName = 'games-list-form';
@@ -227,25 +228,12 @@ const GamesList = props => {
                                 </Column>
                             ))}
                         </Row>
-                        {gamesList.totalPages > 1 && (
-                            <Row>
-                                <Column>
-                                    {Array
-                                        .from(new Array(gamesList.totalPages), (_, index) => (index + 1))
-                                        .map(
-                                            page => (
-                                                <Button
-                                                    key={page}
-                                                    onClick={pageChangeHandler.bind(null, page)}
-                                                    disabled={gamesList.page === page}
-                                                >
-                                                    {page}
-                                                </Button>
-                                            )
-                                        )
-                                    }
-                                </Column>
-                            </Row>
+                        {gamesList.totalPages > 1 && filters && (
+                            <Pagination
+                                currentPage={gamesList.page}
+                                totalPages={gamesList.totalPages}
+                                onPageChange={pageChangeHandler}
+                            />
                         )}
                     </Fragment>
                 ): (
