@@ -15,6 +15,11 @@ const gamesListSlice = createSlice({
             state.total = action.payload.total;
             state.games = action.payload.games;
             state.totalPages = action.payload.totalPages;
+        },
+        changePage: (state, action) => {
+            const page = parseInt(action.payload.page);
+
+            state.page = page;
         }
     }
 });

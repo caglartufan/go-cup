@@ -3,12 +3,14 @@ const router = express.Router();
 const { ErrorHandler } = require('../../utils/ErrorHandler');
 
 router.get('/', async function(req, res) {
-    const {
+    let {
         page,
         size: sizeFilter,
         'elo-range': eloRangeFilter,
         'started-at-order': startedAtOrder
     } = req.query;
+
+    page = parseInt(page) || 1;
 
     const { total, gameDTOs } = await req.app.get('services').gameService.getGames(page, sizeFilter, eloRangeFilter, startedAtOrder);
 
@@ -18,6 +20,7 @@ router.get('/', async function(req, res) {
         ok: true,
         total: total,
         games: serializedGameDTOs,
+        page,
         totalPages: Math.ceil(total / 6)
     });
 });

@@ -3,33 +3,132 @@ const { GameNotFoundError } = require('../utils/ErrorHandler');
 const MESSAGES = require('../messages/messages');
 
 class GameDAO {
-    static async getGames(page, sizeFilter, eloRangeFilter, startedAtOrder) {
+    static async getGames(page = 1, sizeFilter = 'all-sizes', eloRangeFilter = 'all-elos', startedAtOrder = 'desc') {
         // TODO: Filter unnecessary data requested such as chat, waitingEndsAt etc.
         // @@@ create dynamic aggregate https://stackoverflow.com/questions/51443746/mongoose-how-to-filter-on-populate-field
-        const query = {};
+        const aggregation = [
+            {
+                $match: {
+                    isPrivate: false
+                }
+            },
+            {
+                $project: {
+                    _id: 1,
+                    size: 1,
+                    status: 1,
+                    black: {
+                        user: 1,
+                        score: 1,
+                        timeRemaining: 1
+                    },
+                    white: {
+                        user: 1,
+                        score: 1,
+                        timeRemaining: 1
+                    },
+                    board: 1,
+                    createdAt: 1,
+                    startedAt: 1
+                }
+            },
+            {
+                /**
+                 * Join black.user with associated user from users collection
+                 */
+                $lookup: {
+                    from: 'users',
+                    let: { userId: '$black.user' },
+                    pipeline: [
+                        { $match: { $expr: { $eq: [ '$_id', '$$userId' ] } } },
+                        { $project: { _id: 0, username: 1, elo: 1 } }
+                    ],
+                    as: 'black.user'
+                }
+            },
+            {
+                /**
+                 * Join white.user with associated user from users collection
+                 */
+                $lookup: {
+                    from: 'users',
+                    let: { userId: '$white.user' },
+                    pipeline: [
+                        { $match: { $expr: { $eq: [ '$_id', '$$userId' ] } } },
+                        { $project: { _id: 0, username: 1, elo: 1 } }
+                    ],
+                    as: 'white.user'
+                }
+            },
+            {
+                $addFields: {
+                    'black.user': { $arrayElemAt: [ '$black.user', 0 ] },
+                    'white.user': { $arrayElemAt: [ '$white.user', 0 ] }
+                }
+            }
+        ];
 
         if(sizeFilter && sizeFilter !== 'all-sizes') {
-            query.size = sizeFilter;
+            aggregation[0].$match.size = parseInt(sizeFilter);
         }
 
         if(eloRangeFilter && eloRangeFilter !== 'all-elos') {
             const eloRangeBoundaries = eloRangeFilter
                 .split('-')
                 .map(eloRangeBoundary => parseInt(eloRangeBoundary));
+            const eloMax = eloRangeBoundaries[0];
+            const eloMin = eloRangeBoundaries[1];
 
-            query.
+            aggregation.push({
+                $match: {
+                    $or: [
+                        {
+                            $and: [
+                                { 'black.user.elo': { $lte: eloMax } },
+                                { 'black.user.elo': { $gte: eloMin } }
+                            ]
+                        },
+                        {
+                            $and: [
+                                { 'white.user.elo': { $lte: eloMax } },
+                                { 'white.user.elo': { $gte: eloMin } }
+                            ]
+                        },
+                    ]
+                }
+            });
         }
 
-        const total = await Game
-            .find({ isPrivate: false })
-            .count();
+        if(startedAtOrder) {
+            aggregation.push({
+                $sort: {
+                    startedAt: startedAtOrder === 'asc' ? 1 : -1
+                }
+            });
+        }
+
+        let total = await Game
+            .aggregate([
+                ...aggregation,
+                {
+                    $count: 'total'
+                }
+            ])
+            .exec();
+
+        total = total[0]?.total || 0;
 
         const games = await Game
-            .find({ isPrivate: false })
-            .limit(6)
-            .select('_id size status black white board createdAt startedAt')
-            .populate('black.user', '-_id username elo')
-            .populate('white.user', '-_id username elo');
+            .aggregate([
+                ...aggregation,
+                {
+                    $skip: (page - 1) * 6
+                },
+                {
+                    $limit: 6
+                }
+            ])
+            .exec();
 
         return { total, games };
     }
