@@ -1,10 +1,11 @@
 import { Provider } from 'react-redux';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+
 import WebSocketProvider from './websocket/WebSocketProvider';
 
 import { store } from './store/store';
 
-import RootLayout from './layout/Root/Root';
+import RootLayout from './layout/Root';
 import HomePage, { loader as homeLoader } from './pages/Home';
 import LoginPage, { action as loginAction } from './pages/Login';
 import SignupPage, { action as signupAction } from './pages/Signup';

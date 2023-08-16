@@ -1,0 +1,15 @@
+@use 'sass:map';
+@use '../../../sass/abstracts/variables' as *;
+
+.form-control {
+    font-size: 1.3rem;
+    padding: .4rem;
+    border-radius: 5px;
+    border: 1px solid $tertiary;
+    transition: all .3s ease-out;
+
+    &--invalid {
+        border-color: map.get($status, danger);
+        outline-color: map.get($status, danger);
+    }
+}

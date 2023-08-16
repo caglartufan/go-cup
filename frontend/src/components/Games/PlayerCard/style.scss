@@ -1,0 +1,112 @@
+@use 'sass:math';
+@use '../../../sass/abstracts/variables' as *;
+
+.player-card {
+    display: flex;
+    align-items: center;
+    position: relative;
+
+    &::after {
+        content: '';
+        display: block;
+        position: absolute;
+        bottom: 1rem;
+        left: 50%;
+        height: 4px;
+        width: calc(100% - 4rem);
+        transform: translateX(-50%);
+        background-color: transparent;
+        border-radius: 3px;
+        transition: all .3s ease;
+    }
+
+    &--black {
+        color: #fff;
+        background-color: lighten(#000, 15%);
+
+        & .player-card__name:hover {
+            color: darken(#fff, 20%);
+        }
+
+        &.active {
+            &::after {
+                background-color: lighten(#000, 28%);
+            }
+        }
+    }
+
+    &--white {
+        color: #000;
+        background-color: darken(#fff, 7%);
+
+        & .player-card__name:hover {
+            color: lighten(#000, 30%);
+        }
+
+        &.active {
+            &::after {
+                background-color: darken(#fff, 18%);
+            }
+        }
+    }
+
+    &__avatar {
+        position: relative;
+        margin-right: 1.5rem;
+
+        &-image {
+            width: 5rem;
+            aspect-ratio: 1;
+            border-radius: 50%;
+        }
+
+        &-badge {
+            display: block;
+            position: absolute;
+            top: calc(2.5rem - (2.5rem / math.sqrt(2)));
+            right: calc(2.5rem - (2.5rem / math.sqrt(2)));
+            width: 1.1rem;
+            height: 1.1rem;
+            border-radius: 50%;
+            transform: translate(50%, -50%);
+
+            &--online {
+                background-color: map-get($status, success);
+            }
+
+            &--offline {
+                background-color: map-get($status, danger);
+            }
+        }
+    }
+
+    &__meta {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+    }
+
+    // TODO: Limit username area to one line with ellipsis at the end.
+    &__name {
+        &,
+        &:link,
+        &:visited {
+            color: inherit;
+            font-size: 1.5rem;
+            font-weight: 300;
+            margin-bottom: 1rem;
+        }
+    }
+
+    &__score {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin-bottom: .75rem;
+    }
+
+    &__time-remaining {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin-bottom: .5rem;
+    }
+}

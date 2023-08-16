@@ -1,0 +1,50 @@
+@use 'sass:map';
+@use '../../sass/abstracts/variables' as *;
+
+.leaderboard-rank {
+    font-weight: 600;
+}
+
+.leaderboard-user {
+    display: flex;
+
+    &-avatar {
+        margin-right: .5rem;
+
+        &__image {
+            aspect-ratio: 1;
+            height: 4rem;
+            border-radius: 50%;
+
+            &--online {
+                border: 1px solid map.get($status, success);
+            }
+
+            &--offline {
+                border: 1px solid map.get($status, danger);
+            }
+        }
+    }
+
+    &-metadata {
+        display: flex;
+        flex-direction: column;
+        row-gap: .5rem;
+
+        &__username {
+            font-weight: 600;
+        }
+
+        &__activity {
+            font-size: 1.3rem;
+
+            &--online {
+                color: map.get($status, success);
+            }
+
+            &--offline {
+                color: map.get($status, danger);
+            }
+        }
+    }
+}
