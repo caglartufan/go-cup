@@ -137,3 +137,17 @@ a {
         color: $primary-dark;
     }
 }
+
+.heading-primary {
+    font-size: 2.75rem;
+    font-weight: 600;
+    color: $secondary;
+    margin-bottom: .5rem;
+}
+
+.heading-secondary {
+    font-size: 2rem;
+    font-weight: 500;
+    color: $secondary-light;
+    margin-bottom: 3rem;
+}

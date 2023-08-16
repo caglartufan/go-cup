@@ -26,8 +26,6 @@ router.get('/me', auth, function (req, res, next) {
 router.get('/leaderboard', async function(req, res) {
 	const leaderboard = await UserDAO.getTopEloPlayers();
 
-	console.log(leaderboard);
-
 	const leaderboardMapped = leaderboard.map(
 		user => UserDTO.withUserObject(user).toObject()
 	);
