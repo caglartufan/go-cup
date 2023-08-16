@@ -8,7 +8,7 @@ import RootLayout from './layout/Root/Root';
 import HomePage, { loader as homeLoader } from './pages/Home';
 import LoginPage, { action as loginAction } from './pages/Login';
 import SignupPage, { action as signupAction } from './pages/Signup';
-import LeaderbordPage from './pages/Leaderboard';
+import LeaderbordPage, { loader as leaderboardLoader } from './pages/Leaderboard';
 import GamesPage, { loader as gamesLoader } from './pages/Games';
 import GameDetailPage, { loader as gameDetailLoader } from './pages/GameDetail';
 import ProfilePage from './pages/Profile';
@@ -44,7 +44,8 @@ const router = createBrowserRouter([
 			},
 			{
 				path: 'leaderboard',
-				element: <LeaderbordPage />
+				element: <LeaderbordPage />,
+				loader: leaderboardLoader
 			},
 			{
 				path: 'login',

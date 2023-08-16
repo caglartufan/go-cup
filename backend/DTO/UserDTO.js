@@ -11,13 +11,14 @@ class UserDTO {
     #isOnline = false;
     #country = '';
     #games = null;
+    #totalGames = 0;
     #activeGame = null;
     #elo = 0;
     #isInQueue = false;
     #createdAt = null;
     #updatedAt = null;
     
-    constructor(login, username, avatar, firstname, lastname, email, password, passwordConfirmation, isAdmin, isOnline, country, games, activeGame, elo, isInQueue, createdAt, updatedAt) {
+    constructor(login, username, avatar, firstname, lastname, email, password, passwordConfirmation, isAdmin, isOnline, country, games, totalGames, activeGame, elo, isInQueue, createdAt, updatedAt) {
         this.#login = login;
         this.#username = username;
         this.#avatar = avatar;
@@ -30,6 +31,7 @@ class UserDTO {
         this.#isOnline = isOnline;
         this.#country = country;
         this.#games = games;
+        this.#totalGames = totalGames;
         this.#activeGame = activeGame;
         this.#elo = elo;
         this.#isInQueue = isInQueue;
@@ -50,7 +52,7 @@ class UserDTO {
             undefined,
             undefined,
             requestData['country']
-        )
+        );
     }
 
     static withUserObject(user) {
@@ -67,6 +69,7 @@ class UserDTO {
             user.isOnline,
             user.country,
             user.games,
+            user.totalGames,
             user.activeGame,
             user.elo,
             undefined,
@@ -89,6 +92,7 @@ class UserDTO {
             isOnline: this.#isOnline,
             country: this.#country,
             games: this.#games,
+            totalGames: this.#totalGames,
             activeGame: this.#activeGame,
             elo: this.#elo,
             isInQueue: this.#isInQueue,
@@ -191,6 +195,14 @@ class UserDTO {
 
     set games(value) {
         this.#games = value;
+    }
+
+    get totalGames() {
+        return this.#totalGames;
+    }
+
+    set totalGames(value) {
+        this.#totalGames = value;
     }
 
     get activeGame() {

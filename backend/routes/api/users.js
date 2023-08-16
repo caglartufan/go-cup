@@ -3,6 +3,7 @@ const router = express.Router();
 const { ErrorHandler } = require('../../utils/ErrorHandler');
 const auth = require('../../middlewares/auth');
 const UserDTO = require('../../DTO/UserDTO');
+const UserDAO = require('../../DAO/UserDAO');
 
 /* GET users listing. */
 router.get('/me', auth, function (req, res, next) {
@@ -20,6 +21,21 @@ router.get('/me', auth, function (req, res, next) {
 	} catch(error) {
 		next(ErrorHandler.handle(error));
 	}
+});
+
+router.get('/leaderboard', async function(req, res) {
+	const leaderboard = await UserDAO.getTopEloPlayers();
+
+	console.log(leaderboard);
+
+	const leaderboardMapped = leaderboard.map(
+		user => UserDTO.withUserObject(user).toObject()
+	);
+
+	return res.json({
+		ok: true,
+		leaderboard: leaderboardMapped
+	});
 });
 
 module.exports = router;

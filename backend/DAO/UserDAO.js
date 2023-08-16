@@ -61,6 +61,31 @@ class UserDAO {
         return user.games;
     }
 
+    static async getTopEloPlayers(total = 20) {
+        return await User
+            .aggregate([
+                {
+                    $project: {
+                        _id: 0,
+                        username: 1,
+                        avatar: 1,
+                        isOnline: 1,
+                        elo: 1,
+                        totalGames: { $size: '$games' }
+                    }
+                },
+                {
+                    $sort: {
+                        elo: -1
+                    }
+                },
+                {
+                    $limit: total
+                }
+            ])
+            .exec();
+    }
+
     static async createUser(user) {
         user = new User({
             username: user.username,
