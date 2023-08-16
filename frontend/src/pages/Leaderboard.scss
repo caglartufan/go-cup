@@ -1,6 +1,10 @@
 @use 'sass:map';
 @use '../sass/abstracts/variables' as *;
 
+.leaderboard-rank {
+    font-weight: 600;
+}
+
 .leaderboard-user {
     display: flex;
 

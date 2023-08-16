@@ -1,4 +1,4 @@
-import { useLoaderData } from 'react-router-dom';
+import { NavLink, useLoaderData } from 'react-router-dom';
 
 import Container from '../layout/Grid/Container';
 import Row from '../layout/Grid/Row';
@@ -34,7 +34,11 @@ const LeaderbordPage = () => {
                 const rank = index + 1;
 
                 rowData.id = `#${rank}-${user.username}`
-                rowData.rank = `#${rank}`;
+                rowData.rank = (
+                    <span className="leaderboard-rank">
+                        #{rank}
+                    </span>
+                );
                 rowData.user = (
                     <div className="leaderboard-user">
                         <div className="leaderboard-user-avatar">
@@ -45,9 +49,12 @@ const LeaderbordPage = () => {
                             />
                         </div>
                         <div className="leaderboard-user-metadata">
-                            <span className="leaderboard-user-metadata__username">
+                            <NavLink
+                                className="leaderboard-user-metadata__username"
+                                to={`/profile/${user.username}`}
+                            >
                                 {user.username}
-                            </span>
+                            </NavLink>
                             {
                                 user.isOnline
                                     ? (

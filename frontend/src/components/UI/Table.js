@@ -20,9 +20,9 @@ const Table = props => {
                 <tr>
                     {Object.keys(columns).map(
                         columnId => (
-                            <td key={columnId}>
+                            <th key={columnId}>
                                 {columns[columnId]}
-                            </td>
+                            </th>
                         )
                     )}
                 </tr>
