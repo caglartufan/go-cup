@@ -12,7 +12,7 @@ import SignupPage, { action as signupAction } from './pages/Signup';
 import LeaderbordPage, { loader as leaderboardLoader } from './pages/Leaderboard';
 import GamesPage, { loader as gamesLoader } from './pages/Games';
 import GameDetailPage, { loader as gameDetailLoader } from './pages/GameDetail';
-import ProfilePage from './pages/Profile';
+import ProfilePage, { loader as profileLoader } from './pages/Profile';
 
 import { authLoader, authMiddleware, logoutAction, noAuthMiddleware } from './utils/auth';
 
@@ -63,7 +63,8 @@ const router = createBrowserRouter([
 			{
 				path: 'profile',
 				element: <ProfilePage />,
-				loader: authMiddleware
+				// loader: authMiddleware
+				loader: profileLoader
 			},
 			{
 				path: 'logout',
