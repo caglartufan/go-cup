@@ -1,3 +1,5 @@
+export const BASE_URL = 'http://192.168.1.20:3000';
+
 export const formatSeconds = totalSeconds => {
     let seconds = String(Math.floor(totalSeconds % 60));
     let minutes = String(Math.floor(totalSeconds / 60));

@@ -1,7 +1,8 @@
 import { io } from 'socket.io-client';
 import { getAuthToken } from '../utils/auth';
+import { BASE_URL } from '../utils/helpers';
 
-const URL = 'http://localhost:3000';
+const URL = BASE_URL;
 
 const options = {
     auth: {

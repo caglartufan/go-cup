@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { formatSeconds } from '../../../utils/helpers';
+import { BASE_URL, formatSeconds } from '../../../utils/helpers';
 
 import Card from '../../UI/Card';
 
@@ -27,7 +27,7 @@ const PlayerCard = props => {
         <Card box-shadow="light" className={className}>
             <div className="player-card__avatar">
                 <img
-                    src={'http://localhost:3000' + avatar}
+                    src={BASE_URL + avatar}
                     alt={username} className="player-card__avatar-image"
                 />
                 <span className={`player-card__avatar-badge player-card__avatar-badge--${isOnline ? 'online' : 'offline'}`}></span>

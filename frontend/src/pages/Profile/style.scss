@@ -1,0 +1,81 @@
+@use '../../sass/abstracts/variables' as *;
+@use '../../sass/abstracts/mixins' as *;
+
+.profile {
+    padding: 0;
+    overflow: hidden;
+
+    &-upper {
+        display: flex;
+        column-gap: 2rem;
+        padding: 2rem;
+        background-color: $primary-light;
+
+        &-avatar {
+
+            &__image {
+                aspect-ratio: 1;
+                height: 12.5rem;
+                border-radius: 50%;
+                @include box-shadow(medium);
+            }
+        }
+
+        &-general-info {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+
+            &__username {
+                font-size: 3rem;
+                font-weight: 600;
+                margin-bottom: 1.25rem;
+            }
+
+            &__fullname {
+                font-size: 2rem;
+                font-weight: 500;
+                color: $secondary;
+                margin-bottom: .5rem;
+            }
+
+            &__signed-up-at {
+                font-size: 1.75rem;
+                color: $secondary;
+            }
+        }
+    }
+
+    &-lower {
+
+        &-tabs {
+            display: flex;
+            background-color: $primary;
+            @include box-shadow(medium);
+
+            &__tab {
+                &,
+                &:link,
+                &:visited {
+                    display: block;
+                    font-size: 1.6rem;
+                    font-weight: 600;
+                    color: $white;
+                    background-color: $primary;
+                    padding: 1.5rem;
+                }
+
+                &--active,
+                &--active:link,
+                &--active:visited,
+                &:hover {
+                    background-color: $primary-dark;
+                }
+            }
+        }
+
+        &-tab-content {
+            padding: 2rem;
+        }
+    }
+}

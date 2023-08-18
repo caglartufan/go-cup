@@ -92,12 +92,12 @@ class UserService {
         return userId;
     }
 
-    async getGamesOfUser(user) {
+    async getGamesOfUser(user, populate = false) {
         if(!(user instanceof UserDTO)) {
             throw new InvalidDTOError(user, UserDTO);
         }
 
-        return await UserDAO.getGamesOfUser(user);
+        return await UserDAO.getGamesOfUser(user, populate);
     }
 
     async setUserOnline(user) {

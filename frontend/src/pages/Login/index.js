@@ -1,5 +1,6 @@
 import { Link, Form, useNavigate, useSubmit, useActionData, useNavigation, redirect } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
+import { BASE_URL } from '../../utils/helpers';
 
 import { socket } from '../../websocket';
 import { loginFormActions } from '../../store/loginFormSlice';
@@ -138,7 +139,7 @@ export const action = async ({ request }) => {
     };
 
     try {
-        const response = await fetch('http://localhost:3000/api/login', {
+        const response = await fetch(BASE_URL + '/api/login', {
             method: request.method,
             headers: {
                 'Content-Type': 'application/json'

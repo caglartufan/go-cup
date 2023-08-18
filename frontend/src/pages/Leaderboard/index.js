@@ -1,4 +1,5 @@
 import { NavLink, useLoaderData } from 'react-router-dom';
+import { BASE_URL } from '../../utils/helpers';
 
 import Container from '../../layout/Grid/Container';
 import Row from '../../layout/Grid/Row';
@@ -43,7 +44,7 @@ const LeaderbordPage = () => {
                     <div className="leaderboard-user">
                         <div className="leaderboard-user-avatar">
                             <img
-                                src={`http://localhost:3000${user.avatar}`}
+                                src={BASE_URL + user.avatar}
                                 alt={user.username}
                                 className={`leaderboard-user-avatar__image leaderboard-user-avatar__image--${user.isOnline ? 'online' : 'offline'}`}
                             />
@@ -103,7 +104,7 @@ const LeaderbordPage = () => {
 };
 
 export const loader = async () => {
-    const response = await fetch('http://localhost:3000/api/users/leaderboard');
+    const response = await fetch(BASE_URL + '/api/users/leaderboard');
 
     if(!response.ok) {
         return response;

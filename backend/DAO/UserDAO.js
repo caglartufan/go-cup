@@ -48,14 +48,115 @@ class UserDAO {
         }).select('username');
     }
 
-    static async getGamesOfUser(user) {
-        user = await User.findOne({
-            username: user.username,
-            email: user.email
-        }).select('games');
+    static async getGamesOfUser(user, populate = false) {
+
+        if(populate) {
+            user = await User
+                .aggregate([
+                    {
+                        $match: {
+                            username: user.username,
+                            email: user.email
+                        }
+                    },
+                    {
+                        $project: {
+                            games: 1
+                        }
+                    },
+                    {
+                        $lookup: {
+                            from: 'games',
+                            localField: 'games',
+                            foreignField: '_id',
+                            as: 'games',
+                            pipeline: [
+                                {
+                                    $project: {
+                                        _id: 1,
+                                        size: 1,
+                                        status: 1,
+                                        'black.user': 1,
+                                        'white.user': 1,
+                                        isPrivate: 1,
+                                        startedAt: 1,
+                                        finishedAt: 1
+                                    }
+                                },
+                                {
+                                    $match: {
+                                        status: {
+                                            $in: ['black_won', 'white_won', 'white_resigned', 'black_resigned', 'cancelled', 'cancelled_by_black', 'cancelled_by_white']
+                                        },
+                                        isPrivate: false
+                                    }
+                                },
+                                {
+                                    $sort: {
+                                        finishedAt: -1
+                                    }
+                                },
+                                {
+                                    $lookup: {
+                                        from: 'users',
+                                        localField: 'black.user',
+                                        foreignField: '_id',
+                                        as: 'black.user',
+                                        pipeline: [
+                                            {
+                                                $project: {
+                                                    _id: 0,
+                                                    username: 1
+                                                }
+                                            }
+                                        ]
+                                    }
+                                },
+                                {
+                                    $lookup: {
+                                        from: 'users',
+                                        localField: 'white.user',
+                                        foreignField: '_id',
+                                        as: 'white.user',
+                                        pipeline: [
+                                            {
+                                                $project: {
+                                                    _id: 0,
+                                                    username: 1
+                                                }
+                                            }
+                                        ]
+                                    }
+                                },
+                                {
+                                    $addFields: {
+                                        'black.user': {
+                                            $arrayElemAt: ['$black.user', 0]
+                                        },
+                                        'white.user': {
+                                            $arrayElemAt: ['$white.user', 0]
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ]);
+        } else {
+            user = await User
+                .findOne({
+                    username: user.username,
+                    email: user.email
+                })
+                .select('games');
+        }
 
         if(!user) {
             throw new UserNotFoundError();
+        }
+
+        if(user?.length) {
+            user = user[0];
         }
 
         return user.games;

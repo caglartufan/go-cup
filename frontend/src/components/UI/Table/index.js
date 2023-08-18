@@ -19,11 +19,24 @@ const Table = props => {
             <thead>
                 <tr>
                     {Object.keys(columns).map(
-                        columnId => (
-                            <th key={columnId}>
-                                {columns[columnId]}
-                            </th>
-                        )
+                        columnId => {
+                            const columnData = columns[columnId];
+                            let text = '';
+                            let width = '';
+
+                            if(typeof columnData === 'object') {
+                                text = columnData.text;
+                                width = columnData.width;
+                            } else if(typeof columnData === 'string') {
+                                text = columnData;
+                            }
+
+                            return (
+                                <th key={columnId} width={width || undefined}>
+                                    {text}
+                                </th>
+                            )
+                        }
                     )}
                 </tr>
             </thead>

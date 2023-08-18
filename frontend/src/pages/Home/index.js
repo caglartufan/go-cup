@@ -1,3 +1,5 @@
+import { BASE_URL } from '../../utils/helpers';
+
 import { store } from '../../store/store';
 import { gamesListActions } from '../../store/gamesListSlice';
 
@@ -11,7 +13,7 @@ const HomePage = () => {
 };
 
 export const loader = async () => {
-    const response = await fetch('http://localhost:3000/api/games');
+    const response = await fetch(BASE_URL + '/api/games');
 
     if(!response.ok) {
         return response;

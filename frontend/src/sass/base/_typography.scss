@@ -1,3 +1,4 @@
+@use 'sass:map';
 @use '../abstracts/variables' as *;
 
 @font-face {
@@ -150,4 +151,28 @@ a {
     font-weight: 500;
     color: $secondary-light;
     margin-bottom: 3rem;
+}
+
+@each $statusCode in map.keys($status) {
+    .text-#{$statusCode} {
+        color: map.get($status, $statusCode);
+    }
+}
+
+.text-bg-black {
+    color: $white;
+    font-weight: 500;
+    background-color: $black;
+}
+
+.text-bg-white {
+    color: $black;
+    font-weight: 500;
+    background-color: $white;
+}
+
+@for $fontWeightMultiplier from 1 through 9 {
+    .font-weight-#{$fontWeightMultiplier * 100} {
+        font-weight: $fontWeightMultiplier * 100;
+    }
 }

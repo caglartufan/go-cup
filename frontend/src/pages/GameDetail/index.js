@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState, Fragment } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { redirect, useLoaderData, useLocation } from 'react-router-dom';
-import { formatSeconds, firstLetterToUppercase } from '../../utils/helpers';
+import { formatSeconds, firstLetterToUppercase, BASE_URL } from '../../utils/helpers';
 
 import { store } from '../../store/store';
 import { toastActions } from '../../store/toastSlice';
@@ -414,7 +414,7 @@ const GameDetailPage = () => {
 };
 
 export const loader = async ({ params }) => {
-    const response = await fetch('http://localhost:3000/api/games/' + params.gameId);
+    const response = await fetch(BASE_URL + '/api/games/' + params.gameId);
 
     const resData = await response.json();
 

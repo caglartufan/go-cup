@@ -1,8 +1,10 @@
+import { BASE_URL } from '../../utils/helpers';
+
 import { store } from '../../store/store';
 import { gamesListActions } from '../../store/gamesListSlice';
+import { gamesListFormActions } from '../../store/gamesListFormSlice';
 
 import GamesList from '../../components/Games/GamesList';
-import { gamesListFormActions } from '../../store/gamesListFormSlice';
 
 const GamesPage = () => {
     // TODO: Defer loading
@@ -60,7 +62,7 @@ export const loader = async ({ request }) => {
         }));
     }
 
-    const requestUrl = new URL('http://localhost:3000/api/games');
+    const requestUrl = new URL(BASE_URL + '/api/games');
     requestUrl.searchParams.set('size', sizeFilter);
     requestUrl.searchParams.set('elo-range', eloRangeFilter);
     requestUrl.searchParams.set('started-at-order', startedAtOrder);

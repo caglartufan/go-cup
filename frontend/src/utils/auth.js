@@ -1,9 +1,11 @@
 import { redirect } from 'react-router-dom';
 import jwtDecode from 'jwt-decode';
+import { BASE_URL } from './helpers';
+
+import { socket } from '../websocket';
 import { store } from '../store/store';
 import { userActions } from '../store/userSlice';
 import { toastActions } from '../store/toastSlice';
-import { socket } from '../websocket';
 import { queueActions } from '../store/queueSlice';
 
 export const AUTH_TOKEN_KEY = 'auth-token';
@@ -58,7 +60,7 @@ export const authLoader = async () => {
         return null;
     }
 
-    const response = await fetch('http://localhost:3000/api/users/me', {
+    const response = await fetch(BASE_URL + '/api/users/me', {
         headers: {
             'Authorization': 'Bearer ' + token
         }

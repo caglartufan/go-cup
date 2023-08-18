@@ -40,7 +40,7 @@
         top: 100%;
         right: 0;
         padding: 1rem 2rem;
-        min-width: 10rem;
+        min-width: 15rem;
         background-color: $overlay;
         @include box-shadow('medium');
         z-index: map.get($z-indices, dropdown);

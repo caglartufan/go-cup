@@ -1,6 +1,7 @@
 import { useNavigate, useNavigation, useSubmit, useActionData, redirect, Form } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { setAuthToken } from '../../utils/auth';
+import { BASE_URL } from '../../utils/helpers';
 
 import { socket } from '../../websocket';
 import { store } from '../../store/store';
@@ -183,7 +184,7 @@ export const action = async ({ request }) => {
     };
 
     try {
-        const response = await fetch('http://localhost:3000/api/signup', {
+        const response = await fetch(BASE_URL + '/api/signup', {
             method: request.method,
             headers: {
                 'Content-Type': 'application/json'

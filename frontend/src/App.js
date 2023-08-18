@@ -13,6 +13,9 @@ import LeaderbordPage, { loader as leaderboardLoader } from './pages/Leaderboard
 import GamesPage, { loader as gamesLoader } from './pages/Games';
 import GameDetailPage, { loader as gameDetailLoader } from './pages/GameDetail';
 import ProfilePage, { loader as profileLoader } from './pages/Profile';
+import GamesTab, { loader as gamesTabLoader } from './pages/Profile/Games';
+import StatisticsTab, { loader as statisticsTabLoader } from './pages/Profile/Statistics';
+import ProfileSettingsTab, { loader as profileSettingTabLoader } from './pages/Profile/ProfileSettings';
 
 import { authLoader, authMiddleware, logoutAction, noAuthMiddleware } from './utils/auth';
 
@@ -63,8 +66,24 @@ const router = createBrowserRouter([
 			{
 				path: 'profile',
 				element: <ProfilePage />,
-				// loader: authMiddleware
-				loader: profileLoader
+				loader: profileLoader,
+				children: [
+					{
+						index: true,
+						element: <GamesTab />,
+						loader: gamesTabLoader,
+					},
+					{
+						path: 'statistics',
+						element: <StatisticsTab />,
+						loader: statisticsTabLoader
+					},
+					{
+						path: 'profile-settings',
+						element: <ProfileSettingsTab />,
+						loader: profileSettingTabLoader
+					}
+				]
 			},
 			{
 				path: 'logout',
